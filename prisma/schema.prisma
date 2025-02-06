@@ -1,0 +1,676 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model CurrencyMaster {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  code      String   @unique()
+  symbol    String
+  rate      Float
+  isActive  Boolean  @default(true)
+  flag      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AttributeMaster {
+  id                      String                    @id @default(auto()) @map("_id") @db.ObjectId
+  name                    String                    @unique
+  key                     String
+  inputType               AttributeInputType
+  type                    AttributeType
+  isActive                Boolean                   @default(true)
+  showInFilter            Boolean                   @default(false)
+  showInCatalogue         Boolean?                  @default(false)
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  isDefault               Boolean?                  @default(false)
+  children                AttributeValue[]          @relation("AttributeMasterToValue")
+  CategoryAttribute       CategoryAttribute[]
+  ProductAttributeValue   ProductAttributeValue[]
+  CatalogueAttributeValue CatalogueAttributeValue[]
+}
+
+enum AttributeInputType {
+  TextField
+  TextArea
+  TextEditor
+  Dropdown
+  MultipleSelect
+  Date
+  DateandTime
+  CheckBox
+  Redio
+}
+
+enum AttributeType {
+  Attribute
+  Label
+  Colour
+  Other
+}
+
+model AttributeValue {
+  id                      String                    @id @default(auto()) @map("_id") @db.ObjectId
+  name                    String?                   @default("")
+  value                   String                    @unique
+  attr_id                 String                    @db.ObjectId
+  colour                  String?                   @default("")
+  isActive                Boolean                   @default(true)
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  attribute               AttributeMaster           @relation("AttributeMasterToValue", fields: [attr_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  products                ProductAttributeValue[]
+  CatalogueAttributeValue CatalogueAttributeValue[]
+}
+
+model CategoryMaster {
+  id                String              @id @default(auto()) @map("_id") @db.ObjectId
+  position          Int
+  name              String              @unique
+  parent_id         String?             @db.ObjectId
+  meta_title        String?             @default("")
+  meta_keyword      String?             @default("")
+  meta_description  String?             @default("")
+  parent            CategoryMaster?     @relation("CategoryParent", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children          CategoryMaster[]    @relation("CategoryParent")
+  image             String?             @default("")
+  // attribute_ids    String[]         @db.ObjectId
+  // attributes       AttributeMaster? @relation("CategoryToAttribute", fields: [attribute_id], references: [id])
+  // attribute_id     String?          @db.ObjectId
+  // attribute_ids     String[]           @db.Array(ObjectId) 
+  // attributes        AttributeMaster[]  @relation("CategoryToAttribute", references: [id])
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  Menu              Menu[]              @relation("categoryMaster")
+  SubMenuCollection SubMenuCollection[]
+  CategoryAttribute CategoryAttribute[]
+  products          ProductCategory[]
+  CatalogueCategory CatalogueCategory[]
+  StitchingGroup    StitchingGroup[]
+}
+
+model CategoryAttribute {
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
+  category_id  String          @db.ObjectId
+  attribute_id String          @db.ObjectId
+  category     CategoryMaster  @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  attribute    AttributeMaster @relation(fields: [attribute_id], references: [id], onDelete: Cascade)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([category_id, attribute_id])
+  @@index([category_id])
+  @@index([attribute_id])
+}
+
+model AdminMaster {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userName     String   @unique
+  email        String   @unique
+  password     String
+  otpVerified  Boolean  @default(true)
+  otp          Int?
+  otpExpiresIn Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model CmsPage {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  position    Int
+  title       String
+  url         String   @default("")
+  description String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  // Menu        Menu[]   @relation("cms")
+  Menu        Menu[]
+}
+
+model HomeBanner {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  position     Int
+  bannerType   BannerType @default(Image)
+  title        String
+  description  String?    @default("")
+  url          String?    @default("")
+  desktopImage String?    @default("")
+  mobileImage  String?    @default("")
+  isActive     Boolean
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+enum BannerType {
+  Image
+  Video
+}
+
+model Testimonial {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  review_date   DateTime
+  review        String
+  customer_name String
+  image         String?  @default("")
+  isActive      Boolean  @default(true)
+  position      Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PageWiseBanner {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  menu_id      String     @db.ObjectId
+  bannerType   BannerType @default(Image)
+  title        String
+  url          String?    @default("")
+  description  String?    @default("")
+  desktopImage String
+  mobileImage  String?    @default("")
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  menu         Menu       @relation(fields: [menu_id], references: [id], onDelete: Cascade)
+}
+
+model SocialMedia {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  icon      String
+  name      String?  @unique()
+  url       String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EmailSetting {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String
+  password  String
+  host      String
+  port      Int
+  toEmail   String?  @default("")
+  bccEmail  String?  @default("")
+  ccEmail   String?  @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Menu {
+  id                String              @id @default(auto()) @map("_id") @db.ObjectId
+  parent_id         String?             @db.ObjectId
+  name              String              @unique
+  url               String?             @default("")
+  menuType          MenuType?           @default(Default)
+  displayType       DisplayType?        @default(Default)
+  meta_title        String?             @default("")
+  meta_keyword      String?             @default("")
+  meta_description  String?             @default("")
+  isActive          Boolean?            @default(true)
+  position          Int
+  category_id       String?             @db.ObjectId
+  // cms_id            String?             @db.ObjectId
+  showInHeader      Boolean?            @default(true)
+  showInFooter      Boolean?            @default(false)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  CategoryMaster    CategoryMaster?     @relation("categoryMaster", fields: [category_id], references: [id])
+  parent            Menu?               @relation("menuHierarchy", fields: [parent_id], onDelete: NoAction, onUpdate: NoAction, references: [id])
+  // cms               CmsPage?            @relation("cms", fields: [cms_id], references: [id])
+  children          Menu[]              @relation("menuHierarchy")
+  SubMenuCollection SubMenuCollection[]
+  CmsPage           CmsPage?            @relation(fields: [cmsPageId], references: [id])
+  cmsPageId         String?             @db.ObjectId
+  PageWiseBanner    PageWiseBanner[]
+}
+
+enum MenuType {
+  Default
+  Category
+}
+
+enum DisplayType {
+  Default
+  Megamenu
+  Dropdown
+}
+
+model EmailTemplate {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  subject     String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Colour {
+  id        String          @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  code      String
+  isActive  Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  products  ProductColour[]
+}
+
+model SubMenuCollection {
+  id               String                 @id @default(auto()) @map("_id") @db.ObjectId
+  parent_id        String?                @db.ObjectId
+  position         Int
+  name             String?                @default("")
+  menu_id          String?                @db.ObjectId
+  category_id      String?                @db.ObjectId
+  type             SubMenuCollectionType? @default(Default)
+  meta_title       String?                @default("")
+  meta_keyword     String?                @default("")
+  meta_description String?                @default("")
+  url              String?                @default("")
+  isActive         Boolean                @default(true)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  parent           SubMenuCollection?     @relation("subMenuCollectionHirarchy", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Menu             Menu?                  @relation(fields: [menu_id], references: [id])
+  CategoryMaster   CategoryMaster?        @relation(fields: [category_id], references: [id])
+  children         SubMenuCollection[]    @relation("subMenuCollectionHirarchy")
+}
+
+enum SubMenuCollectionType {
+  Default
+  Category
+}
+
+model Product {
+  id            String  @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  catalogue_id  String? @db.ObjectId
+  sku           String
+  url           String  @unique
+  quantity      Int
+  // category        String[] @db.ObjectId
+  weight        Float?
+  average_price Float?  @default(0)
+  retail_price  Float?  @default(0)
+  // price            Float
+  retail_GST    Float?  @default(0)
+
+  retail_discount  Float?                  @default(0)
+  offer_price      Float?                  @default(0)
+  image            String[]
+  description      String
+  // attribute_value String[] @db.ObjectId
+  // label            String?                 @default("")
+  tag              String[]
+  stitching        Boolean?                @default(false)
+  isActive         Boolean?                @default(true)
+  showInSingle     Boolean?                @default(false)
+  isDraft          Boolean                 @default(false)
+  readyToShip      Boolean?                @default(false)
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  meta_title       String?                 @default("")
+  meta_keyword     String?                 @default("")
+  meta_description String?                 @default("")
+  attributeValues  ProductAttributeValue[] @relation()
+  categories       ProductCategory[]       @relation()
+  catalogue        Catalogue?              @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
+  colours          ProductColour[]
+  labels           ProductLabel[]          @relation()
+  sizes            ProductSize[]
+  collection       CatalogueCollection[]
+  CartItem         CartItem[]
+  WishList         WishList[]
+}
+
+model Labels {
+  id        String         @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  colorCode String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  isActive  Boolean        @default(true)
+  products  ProductLabel[]
+}
+
+model ProductLabel {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  product_id String    @db.ObjectId
+  label_id   String    @db.ObjectId
+  expiryTime DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  product    Product   @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  label      Labels    @relation(fields: [label_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_id, label_id])
+}
+
+model ProductCategory {
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  product_id  String         @db.ObjectId
+  category_id String         @db.ObjectId
+  product     Product        @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  category    CategoryMaster @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([product_id, category_id])
+  @@index([product_id])
+  @@index([category_id])
+}
+
+model ProductAttributeValue {
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  product_id        String          @db.ObjectId
+  attribute_id      String          @db.ObjectId
+  attributeValue_id String?         @db.ObjectId
+  value             String?         @default("")
+  product           Product         @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  attribute         AttributeMaster @relation(fields: [attribute_id], references: [id], onDelete: Cascade)
+  attributeValue    AttributeValue? @relation(fields: [attributeValue_id], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([product_id, attributeValue_id])
+  @@index([product_id])
+  @@index([attribute_id])
+}
+
+model Catalogue {
+  id                  String                    @id @default(auto()) @map("_id") @db.ObjectId
+  name                String
+  cat_code            String
+  no_of_product       Int
+  url                 String                    @unique
+  quantity            Int
+  price               Int
+  catalogue_discount  Int?                      @default(0)
+  average_price       Int
+  GST                 Float?                    @default(0)
+  offer_price         Float
+  stitching           Boolean?                  @default(false)
+  size                Boolean?                  @default(false)
+  weight              Int
+  meta_title          String?
+  meta_keyword        String?
+  meta_description    String?
+  coverImage          String
+  description         String
+  tag                 String[]
+  isActive            Boolean?                  @default(true)
+  deletedAt           DateTime?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  CatalogueCategory   CatalogueCategory[]
+  Product             Product[]
+  attributeValues     CatalogueAttributeValue[]
+  CatalogueCollection CatalogueCollection[]
+  WishList            WishList[]
+  CatalogueSize       CatalogueSize[]
+  CartItem            CartItem[]
+}
+
+model CatalogueCategory {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  catalogue_id String         @db.ObjectId
+  category_id  String         @db.ObjectId
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  catalogue    Catalogue      @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
+  category     CategoryMaster @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@unique([catalogue_id, category_id])
+}
+
+model CatalogueAttributeValue {
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  catalogue_id      String          @db.ObjectId
+  attribute_id      String          @db.ObjectId
+  attributeValue_id String?         @db.ObjectId
+  value             String?         @default("")
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  catalogue         Catalogue       @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
+  attribute         AttributeMaster @relation(fields: [attribute_id], references: [id], onDelete: Cascade)
+  attributeValue    AttributeValue? @relation(fields: [attributeValue_id], references: [id], onDelete: Cascade)
+
+  @@unique([catalogue_id, attributeValue_id])
+}
+
+model ProductColour {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  product_id String   @db.ObjectId
+  colour_id  String   @db.ObjectId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  colour     Colour   @relation(fields: [colour_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_id, colour_id])
+  @@index([product_id])
+  @@index([colour_id])
+}
+
+model contactDetails {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  position    Int
+  name        String
+  image       String?  @default("")
+  description String
+  isActive    Boolean? @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model users {
+  id                String     @id @default(auto()) @map("_id") @db.ObjectId
+  name              String?
+  email             String     @unique
+  provider_id       String?
+  provider          String?    @default("default")
+  mobile_number     Int?
+  password          String?
+  address           String?
+  country           String?
+  state             String?
+  city              String?
+  pincode           String?
+  business_detail   String?
+  image             String?
+  verification_code String?
+  isActive          Boolean?   @default(true)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  cart              cart[]
+  WishList          WishList[]
+}
+
+model size {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  value         String?         @unique
+  position      Int
+  isActive      Boolean?        @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  products      ProductSize[]
+  CatalogueSize CatalogueSize[]
+}
+
+model productItem {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  product_id  String    @db.ObjectId
+  color_ids   String[]  @db.ObjectId
+  price       Float?
+  quantity    Int?
+  expiry_time DateTime?
+}
+
+model ProductSize {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  product_id String   @db.ObjectId
+  size_id    String   @db.ObjectId
+  price      Int?     @default(0)
+  quantity   Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  size       size     @relation(fields: [size_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_id, size_id])
+}
+
+model StitchingOption {
+  id                   String                 @id @default(auto()) @map("_id") @db.ObjectId
+  name                 String
+  catalogue_price      Float
+  price                Float
+  type                 Optiontype
+  dispatch_time        String?
+  // has_customization    Boolean                @default(false)
+  isActive             Boolean?               @default(true)
+  isCustom             Boolean?               @default(false)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  stitchingValues      StitchingValue[]
+  StitchingGroupOption StitchingGroupOption[]
+}
+
+model StitchingValue {
+  id     String             @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  type   StitchingValueType
+  // stitching_id String             @db.ObjectId
+  // measurementdata   Json?
+  range  String?            @default("")
+  values String?            @default("")
+
+  stitchingOptionId String?          @db.ObjectId
+  isActive          Boolean?         @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  stitchingOption   StitchingOption? @relation(fields: [stitchingOptionId], references: [id], onDelete: Cascade)
+}
+
+enum Optiontype {
+  CheckBox
+  Redio
+}
+
+enum StitchingValueType {
+  TextField
+  Dropdown
+}
+
+model StitchingGroup {
+  id                   String                 @id @default(auto()) @map("_id") @db.ObjectId
+  name                 String
+  category_id          String                 @db.ObjectId
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  category             CategoryMaster         @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  stitchingGroupOption StitchingGroupOption[]
+
+  // @@unique([category_id])
+}
+
+model StitchingGroupOption {
+  id                 String          @id @default(auto()) @map("_id") @db.ObjectId
+  stitchingGroup_id  String          @db.ObjectId
+  stitchingOption_id String          @db.ObjectId
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  stitchingGroup     StitchingGroup  @relation(fields: [stitchingGroup_id], references: [id], onDelete: Cascade)
+  stitchingOption    StitchingOption @relation(fields: [stitchingOption_id], references: [id], onDelete: Cascade)
+
+  @@unique([stitchingGroup_id, stitchingOption_id])
+}
+
+model Collection {
+  id                  String                @id @default(auto()) @map("_id") @db.ObjectId
+  position            Int
+  name                String                @unique
+  title               String?               @default("")
+  meta_title          String?               @default("")
+  meta_keyword        String?               @default("")
+  meta_description    String?               @default("")
+  // image             String?             @default("")
+  isActive            Boolean               @default(true)
+  showInHome          Boolean?              @default(false)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  CatalogueCollection CatalogueCollection[]
+}
+
+model CatalogueCollection {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  catalogue_id  String?    @db.ObjectId
+  product_id    String?    @db.ObjectId
+  collection_id String     @db.ObjectId
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  catalogue     Catalogue? @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
+  product       Product?   @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  collection    Collection @relation(fields: [collection_id], references: [id], onDelete: Cascade)
+
+  // @@unique([catalogue_id, product_id])
+}
+
+model cart {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  user_id   String     @unique() @db.ObjectId
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      users?     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  CartItem  CartItem[]
+}
+
+model CartItem {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  product_id   String?    @db.ObjectId
+  catalogue_id String?    @db.ObjectId
+  cart_id      String     @db.ObjectId
+  size         Json?
+  stitching    Json?
+  quantity     Int
+  isCatalogue  Boolean    @default(false)
+  product      Product?   @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  catalogue    Catalogue? @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
+  cart         cart?      @relation(fields: [cart_id], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model WishList {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  user_id      String     @db.ObjectId
+  product_id   String?    @db.ObjectId
+  catalogue_id String?    @db.ObjectId
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  user         users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product      Product?   @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  catalogue    Catalogue? @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, product_id, catalogue_id])
+}
+
+model CatalogueSize {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  catalogue_id String    @db.ObjectId
+  size_id      String    @db.ObjectId
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  catalogue    Catalogue @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
+  size         size      @relation(fields: [size_id], references: [id], onDelete: Cascade)
+
+  @@unique([catalogue_id, size_id])
+}

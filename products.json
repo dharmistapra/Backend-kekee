@@ -1,0 +1,84 @@
+{
+  "catalog": {
+    "name": "Hollywood",
+    "cat_code": "ABC@1234",
+    "no_of_product": 2,
+    "price": 5000,
+    "catalogue_discount": 50,
+    "average_price": 2500,
+    "stitching": false,
+    "size": false,
+    "weight": -2,
+    "meta_title": "Bridal Saree Meta Title",
+    "meta_keyword": "Meta Keyword Privacy Policy",
+    "meta_description": "dfdf",
+    "desktopImage": "uploads/catalogue/desktop/1735973981713-94010779.jpeg",
+    "mobileImage": "uploads/catalogue/mobile/1735973981718-957248160.webp",
+    "description": "fgffg",
+    "CatalogueCategory": {
+      "create": [
+        {
+          "category": {
+            "connect": {
+              "id": "675ac8cc9b6b7e39a6a0f21c"
+            }
+          }
+        }
+      ]
+    },
+    "tag": ["sdzsf", "zdfzdfg"],
+    "isActive": false
+  },
+  "products": [
+    {
+      "name": "Hollywood",
+      "sku": "ABC@1234",
+      "quantity": "1",
+      "weight": "1",
+      "cat_code": "ABC@1234",
+      "discount": "50",
+      "offer_price": "500.00",
+      "description": "dfkkf",
+      "showInSingle": "true",
+      "category_id": [
+        "675ac8cc9b6b7e39a6a0f21c",
+        "675bbecc2bba11baca6b7d3e",
+        "675bbed72bba11baca6b7d3f"
+      ],
+      "attributes": [
+        "{\"attribute_id\":\"676e84cc227db8e1bde5efd8\",\"attributeValue\":[\"676e86bb227db8e1bde5efde\"],\"value\":\"\"}",
+        "{\"attribute_id\":\"676e8695227db8e1bde5efda\",\"attributeValue\":[\"676e8717227db8e1bde5efe5\"],\"value\":\"\"}",
+        "{\"attribute_id\":\"676e8683227db8e1bde5efd9\",\"attributeValue\":[\"676e86f7227db8e1bde5efe2\"],\"value\":\"\"}",
+        "{\"attribute_id\":\"676e878e227db8e1bde5efe8\",\"attributeValue\":[\"676e87d0227db8e1bde5efea\"],\"value\":\"\"}",
+        "{\"attribute_id\":\"676fa36e72924b9def5f618d\",\"attributeValue\":[],\"value\":\"1\"}"
+      ],
+      "colour_id": ["675fe04ab1b7cb0c98db5067", "675fdf6db1b7cb0c98db5062"],
+      "price": "1000"
+    },
+    {
+      "name": "Hollywood",
+      "sku": "ABC@1234",
+      "quantity": "2",
+      "weight": "2",
+      "cat_code": "ABC@1234",
+      "discount": "50",
+      "offer_price": "500.00",
+      "description": "sdsdfdf",
+      "showInSingle": "true",
+      "category_id": [
+        "675ac8cc9b6b7e39a6a0f21c",
+        "675bbecc2bba11baca6b7d3e",
+        "675bbed72bba11baca6b7d3f"
+      ],
+      "attributes": [
+        "{\"attribute_id\":\"676e84cc227db8e1bde5efd8\",\"attributeValue\":[\"676e86b7227db8e1bde5efdd\"],\"value\":\"\"}",
+        "{\"attribute_id\":\"676e8683227db8e1bde5efd9\",\"attributeValue\":[\"676e86f7227db8e1bde5efe2\"],\"value\":\"\"}",
+        "{\"attribute_id\":\"676e878e227db8e1bde5efe8\",\"attributeValue\":[\"676e87d0227db8e1bde5efea\"],\"value\":\"\"}",
+        "{\"attribute_id\":\"676fa36e72924b9def5f618d\",\"attributeValue\":[],\"value\":\"1\"}",
+        "{\"attribute_id\":\"676e8695227db8e1bde5efda\",\"attributeValue\":[\"676e8717227db8e1bde5efe5\"],\"value\":\"\"}"
+      ],
+      "colour_id": ["675fdf93b1b7cb0c98db5063", "675fb4c3b28f38b2ab861e92"],
+      "price": "1000"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import slug from "slug";
-import prisma from "../../../DB/config.js";
+import prisma from "../../../db/config.js";
 import { deleteFile, updatePosition } from "../../../helper/common.js";
 
 const postMenu = async (req, res, next) => {

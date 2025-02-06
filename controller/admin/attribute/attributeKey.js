@@ -1,4 +1,4 @@
-import prisma from "../../../DB/config.js";
+import prisma from "../../../db/config.js";
 import { updateStatus } from "../../../helper/common.js";
 
 // HANDELE ADD ATTRIBUTE API

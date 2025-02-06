@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import prisma from "../DB/config.js";
+import prisma from "../db/config.js";
 import slug from "slug";
 
 const deleteFile = async (filePath) => {

@@ -1,4 +1,4 @@
-import prisma from "../../DB/config.js";
+import prisma from "../../db/config.js";
 import { updatePosition } from "../../helper/common.js";
 
 const postSubMenuCollection = async (req, res, next) => {

@@ -1,5 +1,5 @@
 import slug from "slug";
-import prisma from "../../../DB/config.js";
+import prisma from "../../../db/config.js";
 import { deleteData, updateStatus } from "../../../helper/common.js";
 
 // HANDELE ADD ATTRIBUTE API

@@ -6,7 +6,8 @@
   "main": "app.js",
   "scripts": {
     "start": "nodemon app.js",
-    "vercel-build": "prisma generate && npm install && npm run build"
+    "vercel-build": "prisma generate && npm install && npm run build",
+    "build": "node build.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

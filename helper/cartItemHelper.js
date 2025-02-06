@@ -1,4 +1,4 @@
-import prisma from "../db/config.js";
+import prisma from "../DB/config.js";
 const isvalidstitching = async (uniqueID, modelName) => {
   // YE FUNCTION HUM USE KAR RAHE HAI DATA FIND KARNE KE LIYE  THROUGH ID
   const models = {

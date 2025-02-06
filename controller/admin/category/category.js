@@ -1,4 +1,4 @@
-import prisma from "../../../db/config.js";
+import prisma from "../../../DB/config.js";
 import {
   convertFilePathSlashes,
   deleteFile,
@@ -49,7 +49,7 @@ const postCategory = async (req, res, next) => {
 
     if (uniqueCategory) {
       if (req.file) await fileValidation(req.file, false);
-      return res.status(409).json({Schema
+      return res.status(409).json({
         isSuccess: false,
         message: "Category name already exists!",
       });

@@ -1,6 +1,6 @@
 import passport from "passport";
 import generateJWT_Token from "../middleware/token.js";
-import prisma from "../db/config.js";
+import prisma from "../DB/config.js";
 import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
 

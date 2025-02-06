@@ -1,4 +1,4 @@
-import prisma from "../../../db/config.js";
+import prisma from "../../../DB/config.js";
 import bcrypt from "bcrypt";
 import generateJWT_Token from "../../../middleware/token.js";
 import speakeasy from "speakeasy"

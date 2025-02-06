@@ -5,7 +5,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth2";
 import { Strategy as FacebookStrategy } from "passport-facebook";
 import bcrypt from "bcrypt";
 import "dotenv/config";
-import prisma from "../db/config.js";
+import prisma from "../DB/config.js";
 
 // FOR ADMIN AUTHENTICATE PASSPORT  USE
 passport.use("admin",

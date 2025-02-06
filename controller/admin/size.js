@@ -1,4 +1,4 @@
-import prisma from "../../db/config.js";
+import prisma from "../../DB/config.js";
 import { deleteData, updatePosition, updateStatus } from "../../helper/common.js";
 const postSize = async (req, res, next) => {
     try {

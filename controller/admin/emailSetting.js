@@ -1,4 +1,4 @@
-import prisma from "../../db/config.js";
+import prisma from "../../DB/config.js";
 import { deleteData } from "../../helper/common.js";
 
 const postEmailSetting = async (req, res, next) => {

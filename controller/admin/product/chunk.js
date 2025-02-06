@@ -12,7 +12,7 @@ import {
   removeProductAndCatalogueImage,
   removeProductImage,
 } from "../../../helper/common.js";
-import prisma from "../../../db/config.js";
+import prisma from "../../../DB/config.js";
 import { productSchema } from "../../../schema/joi_schema.js";
 import slug from "slug";
 

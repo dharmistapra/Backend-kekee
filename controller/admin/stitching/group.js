@@ -1,4 +1,4 @@
-import prisma from "../../../db/config.js";
+import prisma from "../../../DB/config.js";
 const postgroupstitching = async (req, res, next) => {
   try {
     const { name, category_id, optionfield } = req.body;

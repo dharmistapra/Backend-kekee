@@ -1,4 +1,4 @@
-import prisma from "../../../db/config.js";
+import prisma from "../../../DB/config.js";
 
 // SUBCATEGORY ADD
 const postSubCategory = async (req, res, next) => {

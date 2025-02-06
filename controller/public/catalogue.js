@@ -1,4 +1,4 @@
-import prisma from "../../db/config.js";
+import prisma from "../../DB/config.js";
 
 const getCatalogue = async (req, res, next) => {
   try {

@@ -10,7 +10,7 @@ import {
   categoryPosition,
   getSubCategory,
   deleteCategoryImage,
-} from "../Controller/Admin/Category/Category.js";
+} from "../controller/admin/category/category.js";
 import {
   attributeMasterSchema,
   pageSchema,
@@ -71,7 +71,7 @@ import {
   updateAttribute,
   updateAttributeFilterStatus,
   updateAttributeStatus,
-} from "../Controller/Admin/attribute/attributeKey.js";
+} from "../controller/admin/attribute/attributeKey.js";
 import {
   deletAttributeValue,
   getAllAttributeValue,
@@ -79,7 +79,7 @@ import {
   postAttributeValue,
   updateAttributeValue,
   updateAttributeValueStatus,
-} from "../Controller/Admin/attribute/attributeValue.js";
+} from "../controller/admin/attribute/attributeValue.js";
 import { changePassword } from "../auth/auth.js";
 import {
   cmsPosition,
@@ -107,14 +107,14 @@ import {
   testimonialPosition,
   updateTestimonial,
   updateTestimonialStatus,
-} from "../Controller/Admin/testimonials.js";
+} from "../controller/admin/testimonials.js";
 import {
   deleteSocialMedia,
   paginationSocialMedia,
   postSocialMedia,
   updateSocialMedia,
   updateSocialMediaStatus,
-} from "../Controller/Admin/socialMediaIcon.js";
+} from "../controller/admin/socialMediaIcon.js";
 import {
   deletePageWiseBanner,
   paginationPageWiseBanner,
@@ -176,7 +176,7 @@ import {
   postRetailProduct,
   updateReatailProductStatus,
   updateRetailProduct,
-} from "../Controller/Admin/product/product.js";
+} from "../controller/admin/product/product.js";
 import {
   deleteContactDetails,
   deleteContactDetailsImage,
@@ -193,7 +193,7 @@ import {
 } from "../controller/admin/product/tempData.js";
 import HandleChunkData, {
   postCatalogueChunk,
-} from "../Controller/Admin/product/chunk.js";
+} from "../controller/admin/product/chunk.js";
 import {
   addCatalogue,
   catlogtGetSingleProduct,
@@ -207,14 +207,14 @@ import {
   restoreCatalogues,
   restoreCatalogue,
   restoreDeleteCatalogue,
-} from "../Controller/Admin/catalogue/catalogue.js";
+} from "../controller/admin/catalogue/catalogue.js";
 import {
   deleteLabels,
   getAllLabels,
   labelstatus,
   postLabels,
   updatelabels,
-} from "../Controller/Admin/label.js";
+} from "../controller/admin/label.js";
 import {
   deleteSize,
   getAllSizes,
@@ -222,7 +222,7 @@ import {
   postSize,
   sizeStatus,
   updateSize,
-} from "../Controller/Admin/size.js";
+} from "../controller/admin/size.js";
 
 // import {
 //   // deleteStitchingGroup,
@@ -251,21 +251,21 @@ import {
   paginationgroupstitching,
   postgroupstitching,
   putgroupstitching,
-} from "../Controller/Admin/stitching/group.js";
+} from "../controller/admin/stitching/group.js";
 import {
   deleteOptionByGroupingId,
   getOptionByGroupingId,
   optionStatusChange,
   postOptionByGroupingId,
   putOptionByGroupingId,
-} from "../Controller/Admin/stitching/option.js";
+} from "../controller/admin/stitching/option.js";
 import {
   changeOptionMeasurementStatus,
   deleteOptionMeasurement,
   getOptionMeasurement,
   postOptionMeasurement,
   putOptionMeasurement,
-} from "../Controller/Admin/stitching/measurement.js";
+} from "../controller/admin/stitching/measurement.js";
 import {
   collectionPagination,
   collectionPosition,

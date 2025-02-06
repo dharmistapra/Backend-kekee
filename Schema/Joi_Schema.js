@@ -1,5 +1,5 @@
 import Joi from "joi";
-import JoiSchemaValidation from "../Middleware/JoiValidate.js";
+import JoiSchemaValidation from "../middleware/JoiValidate.js";
 
 /** CATEGORY */
 

@@ -4,29 +4,29 @@ import {
   getMenuPageWiseBanner,
 } from "../controller/admin/menu/menu.js";
 import { getHomeBanner } from "../controller/admin/homeBanner.js";
-import { getSocialMedia } from "../Controller/Admin/socialMediaIcon.js";
+import { getSocialMedia } from "../controller/admin/socialMediaIcon.js";
 import { getAllCurrency } from "../controller/admin/currency.js";
 import { getAllCms, getCms } from "../controller/admin/cms.js";
-import { getCategories } from "../Controller/Admin/Category/Category.js";
+import { getCategories } from "../controller/admin/category/category.js";
 import { getContactDetails } from "../controller/admin/contactDetails.js";
 import {
   filterAttribute,
   getProductDetails,
   getProductpublic,
-} from "../Controller/public/product.js";
+} from "../controller/public/product.js";
 import {
   getCatalogue,
   getCatalogueProduct,
   relatedProduct,
   searchCatalogueAndProduct,
 } from "../controller/public/catalogue.js";
-import passport from "../Middleware/Passport.js";
+import passport from "../middleware/passport.js";
 import {
   SendOtp,
   userlogin,
   userRegister,
   VerifyOtp,
-} from "../Controller/public/User/register.js";
+} from "../controller/public/user/register.js";
 import {
   loginSchema,
   registerSchema,

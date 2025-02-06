@@ -8,7 +8,7 @@ import {
   postCartItem,
   postCartItemTesting,
   updateCartItem,
-} from "../Controller/public/CartItem.js";
+} from "../controller/public/cartItem.js";
 import {
   cartSchema,
   editCartSchema,

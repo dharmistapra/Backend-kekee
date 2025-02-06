@@ -10,7 +10,7 @@ import {
   categoryPosition,
   getSubCategory,
   deleteCategoryImage,
-} from "../controller/admin/category/category.js";
+} from "../Controller/Admin/Category/Category.js";
 import {
   attributeMasterSchema,
   pageSchema,

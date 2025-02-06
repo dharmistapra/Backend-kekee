@@ -24,8 +24,11 @@ const __dirname = dirname(__filename);
 var app = express();
 
 app.set("views", path.join(__dirname, "views"));
-app.use("/uploads", express.static("uploads"));
-app.set("view engine", "jade");
+// app.use("/uploads", express.static("uploads"));
+// const path = require("path");
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// app.set("view engine", "jade");
 
 app.use(passport.initialize());
 app.use(logger("dev"));

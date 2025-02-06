@@ -49,7 +49,7 @@ const postCategory = async (req, res, next) => {
 
     if (uniqueCategory) {
       if (req.file) await fileValidation(req.file, false);
-      return res.status(409).json({
+      return res.status(409).json({Schema
         isSuccess: false,
         message: "Category name already exists!",
       });

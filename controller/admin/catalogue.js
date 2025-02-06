@@ -175,8 +175,8 @@ const postCatalogue = async (req, res, next) => {
         // }),
         ...(attributes &&
           attributes.length > 0 && {
-          attributeValues: { create: attributeValueConnection },
-        }),
+            attributeValues: { create: attributeValueConnection },
+          }),
         tag: tag,
         isActive,
       },
@@ -243,7 +243,7 @@ const paginationCatalogue = async (req, res, next) => {
           },
         },
       },
-      orderBy: { updatedAt: "asc" },
+      orderBy: { updatedAt: "desc" },
       skip,
       take,
     });
@@ -399,11 +399,11 @@ const updateCatalogue = async (req, res, next) => {
         },
         ...(attributes && attributes.length > 0
           ? {
-            attributeValues: {
-              deleteMany: {},
-              create: attributeValueConnection,
-            },
-          }
+              attributeValues: {
+                deleteMany: {},
+                create: attributeValueConnection,
+              },
+            }
           : { attributeValues: { deleteMany: {} } }),
         tag,
         isActive,

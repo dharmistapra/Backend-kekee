@@ -141,7 +141,8 @@ const getWishLists = async (req, res, next) => {
           },
         ],
       },
-      include: {
+      select: {
+        id: true,
         product: {
           select: {
             id: true,
@@ -236,32 +237,26 @@ const getWishLists = async (req, res, next) => {
 
     let product = [];
     let catalogue = [];
-    wishLists.map((value) => {
-      if (value.product !== null) {
-        let labels = [];
-        value.product.attributeValues.map((attribute) =>
-          labels.push(attribute.attributeValue.value)
+    wishLists.forEach((value) => {
+      if (value.product) {
+        const labels = value.product.attributeValues.map(
+          (attr) => attr.attributeValue.value
         );
         value.product.labels = labels;
-        value.product.categories = value.product.categories.map(
-          (value) => value.category.Menu[0].url
-        );
-        value.product.menu = value.product.categories[0];
+        value.product.menu = value.product.categories[0]?.category.Menu[0]?.url;
         delete value.product.attributeValues;
         delete value.product.categories;
+        value.product.wishList_id = value.id;
         product.push(value.product);
-      } else if (value.catalogue !== null) {
-        let labels = [];
-        value.catalogue.attributeValues.map((attribute) =>
-          labels.push(attribute.attributeValue.value)
+      } else if (value.catalogue) {
+        const labels = value.catalogue.attributeValues.map(
+          (attr) => attr.attributeValue.name
         );
         value.catalogue.labels = labels;
-        value.catalogue.CatalogueCategory =
-          value.catalogue.CatalogueCategory.map(
-            (value) => value.category.Menu[0].url
-          );
-        value.catalogue.menu = value.catalogue.CatalogueCategory[0];
+        value.catalogue.menu =
+          value.catalogue.CatalogueCategory[0]?.category.Menu[0]?.url;
         delete value.catalogue.attributeValues;
+        value.catalogue.wishList_id = value.id;
         catalogue.push(value.catalogue);
       }
     });
@@ -282,7 +277,7 @@ const getWishLists = async (req, res, next) => {
     if (!wishLists && wishLists.length === 0)
       return res
         .status(200)
-        .json({ isSuccess: false, message: "Wish Lists not found!" });
+        .json({ isSuccess: false, message: "Wish lists not found!" });
 
     return res.status(200).json({
       isSuccess: true,
@@ -290,6 +285,7 @@ const getWishLists = async (req, res, next) => {
       data: data,
     });
   } catch (err) {
+    console.log(err);
     const error = new Error("Something went wrong, please try again!");
     next(error);
   }

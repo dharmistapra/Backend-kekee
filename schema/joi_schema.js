@@ -747,34 +747,9 @@ const editCartSchema = async (req, res, next) => {
   const schema = Joi.object({
     cartItem_id: Joi.string().required(),
     quantity: Joi.number().required(),
-    // stitching: Joi.array()
-    //   .items({
-    //     group_id: Joi.string().required(),
-    //     options: Joi.array()
-    //       .items({
-    //         id: Joi.string().required(),
-    //         price: Joi.string().optional(),
-    //         dispatch_time: Joi.string().optional(),
-    //         measurment_id: Joi.array().items({
-    //           id: Joi.string().required(),
-    //           value: Joi.string().required(),
-    //         }),
-    //       })
-    //       .optional(),
-    //   })
-    //   .optional(),
-    // size: Joi.array()
-    //   .items({
-    //     id: Joi.string().required(),
-    //     value: Joi.string().required(),
-    //   })
-    //   .optional(),
+
   });
-  // .xor("stitching", "size")
-  // .messages({
-  //   "object.xor":
-  //     "stitching conflicts with size. Please provide either stitching or size, but not both.",
-  // });
+
 
   await JoiSchemaValidation(schema, req, next);
 };

@@ -72,37 +72,7 @@ const validateStitching = async (stitching) => {
   return { isValid: true, message: "Validation passed." };
 };
 
-// const findproductpriceOnSize = async (product_id, size_id, quantity = 1) => {
-//   // THIS FUNCTION HELP WHEN WE APPLY ON SIZE ON THE PRIDUCT  THEN SUBTOTAL PRICE AND TAX CALULTED  ON THE PRODUCT QUANTITY
 
-//   if (!product_id) {
-//     return { subtotal: 0, tax: 0 };
-//   }
-
-//   const product = await prisma.product.findUnique({
-//     where: { id: product_id },
-//     include: { sizes: true, categories: true },
-//   });
-
-//   if (!product) {
-//     return { subtotal: 0, tax: 0 };
-//   }
-
-//   const parseSizes = JSON.parse(size_id)
-//   if (product?.sizes && parseSizes) {
-//     let finddata = product?.sizes?.find((item) => String(item?.size_id) === String(parseSizes[0]?.id));
-//     if (finddata) {
-//       console.log("finddata", finddata)
-//       const subtotalPerItem = product?.offer_price + finddata?.price;
-//       const subtotal = subtotalPerItem * quantity;
-//       const taxRate = product.retail_GST || 0;
-//       const taxPerItem = (subtotalPerItem * taxRate) / 100;
-//       const tax = taxPerItem * quantity;
-//       return { subtotal, tax };
-//     }
-//   }
-//   return { subtotal: 0, tax: 0 };
-// };
 
 const findproductpriceOnSize = async (product_id, size_id, quantity = 1) => {
   const product = await prisma.product.findUnique({
@@ -197,105 +167,11 @@ const findStitchingOptionPrices = async (productIds) => {
   return subtotalprice;
 };
 
-// const getAllStitchingData = async (stitching, usermeasuremnetdata) => {
-//   try {
-
-//     if (!Array.isArray(stitching) || stitching.length === 0) return [];
-//     // const optionIds = stitching.flatMap(item => item?.options.flatMap(option => option.measurment_id?.map(measure => measure.id) || []));
-
-//     const groupIds = [];
-//     const optionIds = [];
-//     const measurementData = [];
-
-//     usermeasuremnetdata.forEach(group => {
-//       groupIds.push(group.group_id);
-//       group.options.forEach(option => {
-//         optionIds.push(option.id);
-//         if (option?.measurment_id && option?.measurment_id?.length > 0) {
-//           measurementData.push(...option.measurment_id.map(measurement => ({
-//             measurementId: measurement.id,
-//             value: measurement.value
-//           })));
-//         }
-//       });
-//     });
-
-//     const findstitchinggrioup = await prisma.stitchingGroupOption.findMany({
-//       where: {
-//         AND: [
-//           { stitchingGroup_id: { in: groupIds }, },
-//           { stitchingOption_id: { in: optionIds } }
-//         ]
-//       },
-//       select: {
-//         stitchingGroup: {
-//           select: {
-//             id: true,
-//             name: true
-//           }
-//         },
-//         stitchingOption: {
-//           select: {
-//             id: true,
-//             name: true,
-//             price: true,
-//             dispatch_time: true,
-//             stitchingValues: {
-//               where: {
-//                 id: { in: measurementData?.length > 0 && measurementData?.map(item => item?.measurementId) }
-//               },
-//             }
-//           }
-//         }
-//       }
-//     })
-
-//     console.log("findstitchinggrioup", JSON.stringify(findstitchinggrioup, null, 2));
-
-//     // const findSttichingMeasuremnt = await prisma.stitchingValue.findMany({
-//     //   where: {
-//     //     id: { in: optionIds }
-//     //   },
-//     //   select: {
-//     //     id: true,
-//     //     name: true,
-//     //     values: true,
-//     //     stitchingOption: {
-//     //       select: {
-//     //         id: true,
-//     //         name: true,
-//     //         price: true,
-//     //         dispatch_time: true,
-//     //         StitchingGroupOption: {
-//     //           select: {
-//     //             stitchingGroup_id: true,
-//     //             stitchingOption_id: true,
-//     //             stitchingGroup: {
-//     //               select: {
-//     //                 id: true,
-//     //                 name: true
-//     //               }
-//     //             }
-//     //           }
-//     //         },
-//     //       }
-//     //     },
-
-//     //   }
-//     // })
-
-//     return findstitchinggrioup;
-//   } catch (error) {
-//     console.error(error);
-//     throw new Error("Something went wrong, please try again!");
-//   }
-// };
 
 const getAllStitchingData = async (stitching, usermeasuremnetdata) => {
   try {
     if (!Array.isArray(stitching) || stitching.length === 0) return [];
 
-    // Step 1: Extract group IDs, option IDs, and measurement data
     const groupIds = [];
     const optionIds = [];
     const measurementData = [];
@@ -315,7 +191,6 @@ const getAllStitchingData = async (stitching, usermeasuremnetdata) => {
       });
     });
 
-    // Step 2: Fetch stitching group options with stitching values
     const findstitchinggrioup = await prisma.stitchingGroupOption.findMany({
       where: {
         AND: [
@@ -482,12 +357,6 @@ const updateStitchingValues = (stitchingData, allStitchingData) => {
   return updatedData;
 };
 
-
-
-
-
-
-
 const findCatalogueStitchingprice = async (catalogue_id, stitching, quantity, checkproductquantity) => {
   if (!catalogue_id) {
     return { subtotal: 0, tax: 0 };
@@ -510,23 +379,22 @@ const findCatalogueStitchingprice = async (catalogue_id, stitching, quantity, ch
       .flat();
 
 
+
     const outOfStockCount = checkproductquantity?.filter(data => data.outOfStock === true).length;
+    const availableProductCount = checkproductquantity.length - outOfStockCount;
+    const stitchingPricePerItem = await findStitchingOptionPrices(extranct_Option_Id) || 0;
+    const subtotal = (availableProductCount * catalogue.average_price) + (availableProductCount * stitchingPricePerItem);
     console.log("outOfStockCount", outOfStockCount)
-
-    const subtotalPerItem = await findStitchingOptionPrices(extranct_Option_Id);
-    const subtotal = (catalogue?.offer_price + subtotalPerItem) - (outOfStockCount * catalogue.average_price)
-
     const taxRate = catalogue.GST || 0;
     const taxPerItem = (subtotal * taxRate) / 100;
     const tax = taxPerItem * quantity;
-    return { subtotal, tax };
+    let catalogueOutOfStock = availableProductCount === 0 ? true : false
+    return { subtotal, tax, catalogueOutOfStock };
   }
   return { subtotal: 0, tax: 0 };
 };
 
-
-
-const findCatalogueprice = async (catalogue_id, size_id, quantity = 1, checkproductquantity) => {
+const findCatalogueSizeprice = async (catalogue_id, size_id, quantity = 1, checkproductquantity) => {
   const catalogue = await prisma.catalogue.findUnique({
     where: { id: catalogue_id },
     include: {

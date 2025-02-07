@@ -1,13 +1,10 @@
 import express from "express";
 const publicProtected = express.Router();
 import {
-  deletecartItem,
-  deleteCartItemTesting,
-  getAllcartitem,
-  getAllcartitemTesting,
-  postCartItem,
-  postCartItemTesting,
   updateCartItem,
+  postCartItem,
+  getAllcartitem,
+  deleteCartItem,
 } from "../controller/public/cartItem.js";
 import {
   cartSchema,
@@ -20,14 +17,11 @@ import {
   postWishList,
 } from "../controller/public/wishList.js";
 
+// publicProtected.post("/cart-item", cartSchema, postCartItem);
 publicProtected.post("/cart-item", cartSchema, postCartItem);
-publicProtected.post("/cart-item", postCartItemTesting);
 publicProtected.put("/cart-item", editCartSchema, updateCartItem);
-// publicProtected.put("/testingcart-item", updateQuantityTesting);
-publicProtected.get("/cart-item/:id", getAllcartitem);
-publicProtected.get("/testingcart-item/:id", getAllcartitemTesting);
-publicProtected.delete("/cart-item/:id", deletecartItem);
-publicProtected.post("/delettestingcart-item", deleteCartItemTesting);
+publicProtected.get("/testingcart-item/:id", getAllcartitem);
+publicProtected.post("/delettestingcart-item", deleteCartItem);
 
 publicProtected.post("/wish-list", wishListSchema, postWishList);
 publicProtected.delete("/wish-list/:id", deleteWishListItem);

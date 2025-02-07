@@ -10,117 +10,6 @@ import {
   validateStitching,
 } from "../../helper/cartItemHelper.js";
 
-const postCartItem = async (req, res, next) => {
-  try {
-    const user_id = req.user.id;
-    let { product_id, catalogue_id, size, stitching, quantity } = req.body;
-    if (
-      ![user_id, product_id || catalogue_id].every((id) =>
-        /^[a-fA-F0-9]{24}$/.test(id)
-      )
-    )
-      return res
-        .status(400)
-        .json({ isSuccess: false, message: "Invalid ID format!" });
-    const findUser = await prisma.users.findUnique({ where: { id: user_id } });
-    if (!findUser)
-      res.status(404).json({ isSuccess: false, message: "user not found." });
-
-    if (product_id) {
-      const findProduct = await prisma.product.findUnique({
-        where: { id: product_id },
-        include: { sizes: true, categories: true },
-      });
-      if (!findProduct)
-        return res
-          .status(404)
-          .json({ isSuccess: false, message: "Product not found." });
-      if (findProduct.quantity < quantity)
-        return res.status(400).json({
-          isSuccess: false,
-          message: `product quantity must be less than ${findProduct.quantity}`,
-        });
-    }
-
-    if (catalogue_id) {
-      const findCatalogue = await prisma.catalogue.findUnique({
-        where: { id: catalogue_id },
-        include: { CatalogueSize: true },
-      });
-      if (!findCatalogue)
-        return res
-          .status(404)
-          .json({ isSuccess: false, message: "Catalogue not found." });
-
-      if (findCatalogue.quantity < quantity)
-        return res.status(400).json({
-          isSuccess: false,
-          message: `catalogue quantity must be less than ${findCatalogue.quantity}`,
-        });
-    }
-
-    let cart = await prisma.cart.findUnique({
-      where: {
-        user_id: user_id,
-      },
-    });
-    if (!cart) {
-      cart = await prisma.cart.create({ data: { user_id: user_id } });
-    }
-
-    if (stitching && Array.isArray(stitching) && stitching?.length > 0) {
-      const stitchingValidationResult = await validateStitching(stitching); // AGAR STTICHING YES HAI TO HIM STITCHING KE DATA KO VALIDATE KARENEGE
-      if (!stitchingValidationResult?.isValid)
-        return res.status(404).json({
-          isSuccess: false,
-          message: stitchingValidationResult.message,
-        });
-    } else if (size && Array.isArray(size) && size?.length > 0) {
-      const result = await Promise.all(
-        size.map(async (item, index) => {
-          return await isvalidstitching(item.id, "size"); // AGAR SIZE YES HAI TO HIM SIZE KE ID KO DB KE STAH MATCH KARAYENEG  [true,true,true]
-        })
-      );
-
-      if (result?.length > 0 && result.includes(false)) {
-        ///  AGAR EK BHE SIZE FALSE HUWE THEN HUM RETUN MESSAGE PAAS KAR DENEGE
-        return res
-          ?.status(400)
-          .json({ isSuccess: false, message: "size Does Not Found" });
-      }
-    }
-
-    const result = await prisma.cartItem.create({
-      // AFTER ALL VALIDATION COMPLETE THEN WE STRORE DATA IN THE DATABASE
-      data: {
-        ...(product_id && { product_id: product_id }),
-        ...(catalogue_id && { catalogue_id: catalogue_id }),
-        cart_id: cart.id,
-        stitching: JSON.stringify(stitching),
-        size: JSON.stringify(size),
-        quantity: quantity,
-      },
-      select: {
-        id: true,
-        cart_id: true,
-        product: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
-    return res.status(200).json({
-      isSuccess: true,
-      message: "Add to cart Successfully.",
-      data: result,
-    });
-  } catch (error) {
-    console.log("errr", error);
-    let err = new Error("Something went wrong, please try again!");
-    next(err);
-  }
-};
 
 const updateCartItem = async (req, res, next) => {
   try {
@@ -183,460 +72,8 @@ const updateCartItem = async (req, res, next) => {
     next(err);
   }
 };
-const getAllcartitem = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    if (!/^[a-fA-F0-9]{24}$/.test(id)) {
-      return res
-        .status(400)
-        .json({ isSuccess: false, message: "Invalid ID format!" });
-    }
 
-    const finduser = await prisma.cart.findUnique({ where: { user_id: id } });
-    if (!finduser) {
-      return res
-        .status(400)
-        .json({ isSuccess: false, message: "Cart item not found" });
-    }
-
-    const cartItems = await prisma.cartItem.findMany({
-      where: { cart_id: finduser?.id },
-      select: {
-        id: true,
-        quantity: true,
-        size: true,
-        stitching: true,
-        product: {
-          select: {
-            id: true,
-            name: true,
-            catalogue_id: true,
-            sku: true,
-            url: true,
-            average_price: true,
-            retail_price: true,
-            retail_discount: true,
-            offer_price: true,
-            image: true,
-            tag: true,
-            showInSingle: true,
-          },
-        },
-      },
-    });
-
-    if (!cartItems || cartItems.length === 0) {
-      return res
-        .status(400)
-        .json({ isSuccess: false, message: "Cart items not found" });
-    }
-
-    let subtotal = 0,
-      tax = 0;
-    let stitchingDataMap = [];
-
-    await Promise.all(
-      cartItems.map(async (item) => {
-        let itemSubtotal = 0,
-          itemTax = 0;
-        const findProduct = item.product?.id;
-        const { quantity, stitching, size } = item;
-
-        if (size) {
-          const priceDetails = await findproductpriceOnSize(
-            findProduct,
-            stitching,
-            quantity
-          );
-          itemSubtotal = priceDetails?.subtotal || 0;
-          itemTax = priceDetails?.tax || 0;
-        } else if (stitching) {
-          const parsedStitching = JSON.parse(stitching);
-          const priceDetails = await findproductpriceonStitching(
-            findProduct,
-            parsedStitching,
-            quantity
-          );
-          itemSubtotal = priceDetails?.subtotal || 0;
-          itemTax = priceDetails?.tax || 0;
-
-          const measurementData = extractMeasurementData(parsedStitching);
-          stitchingDataMap = await getAllStitchingData(
-            parsedStitching,
-            parsedStitching
-          );
-          console.log("stitchingDataMap", stitchingDataMap);
-        }
-
-        item.subtotal = itemSubtotal;
-        item.tax = itemTax;
-        item.stitching = stitchingDataMap;
-        subtotal += itemSubtotal;
-        tax += itemTax;
-      })
-    );
-
-    const orderTotal = subtotal + tax;
-
-    return res.status(200).json({
-      isSuccess: true,
-      message: "Cart items retrieved successfully.",
-      data: cartItems,
-      subtotal,
-      tax,
-      orderTotal,
-    });
-  } catch (error) {
-    console.error(error);
-    next(new Error("Something went wrong, please try again!"));
-  }
-};
-
-const deletecartItem = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    if (!/^[a-fA-F0-9]{24}$/.test(id))
-      res.status(400).json({ isSuccess: false, message: "Invalid ID format!" });
-
-    const finddata = await prisma.cartItem.findUnique({
-      where: {
-        id: id,
-      },
-    });
-
-    if (!finddata) {
-      return res.status(4000).json({
-        isSuccess: false,
-        message: "Cart item not founf.",
-      });
-    }
-
-    const deletecartItem = await prisma.cartItem.delete({
-      where: {
-        id: id,
-      },
-      select: {
-        product: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
-
-    return res.status(200).json({
-      isSuccess: false,
-      message: "Cart item remove successfully.",
-      data: deletecartItem,
-    });
-  } catch (error) {
-    let err = new Error("Something went wrong, please try again!");
-    next(err);
-  }
-};
-
-// CART ITEM TESTING SUCCESSFULY WORKING
-
-// const postCartItemTesting = async (req, res, next) => {
-//   try {
-//     const user_id = req.user.id;
-//     let { product_id, catalogue_id, size, stitching, quantity } = req.body;
-
-//     const findUser = await prisma.users.findUnique({ where: { id: user_id } });
-//     if (!findUser)
-//       return res
-//         .status(404)
-//         .json({ isSuccess: false, message: "User not found." });
-
-//     let cart = await prisma.cart.findUnique({ where: { user_id: user_id } });
-//     if (!cart) {
-//       cart = await prisma.cart.create({ data: { user_id: user_id } });
-//     }
-
-//     // Validate stitching or size
-//     if (stitching && Array.isArray(stitching) && stitching.length > 0) {
-//       const stitchingValidationResult = await validateStitching(stitching);
-//       if (!stitchingValidationResult?.isValid)
-//         return res.status(400).json({
-//           isSuccess: false,
-//           message: stitchingValidationResult.message,
-//         });
-//     } else if (size && Array.isArray(size) && size.length > 0) {
-//       const result = await Promise.all(
-//         size.map(async (item) => await isvalidstitching(item.id, "size"))
-//       );
-//       if (result.includes(false))
-//         return res
-//           .status(400)
-//           .json({ isSuccess: false, message: "Size does not exist." });
-//     }
-
-//     if (catalogue_id && !product_id) {
-//       const products = await prisma.product.findMany({
-//         where: { catalogue_id: catalogue_id },
-//       });
-//       if (!products.length)
-//         return res
-//           .status(400)
-//           .json({ error: "No products found in this catalogue" });
-
-//       for (let product of products) {
-//         const existingCatalogueItem = await prisma.cartItem.findFirst({
-//           where: {
-//             cart_id: cart.id,
-//             product_id: product.id,
-//             isCatalogue: true,
-//           },
-//         });
-
-//         if (existingCatalogueItem) {
-//           await prisma.cartItem.update({
-//             where: { id: existingCatalogueItem.id },
-//             data: { quantity },
-//           });
-//         } else {
-//           await prisma.cartItem.create({
-//             data: {
-//               cart_id: cart.id,
-//               product_id: product.id,
-//               stitching: JSON.stringify(stitching),
-//               size: JSON.stringify(size),
-//               quantity: quantity,
-//               isCatalogue: true,
-//             },
-//           });
-//         }
-//       }
-
-//       return res.status(200).json({
-//         isSuccess: true,
-//         message: "Catalogue items added to cart successfully.",
-//       });
-//     }
-
-//     if (product_id) {
-//       const findProduct = await prisma.product.findUnique({
-//         where: { id: product_id },
-//         include: { sizes: true, categories: true },
-//       });
-//       if (!findProduct)
-//         return res
-//           .status(404)
-//           .json({ isSuccess: false, message: "Product not found." });
-
-//       const existingSingleItem = await prisma.cartItem.findFirst({
-//         where: {
-//           cart_id: cart.id,
-//           product_id: product_id,
-//           isCatalogue: false,
-//         },
-//       });
-
-//       let result;
-//       let message;
-//       if (existingSingleItem) {
-//         result = await prisma.cartItem.update({
-//           where: { id: existingSingleItem.id },
-//           data: {
-//             product_id: product_id,
-//             stitching: JSON.stringify(stitching),
-//             size: JSON.stringify(size),
-//             quantity: quantity,
-//           },
-//         });
-
-//         message = "item update successfully";
-//       } else {
-//         result = await prisma.cartItem.create({
-//           data: {
-//             cart_id: cart.id,
-//             product_id: product_id,
-//             stitching: JSON.stringify(stitching),
-//             size: JSON.stringify(size),
-//             quantity: quantity,
-//             isCatalogue: false,
-//           },
-//         });
-//         message = "item add in cart successfully";
-//       }
-
-//       return res.status(200).json({
-//         isSuccess: true,
-//         message: message,
-//         data: result,
-//       });
-//     }
-//   } catch (error) {
-//     console.log("Error:", error);
-//     return next(new Error("Something went wrong, please try again!"));
-//   }
-// };
-
-
-
-
-
-// const getAllcartitemTesting = async (req, res, next) => {
-//   try {
-//     const { id } = req.params;
-//     const finduser = await prisma.cart.findUnique({ where: { user_id: id } });
-
-//     if (!finduser) {
-//       return res
-//         .status(400)
-//         .json({ isSuccess: false, message: "Cart item not found" });
-//     }
-
-//     const cartItems = await prisma.cartItem.findMany({
-//       where: { cart_id: finduser?.id },
-//       select: {
-//         id: true,
-//         quantity: true,
-//         isCatalogue: true,
-//         size: true,
-//         stitching: true,
-//         product: {
-//           select: {
-//             id: true,
-//             name: true,
-//             catalogue_id: true,
-//             sku: true,
-//             url: true,
-//             average_price: true,
-//             retail_price: true,
-//             retail_discount: true,
-//             offer_price: true,
-//             image: true,
-//             tag: true,
-//             showInSingle: true,
-//           },
-//         },
-//       },
-//     });
-
-//     if (!cartItems || cartItems.length === 0) {
-//       return res
-//         .status(400)
-//         .json({ isSuccess: false, message: "Cart items not found" });
-//     }
-
-//     let subtotal = 0,
-//       tax = 0;
-//     let individualItems = [];
-//     let stitchingDataMap = [];
-
-//     const catalogueIds = [
-//       ...new Set(
-//         cartItems.map((item) => item?.product?.catalogue_id).filter((id) => id)
-//       ),
-//     ];
-//     console.log(catalogueIds);
-//     const catalogueDetails = await prisma.catalogue.findMany({
-//       where: { id: { in: catalogueIds } },
-//       select: {
-//         id: true,
-//         name: true,
-//         cat_code: true,
-//         no_of_product: true,
-//         url: true,
-//         coverImage: true,
-//         price: true
-//       },
-//     });
-
-//     const catalogueMap = {};
-//     catalogueDetails.forEach((catalogue) => {
-//       catalogueMap[catalogue.id] = {
-//         ...catalogue,
-//         quantity: 0,
-//         isCatalogue: true,
-//         subtotal: 0,
-//         tax: 0,
-//         size: null,
-//         stitching: [],
-//         products: [],
-//       };
-//     });
-
-//     await Promise.all(
-//       cartItems.map(async (item) => {
-//         let itemSubtotal = 0,
-//           itemTax = 0;
-//         let itemMessage = "";
-//         const findProduct = item.product?.id;
-//         const { quantity, stitching, size, isCatalogue } = item;
-//         let catalogueId = item?.product?.catalogue_id;
-
-//         if (size) {
-//           const priceDetails = await findproductpriceOnSize(
-//             findProduct,
-//             size,
-//             quantity
-//           );
-//           itemSubtotal = priceDetails?.subtotal || 0;
-//           itemTax = priceDetails?.tax || 0;
-//           itemMessage = priceDetails?.message || null;
-//         } else if (stitching) {
-//           const parsedStitching = JSON.parse(stitching);
-//           const priceDetails = await findproductpriceonStitching(
-//             findProduct,
-//             parsedStitching,
-//             quantity
-//           );
-//           itemSubtotal = priceDetails?.subtotal * quantity || 0;
-//           itemTax = priceDetails?.tax || 0;
-//           itemMessage = priceDetails?.message || null;
-//           stitchingDataMap = await getAllStitchingData(
-//             parsedStitching,
-//             parsedStitching
-//           );
-//         }
-
-//         subtotal += itemSubtotal;
-//         tax += itemTax;
-
-//         if (isCatalogue && catalogueId && catalogueMap[catalogueId]) {
-//           catalogueMap[catalogueId].products.push({
-//             ...item.product,
-//             subtotal: itemSubtotal,
-//             tax: itemTax,
-//             message: itemMessage,
-//           });
-//           catalogueMap[catalogueId].quantity = quantity;
-//           catalogueMap[catalogueId].size = size;
-//           catalogueMap[catalogueId].stitching = stitchingDataMap;
-//           catalogueMap[catalogueId].subtotal += itemSubtotal;
-//           catalogueMap[catalogueId].tax += itemTax;
-//         } else {
-//           individualItems.push({
-//             ...item.product,
-//             quantity: item.quantity,
-//             subtotal: itemSubtotal,
-//             tax: itemTax,
-//             message: itemMessage,
-//           });
-//         }
-//       })
-//     );
-
-//     const orderTotal = subtotal + tax;
-
-//     return res.status(200).json({
-//       isSuccess: true,
-//       message: "Cart items retrieved successfully.",
-//       catalogues: Object.values(catalogueMap),
-//       individualItems,
-//       subtotal,
-//       tax,
-//       orderTotal,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     next(new Error("Something went wrong, please try again!"));
-//   }
-// };
-
-const deleteCartItemTesting = async (req, res, next) => {
+const deleteCartItem = async (req, res, next) => {
   try {
     const { product_id, catalogue_id, user_id } = req.body;
 
@@ -691,39 +128,7 @@ const deleteCartItemTesting = async (req, res, next) => {
   }
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const postCartItemTesting = async (req, res, next) => {
+const postCartItem = async (req, res, next) => {
   try {
     const user_id = req.user.id;
     let { product_id, catalogue_id, size, stitching, quantity } = req.body;
@@ -856,22 +261,7 @@ const postCartItemTesting = async (req, res, next) => {
   }
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const getAllcartitemTesting = async (req, res, next) => {
+const getAllcartitem = async (req, res, next) => {
   try {
     const { id } = req.params;
     const finduser = await prisma.cart.findUnique({ where: { user_id: id } });
@@ -904,6 +294,7 @@ const getAllcartitemTesting = async (req, res, next) => {
             image: true,
             tag: true,
             showInSingle: true,
+            quantity: true,
           },
         },
         catalogue: {
@@ -950,7 +341,7 @@ const getAllcartitemTesting = async (req, res, next) => {
 
       if (item.isCatalogue && item.catalogue_id) {
         const checkproductquantity = catalogue?.Product?.map(data => {
-          if (data.quantity <= quantity) {
+          if (data.quantity < quantity) {
             return { ...data, outOfStock: true };
           }
           return data;
@@ -960,8 +351,10 @@ const getAllcartitemTesting = async (req, res, next) => {
         if (item.stitching) {
           const parsedStitching = JSON.parse(stitching);
           const priceDetails = await findCatalogueStitchingprice(catalogue?.id, parsedStitching, quantity, checkproductquantity);
+          console.log("Price Details", priceDetails)
           item.Subtotal = priceDetails?.subtotal * quantity || 0;
           item.Tax = priceDetails?.tax || 0;
+          item.outOfStock = priceDetails.catalogueOutOfStock
           stitchingDataMap = await getAllStitchingData(parsedStitching, parsedStitching);
         }
       } else {
@@ -976,7 +369,7 @@ const getAllcartitemTesting = async (req, res, next) => {
         } else if (stitching) {
           const parsedStitching = JSON.parse(stitching);
           const priceDetails = await findproductpriceonStitching(product_id, parsedStitching, quantity);
-          console.log("Price Details", priceDetails)
+
           item.Subtotal = priceDetails?.subtotal * quantity || 0;
           item.Tax = priceDetails?.tax || 0;
           item.message = priceDetails.message || ''
@@ -993,13 +386,14 @@ const getAllcartitemTesting = async (req, res, next) => {
 
 
     const DataModified = cartItems && cartItems?.length > 0 && cartItems?.map((item, index) => {
+
       let outOfStockProducts = [];
       let outOfStock = false;
       let message = '';
       if (item.isCatalogue && item.catalogue_id) {
         item.catalogue?.Product?.forEach(product => {
           if (product.outOfStock && product.quantity < item.quantity) {
-            outOfStock = true;
+            outOfStock = item.outOfStock;
             message = "At This Time Product Quantity IS Not Available";
             outOfStockProducts.push({
               sku: product.sku,
@@ -1008,7 +402,16 @@ const getAllcartitemTesting = async (req, res, next) => {
             });
           }
         });
+      } else if (item.product.quantity < item.quantity) {
+        outOfStock = true;
+        message = "At This Time Stock Is Unavailable";
+        outOfStockProducts.push({
+          sku: item.product.sku,
+          outOfStock: item.product.outOfStock,
+          message: message
+        });
       }
+
 
 
       return {
@@ -1025,12 +428,11 @@ const getAllcartitemTesting = async (req, res, next) => {
         size: item.size,
         subtotal: item?.Subtotal,
         tax: item?.Tax,
+        outOfStock: outOfStock,
         message: outOfStockProducts,
-        // outOfStock: item?.product?.outOfStock
       }
     })
 
-    console.log("DataModified", DataModified)
     return res.status(200).json({
       "status": true,
       "message": "Cart Items Get Successfully",
@@ -1045,28 +447,9 @@ const getAllcartitemTesting = async (req, res, next) => {
   }
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export {
+  updateCartItem,
   postCartItem,
   getAllcartitem,
-  updateCartItem,
-  deletecartItem,
-  postCartItemTesting,
-  getAllcartitemTesting,
-  deleteCartItemTesting,
+  deleteCartItem,
 };

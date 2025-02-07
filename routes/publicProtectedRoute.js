@@ -21,7 +21,7 @@ import {
 publicProtected.post("/cart-item", cartSchema, postCartItem);
 publicProtected.put("/cart-item", editCartSchema, updateCartItem);
 publicProtected.get("/cart-item/:id", getAllcartitem);
-publicProtected.post("/deletecart-item", deleteCartItem);
+publicProtected.delete("/deletecart-item/:id", deleteCartItem);
 
 publicProtected.post("/wish-list", wishListSchema, postWishList);
 publicProtected.delete("/wish-list/:id", deleteWishListItem);

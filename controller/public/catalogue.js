@@ -491,6 +491,7 @@ const relatedProduct = async (req, res, next) => {
         retail_GST: true,
         retail_discount: true,
         offer_price: true,
+        image: true,
       },
       orderBy: { updatedAt: "desc" },
       take: 10,

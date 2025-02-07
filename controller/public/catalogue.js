@@ -2,7 +2,7 @@ import prisma from "../../db/config.js";
 
 const getCatalogue = async (req, res, next) => {
   try {
-    const { perPage, pageNo, url } = req.body;
+    const { perPage, pageNo, url, user_id } = req.body;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
@@ -11,6 +11,25 @@ const getCatalogue = async (req, res, next) => {
       return res
         .status(400)
         .json({ isSuccess: false, message: "Please url provided!" });
+
+    let wishList = [];
+    if (user_id) {
+      if (!/^[a-fA-F0-9]{24}$/.test(user_id)) {
+        return res
+          .status(400)
+          .json({ isSuccess: false, message: "Invalid User ID format!" });
+      }
+
+      const wishLists = await prisma.wishList.findMany({
+        where: { user_id: user_id, catalogue_id: { not: null } },
+        select: {
+          catalogue_id: true,
+        },
+      });
+      if (wishLists.length > 0) {
+        wishLists.map((value) => wishList.push(value.catalogue_id));
+      }
+    }
 
     const fetchCategory = await prisma.menu.findFirst({
       where: { url: url },
@@ -86,11 +105,16 @@ const getCatalogue = async (req, res, next) => {
     const transformedData = catalogueData.map((item) => {
       item.CatalogueSize = item.CatalogueSize.map((value) => value.size.value);
       const hasSingle = item.Product.some((product) => product.showInSingle);
+      const outOfStock = item.quantity === 0;
+      item.wishList = false;
+      if (user_id && wishList.length > 0)
+        item.wishList = wishList.includes(item.id);
       delete item.Product;
       delete item.CatalogueCategory;
       return {
         ...item,
         type: hasSingle ? "Full Set + Single" : "Full Set",
+        outOfStock: outOfStock,
       };
     });
 

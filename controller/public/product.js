@@ -78,12 +78,31 @@ const getProductpublic = async (req, res, next) => {
     //   orderBy: { updatedAt: "asc" },
     // });
 
-    const { perPage, pageNo, url } = req.body;
+    const { perPage, pageNo, url, user_id } = req.body;
     const { minPrice, maxPrice, ...dynamicFilters } = req.query;
 
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
+
+    let wishList = [];
+    if (user_id) {
+      if (!/^[a-fA-F0-9]{24}$/.test(user_id)) {
+        return res
+          .status(400)
+          .json({ isSuccess: false, message: "Invalid User ID format!" });
+      }
+
+      const wishLists = await prisma.wishList.findMany({
+        where: { user_id: user_id, product_id: { not: null } },
+        select: {
+          product_id: true,
+        },
+      });
+      if (wishLists.length > 0) {
+        wishLists.map((value) => wishList.push(value.product_id));
+      }
+    }
 
     // Fetch the category based on the URL
     const fetchCategory = await prisma.menu.findFirst({
@@ -130,7 +149,6 @@ const getProductpublic = async (req, res, next) => {
         product: {
           isActive: true,
           showInSingle: true,
-          isDraft: false,
           ...((minPrice || maxPrice) && { offer_price: priceCondition }),
           ...(filterConditions.length > 0 && { OR: filterConditions }),
         },
@@ -148,7 +166,10 @@ const getProductpublic = async (req, res, next) => {
           ...(filterConditions.length > 0 && { OR: filterConditions }),
         },
       },
-      include: {
+      select: {
+        id: true,
+        product_id: true,
+        category_id: true,
         category: {
           select: {
             id: true,
@@ -156,7 +177,24 @@ const getProductpublic = async (req, res, next) => {
           },
         },
         product: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            catalogue_id: true,
+            sku: true,
+            url: true,
+            quantity: true,
+            retail_price: true,
+            retail_GST: true,
+            retail_discount: true,
+            offer_price: true,
+            image: true,
+            tag: true,
+            isActive: true,
+            readyToShip: true,
+            meta_title: true,
+            meta_keyword: true,
+            meta_description: true,
             attributeValues: {
               select: { id: true, attributeValue: true },
             },
@@ -168,11 +206,20 @@ const getProductpublic = async (req, res, next) => {
       orderBy: { updatedAt: "desc" },
     });
 
+    const product = productData.map((value) => {
+      value.product.wishList = false;
+      if (user_id && wishList.length > 0)
+        value.product.wishList = wishList.includes(value.product.id);
+
+      value.product.outOfStock = value.product.quantity === 0;
+      return value;
+    });
+
     // Return response
     return res.status(200).json({
       isSuccess: true,
       message: "Products fetched successfully.",
-      data: productData,
+      data: product,
       totalCount: count,
       currentPage: page,
       pagesize: take,

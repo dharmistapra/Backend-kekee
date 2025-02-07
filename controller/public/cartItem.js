@@ -316,6 +316,17 @@ const getAllcartitem = async (req, res, next) => {
             retail_discount: true,
             offer_price: true,
             image: true,
+            categories: {
+              select: {
+                id: true,
+                category: {
+                  select: {
+                    id: true,
+                    Menu: { select: { id: true, name: true, url: true } },
+                  },
+                },
+              },
+            },
             tag: true,
             showInSingle: true,
             quantity: true,
@@ -332,6 +343,23 @@ const getAllcartitem = async (req, res, next) => {
             GST: true,
             offer_price: true,
             coverImage: true,
+            CatalogueCategory: {
+              select: {
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                    Menu: {
+                      select: {
+                        id: true,
+                        name: true,
+                        url: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
             Product: {
               select: {
                 id: true,
@@ -447,6 +475,21 @@ const getAllcartitem = async (req, res, next) => {
           });
         }
 
+        let menu;
+        if (item?.catalogue?.CatalogueCategory) {
+          const category = item?.catalogue?.CatalogueCategory.map(
+            (value) => value.category.Menu[0].url
+          );
+          menu = category[0];
+          delete item?.catalogue?.CatalogueCategory;
+        }
+        if (item?.product?.categories) {
+          const category = item?.product?.categories.map(
+            (value) => value.category.Menu[0].url
+          );
+          menu = category[0];
+          delete item?.product?.categories;
+        }
         return {
           id: item.id,
           product_id: item?.product_id,
@@ -462,6 +505,10 @@ const getAllcartitem = async (req, res, next) => {
           image: item?.catalogue
             ? item?.catalogue.coverImage
             : item?.product?.image[0],
+          category: item?.catalogue
+            ? item?.catalogue.CatalogueCategory
+            : item?.product?.categories,
+          menu: menu,
           size: item.size,
           subtotal: item?.Subtotal,
           tax: item?.Tax,
@@ -470,12 +517,15 @@ const getAllcartitem = async (req, res, next) => {
         };
       });
 
+    const totalOrder = subtotal + tax;
+
     return res.status(200).json({
       status: true,
       message: "Cart Items Get Successfully",
       data: DataModified,
       totalSubtotal: subtotal,
       totalTax: tax,
+      totalOrder: totalOrder,
     });
   } catch (error) {
     console.error(error);

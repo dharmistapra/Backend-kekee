@@ -10,7 +10,6 @@ import {
   validateStitching,
 } from "../../helper/cartItemHelper.js";
 
-
 const updateCartItem = async (req, res, next) => {
   try {
     let { cartItem_id, quantity } = req.body;
@@ -162,8 +161,6 @@ const postCartItem = async (req, res, next) => {
           .json({ isSuccess: false, message: "Size does not exist." });
     }
 
-
-
     if (catalogue_id && !product_id) {
       const products = await prisma.product.findMany({
         where: { catalogue_id: catalogue_id },
@@ -267,7 +264,9 @@ const getAllcartitem = async (req, res, next) => {
     const finduser = await prisma.cart.findUnique({ where: { user_id: id } });
 
     if (!finduser) {
-      return res.status(400).json({ isSuccess: false, message: "Cart item not found" });
+      return res
+        .status(400)
+        .json({ isSuccess: false, message: "Cart item not found" });
     }
 
     const cartItems = await prisma.cartItem.findMany({
@@ -324,38 +323,45 @@ const getAllcartitem = async (req, res, next) => {
                 quantity: true,
                 showInSingle: true,
               },
-            }
-          }
-        }
+            },
+          },
+        },
       },
     });
 
-
-    let subtotal = 0, tax = 0;
+    let subtotal = 0,
+      tax = 0;
     let stitchingDataMap = [];
 
-
-
     for (let item of cartItems) {
-      const { quantity, stitching, size, isCatalogue, catalogue, product_id } = item;
+      const { quantity, stitching, size, isCatalogue, catalogue, product_id } =
+        item;
 
       if (item.isCatalogue && item.catalogue_id) {
-        const checkproductquantity = catalogue?.Product?.map(data => {
+        const checkproductquantity = catalogue?.Product?.map((data) => {
           if (data.quantity < quantity) {
             return { ...data, outOfStock: true };
           }
           return data;
         });
 
-        catalogue.Product = checkproductquantity
+        catalogue.Product = checkproductquantity;
         if (item.stitching) {
           const parsedStitching = JSON.parse(stitching);
-          const priceDetails = await findCatalogueStitchingprice(catalogue?.id, parsedStitching, quantity, checkproductquantity);
-          console.log("Price Details", priceDetails)
+          const priceDetails = await findCatalogueStitchingprice(
+            catalogue?.id,
+            parsedStitching,
+            quantity,
+            checkproductquantity
+          );
+          console.log("Price Details", priceDetails);
           item.Subtotal = priceDetails?.subtotal * quantity || 0;
           item.Tax = priceDetails?.tax || 0;
-          item.outOfStock = priceDetails.catalogueOutOfStock
-          stitchingDataMap = await getAllStitchingData(parsedStitching, parsedStitching);
+          item.outOfStock = priceDetails.catalogueOutOfStock;
+          stitchingDataMap = await getAllStitchingData(
+            parsedStitching,
+            parsedStitching
+          );
         }
       } else {
         if (size) {
@@ -368,88 +374,88 @@ const getAllcartitem = async (req, res, next) => {
           item.Tax = priceDetails?.tax || 0;
         } else if (stitching) {
           const parsedStitching = JSON.parse(stitching);
-          const priceDetails = await findproductpriceonStitching(product_id, parsedStitching, quantity);
+          const priceDetails = await findproductpriceonStitching(
+            product_id,
+            parsedStitching,
+            quantity
+          );
 
           item.Subtotal = priceDetails?.subtotal * quantity || 0;
           item.Tax = priceDetails?.tax || 0;
-          item.message = priceDetails.message || ''
+          item.message = priceDetails.message || "";
           stitchingDataMap = await getAllStitchingData(
             parsedStitching,
             parsedStitching
           );
         }
       }
-      subtotal += item.Subtotal
+      subtotal += item.Subtotal;
       tax += item.Tax;
     }
 
+    const DataModified =
+      cartItems &&
+      cartItems?.length > 0 &&
+      cartItems?.map((item, index) => {
+        let outOfStockProducts = [];
+        let outOfStock = false;
+        let message = "";
+        if (item.isCatalogue && item.catalogue_id) {
+          item.catalogue?.Product?.forEach((product) => {
+            if (product.outOfStock && product.quantity < item.quantity) {
+              outOfStock = item.outOfStock;
+              message = "At This Time Product Quantity IS Not Available";
+              outOfStockProducts.push({
+                sku: product.sku,
+                outOfStock: product.outOfStock,
+                message: message,
+              });
+            }
+          });
+        } else if (item.product.quantity < item.quantity) {
+          outOfStock = true;
+          message = "At This Time Stock Is Unavailable";
+          outOfStockProducts.push({
+            sku: item.product.sku,
+            outOfStock: item.product.outOfStock,
+            message: message,
+          });
+        }
 
-
-    const DataModified = cartItems && cartItems?.length > 0 && cartItems?.map((item, index) => {
-
-      let outOfStockProducts = [];
-      let outOfStock = false;
-      let message = '';
-      if (item.isCatalogue && item.catalogue_id) {
-        item.catalogue?.Product?.forEach(product => {
-          if (product.outOfStock && product.quantity < item.quantity) {
-            outOfStock = item.outOfStock;
-            message = "At This Time Product Quantity IS Not Available";
-            outOfStockProducts.push({
-              sku: product.sku,
-              outOfStock: product.outOfStock,
-              message: message
-            });
-          }
-        });
-      } else if (item.product.quantity < item.quantity) {
-        outOfStock = true;
-        message = "At This Time Stock Is Unavailable";
-        outOfStockProducts.push({
-          sku: item.product.sku,
-          outOfStock: item.product.outOfStock,
-          message: message
-        });
-      }
-
-
-
-      return {
-        id: item.id,
-        product_id: item?.product_id,
-        catalogue_id: item?.catalogue_id,
-        isCatalogue: item.isCatalogue,
-        stitching: stitchingDataMap,
-        name: item?.catalogue ? item?.catalogue.name : item?.product?.name,
-        quantity: item.quantity,
-        sku: item?.catalogue ? item?.catalogue.cat_code : item?.product?.sku,
-        price: item?.catalogue ? item?.catalogue.offer_price : item?.product.offer_price,
-        image: item?.catalogue ? item?.catalogue.coverImage : item?.product?.image[0],
-        size: item.size,
-        subtotal: item?.Subtotal,
-        tax: item?.Tax,
-        outOfStock: outOfStock,
-        message: outOfStockProducts,
-      }
-    })
+        return {
+          id: item.id,
+          product_id: item?.product_id,
+          catalogue_id: item?.catalogue_id,
+          isCatalogue: item.isCatalogue,
+          stitching: stitchingDataMap,
+          name: item?.catalogue ? item?.catalogue.name : item?.product?.name,
+          quantity: item.quantity,
+          sku: item?.catalogue ? item?.catalogue.cat_code : item?.product?.sku,
+          price: item?.catalogue
+            ? item?.catalogue.offer_price
+            : item?.product.offer_price,
+          image: item?.catalogue
+            ? item?.catalogue.coverImage
+            : item?.product?.image[0],
+          size: item.size,
+          subtotal: item?.Subtotal,
+          tax: item?.Tax,
+          outOfStock: outOfStock,
+          message: outOfStockProducts,
+        };
+      });
 
     return res.status(200).json({
-      "status": true,
-      "message": "Cart Items Get Successfully",
-      "data": DataModified,
-      "totalSubtotal": subtotal,
-      "totalTax": tax
-    })
-
+      status: true,
+      message: "Cart Items Get Successfully",
+      data: DataModified,
+      totalSubtotal: subtotal,
+      totalTax: tax,
+    });
   } catch (error) {
     console.error(error);
     next(new Error("Something went wrong, please try again!"));
   }
 };
 
-export {
-  updateCartItem,
-  postCartItem,
-  getAllcartitem,
-  deleteCartItem,
-};
+export { updateCartItem, postCartItem, getAllcartitem, deleteCartItem };

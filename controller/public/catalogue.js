@@ -253,7 +253,14 @@ const searchCatalogueAndProduct = async (req, res, next) => {
   try {
     let isSingleSearch = req.query?.isSingleSearch || "false";
     const search = req.query?.search?.toLowerCase();
+    const { perPage, pageNo } = req.body;
+
+    let page = +pageNo || 1;
+    let take = +perPage || 10;
+    let skip = (page - 1) * take;
+
     let result;
+    let count;
     let transformedData;
     if (isSingleSearch === "false") {
       let condition = {
@@ -291,6 +298,13 @@ const searchCatalogueAndProduct = async (req, res, next) => {
           },
         ];
       }
+
+      count = await prisma.catalogue.count({ where: condition });
+      // if (count === 0)
+      //   return res
+      //     .status(200)
+      //     .json({ isSuccess: true, message: "Catalogue not found!", data: [] });
+
       result = await prisma.catalogue.findMany({
         where: condition,
         select: {
@@ -344,6 +358,8 @@ const searchCatalogueAndProduct = async (req, res, next) => {
           },
         },
         orderBy: { updatedAt: "desc" },
+        skip,
+        take,
       });
 
       transformedData = result.map((item) => {
@@ -397,6 +413,12 @@ const searchCatalogueAndProduct = async (req, res, next) => {
         ];
       }
 
+      count = await prisma.product.count({ where: condition });
+      // if (count === 0)
+      //   return res
+      //     .status(200)
+      //     .json({ isSuccess: true, message: "Catalogue not found!", data: [] });
+
       transformedData = await prisma.product.findMany({
         where: condition,
         select: {
@@ -419,6 +441,8 @@ const searchCatalogueAndProduct = async (req, res, next) => {
           },
         },
         orderBy: { updatedAt: "desc" },
+        skip,
+        take,
       });
     }
 
@@ -426,6 +450,9 @@ const searchCatalogueAndProduct = async (req, res, next) => {
       isSuccess: true,
       message: "Products get successfully.",
       data: transformedData,
+      totalCount: count,
+      currentPage: page,
+      pageSize: take,
     });
   } catch (err) {
     console.log(err);

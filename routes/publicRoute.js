@@ -103,6 +103,6 @@ router.post("/verify-otp", [verifyOtpSchema], VerifyOtp);
 router.get("/collection", getCollection);
 
 //SEARCH
-router.get("/search", searchCatalogueAndProduct);
+router.post("/search", searchCatalogueAndProduct);
 
 export default router;

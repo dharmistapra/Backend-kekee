@@ -706,7 +706,7 @@ const cartSchema = async (req, res, next) => {
   const schema = Joi.object({
     product_id: Joi.string().optional(),
     catalogue_id: Joi.string().optional(),
-    user_id: Joi.string().required(),
+    // user_id: Joi.string().required(),
     quantity: Joi.number().required(),
     stitching: Joi.array()
       .items({
@@ -747,9 +747,7 @@ const editCartSchema = async (req, res, next) => {
   const schema = Joi.object({
     cartItem_id: Joi.string().required(),
     quantity: Joi.number().required(),
-
   });
-
 
   await JoiSchemaValidation(schema, req, next);
 };

@@ -47,9 +47,10 @@ const postWishList = async (req, res, next) => {
       where: condition,
     });
     if (isWishListExists)
-      return res
-        .status(200)
-        .json({ isSuccess: true, message: `This ${data} already exists!` });
+      return res.status(200).json({
+        isSuccess: true,
+        message: `This ${data} is already in your wishlist!`,
+      });
     const result = await prisma.wishList.create({
       data: {
         user_id,

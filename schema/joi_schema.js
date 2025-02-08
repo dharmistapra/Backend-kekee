@@ -723,6 +723,10 @@ const cartSchema = async (req, res, next) => {
           })
           .optional(),
       })
+      .min(1)
+      .messages({
+        "array.min": "Please select at least one stitching option.",
+      })
       .optional(),
     size: Joi.array()
       .items({

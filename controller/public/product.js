@@ -96,11 +96,12 @@ const getProductpublic = async (req, res, next) => {
       const wishLists = await prisma.wishList.findMany({
         where: { user_id: user_id, product_id: { not: null } },
         select: {
+          id: true,
           product_id: true,
         },
       });
       if (wishLists.length > 0) {
-        wishLists.map((value) => wishList.push(value.product_id));
+        wishLists.map((value) => wishList.push(value));
       }
     }
 
@@ -207,9 +208,14 @@ const getProductpublic = async (req, res, next) => {
     });
 
     const product = productData.map((value) => {
-      value.product.wishList = false;
-      if (user_id && wishList.length > 0)
-        value.product.wishList = wishList.includes(value.product.id);
+      value.product.wishList = wishList.some(
+        (wish) => wish.product_id === value.product.id
+      );
+      value.product.wishList_id =
+        wishList.find((wish) => wish.product_id === value.product.id)?.id ||
+        null;
+      // if (user_id && wishList.length > 0)
+      //   value.product.wishList = wishList.includes(value.product.id);
 
       value.product.outOfStock = value.product.quantity === 0;
       return value;

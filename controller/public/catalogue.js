@@ -23,11 +23,12 @@ const getCatalogue = async (req, res, next) => {
       const wishLists = await prisma.wishList.findMany({
         where: { user_id: user_id, catalogue_id: { not: null } },
         select: {
+          id: true,
           catalogue_id: true,
         },
       });
       if (wishLists.length > 0) {
-        wishLists.map((value) => wishList.push(value.catalogue_id));
+        wishLists.map((value) => wishList.push(value));
       }
     }
 
@@ -106,10 +107,19 @@ const getCatalogue = async (req, res, next) => {
       item.CatalogueSize = item.CatalogueSize.map((value) => value.size.value);
       const hasSingle = item.Product.some((product) => product.showInSingle);
       const outOfStock = item.quantity === 0;
-      item.wishList = false;
-      if (user_id && wishList.length > 0)
-        item.wishList = wishList.includes(item.id);
-      delete item.Product;
+      // item.wishList = false;
+      // item.wishList_id = null;
+      // if (user_id && wishList.length > 0)
+      (item.wishList = wishList.some((wish) => wish.catalogue_id === item.id)),
+        (item.wishList_id =
+          wishList.find((wish) => wish.catalogue_id === item.id)?.id || null),
+        // wishList.map((value) => {
+        //   if (value.catalogue_id === item.id) {
+        //     item.wishList = true;
+        //     item.wishList_id = value.id;
+        //   }
+        // });
+        delete item.Product;
       delete item.CatalogueCategory;
       return {
         ...item,

@@ -318,6 +318,9 @@ const searchCatalogueAndProduct = async (req, res, next) => {
             url: search_condition,
           },
           {
+            description: search_condition,
+          },
+          {
             attributeValues: {
               some: {
                 attributeValue: {
@@ -357,6 +360,7 @@ const searchCatalogueAndProduct = async (req, res, next) => {
           meta_keyword: true,
           meta_description: true,
           coverImage: true,
+          description: true,
           CatalogueCategory: {
             select: {
               category: {
@@ -401,6 +405,7 @@ const searchCatalogueAndProduct = async (req, res, next) => {
           (value) => value.size.value
         );
         const hasSingle = item.Product.some((product) => product.showInSingle);
+        item.outOfStock = item.quantity === 0;
         delete item.Product;
         delete item.CatalogueCategory;
         return {
@@ -432,6 +437,9 @@ const searchCatalogueAndProduct = async (req, res, next) => {
             url: search_condition,
           },
           {
+            description: search_condition,
+          },
+          {
             attributeValues: {
               some: {
                 attributeValue: {
@@ -453,18 +461,20 @@ const searchCatalogueAndProduct = async (req, res, next) => {
       //     .status(200)
       //     .json({ isSuccess: true, message: "Catalogue not found!", data: [] });
 
-      transformedData = await prisma.product.findMany({
+      result = await prisma.product.findMany({
         where: condition,
         select: {
           id: true,
           name: true,
           sku: true,
           url: true,
+          quantity: true,
           retail_price: true,
           retail_GST: true,
           retail_discount: true,
           offer_price: true,
           image: true,
+          description: true,
           tag: true,
           stitching: true,
           isActive: true,
@@ -479,6 +489,11 @@ const searchCatalogueAndProduct = async (req, res, next) => {
         take,
       });
     }
+
+    transformedData = result.map((item) => {
+      item.outOfStock = item.quantity === 0;
+      return item;
+    });
 
     return res.status(200).json({
       isSuccess: true,

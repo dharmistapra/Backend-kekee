@@ -74,6 +74,7 @@ const pageSchema = async (req, res, next) => {
   const schema = Joi.object({
     perPage: Joi.number().required(),
     pageNo: Joi.number().required(),
+    search: Joi.string().optional().allow('')
   });
   await JoiSchemaValidation(schema, req, next);
 };
@@ -774,6 +775,78 @@ const wishListSchema = async (req, res, next) => {
 
 /** END USER WISH LIST */
 
+
+
+/** USER CHANGE PASSWORD */
+
+const userchangePasswordSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    oldPassword: Joi.string().required().messages({
+      'any.required': 'Old password is required.'
+    }),
+    newPassword: Joi.string().required().messages({
+      'any.required': 'new password is required.'
+    }),
+    user_id: Joi.string().required().messages({
+      'any.required': 'user id is required.'
+    }),
+  })
+  await JoiSchemaValidation(schema, req, next);
+};
+
+/** END USER CHANGE PASSWORD  */
+
+
+/** USER CHANGE PASSWORD */
+
+const updateUserbasicInfoSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    name: Joi.string().required().messages({
+      'any.required': 'name is required.'
+    }),
+    mobile_number: Joi.number()
+      .required()
+      .messages({
+        'any.required': 'Mobile number is required.',
+        'number.min': 'Mobile number must be at least 10 digits long.'
+      }),
+    user_id: Joi.string().required().messages({
+      'any.required': 'user id is required.'
+    }),
+  })
+  await JoiSchemaValidation(schema, req, next);
+};
+
+/** END USER CHANGE PASSWORD  */
+
+
+/** USER RESET PASSWORD */
+const resetPasswordUsersSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string()
+      .min(8)
+      .required()
+      .messages({
+        "string.min": "Password must be at least 8 characters.",
+        "any.required": "Password is required."
+      }),
+    otp: Joi.string()
+      .required()
+      .messages({
+        "any.required": "OTP is required."
+      }),
+    secret: Joi.string()
+      .required()
+      .messages({
+        "any.required": "Secret code is required."
+      })
+  });
+
+  await JoiSchemaValidation(schema, req, next);
+};
+/** USER RESET PASSWORD */
+
 export {
   categorySchema,
   subCategorySchema,
@@ -814,4 +887,7 @@ export {
   cartSchema,
   editCartSchema,
   wishListSchema,
+  userchangePasswordSchema,
+  resetPasswordUsersSchema,
+  updateUserbasicInfoSchema
 };

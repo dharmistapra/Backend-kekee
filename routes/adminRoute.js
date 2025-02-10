@@ -275,6 +275,7 @@ import {
   updateCollection,
   updateCollectionStatus,
 } from "../controller/admin/collection.js";
+import { paginationusers, updateUsersStatus } from "../controller/admin/users.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -644,4 +645,8 @@ adminRouter.get("/collection-status/:id", updateCollectionStatus);
 adminRouter.post("/collection-pagination", collectionPagination);
 adminRouter.post("/collection-position", positionSchema, collectionPosition);
 
+
+
+adminRouter.post("/users-pagination", paginationusers);
+adminRouter.get("/users-status/:id", updateUsersStatus);
 export default adminRouter;

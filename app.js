@@ -13,6 +13,7 @@ import adminAuthRouter from "./routes/adminLogin.js";
 import publicRouter from "./routes/publicRoute.js";
 import publicProtected from "./routes/publicProtectedRoute.js";
 // import "./automated/deleteCatalogue.js";
+import requestIp from "request-ip";
 const PORT = process.env.PORT || 3000;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -28,6 +29,7 @@ app.use("/uploads", express.static("uploads"));
 // app.set("view engine", "jade");
 
 app.use(passport.initialize());
+app.use(requestIp.mw());
 app.use(logger("dev"));
 app.use(express.json({ limit: "100mb" }));
 app.use(

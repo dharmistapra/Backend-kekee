@@ -7,6 +7,7 @@ import {
   updatePosition,
   updateStatus,
 } from "../../../helper/common.js";
+import createSearchFilter from "../../../helper/searchFilter.js";
 
 // CATEGORY ADD
 const postCategory = async (req, res, next) => {
@@ -168,12 +169,19 @@ const getAllCategory = async (req, res, next) => {
 // GET CATEGORY WITH PAGINATION
 const categoryPagination = async (req, res, next) => {
   try {
-    const { perPage, pageNo, parent_id } = req.body;
+    const { perPage, pageNo, parent_id, search } = req.body;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
 
-    // Get the total count of categories where parent_id is null
+    const filter = [
+      { name: { contains: search, mode: "insensitive" } },
+    ]
+
+
+    const searchFilter = createSearchFilter(search, filter);
+
+
     const count = await prisma.categoryMaster.count({
       where: { parent_id: parent_id },
     });
@@ -186,7 +194,10 @@ const categoryPagination = async (req, res, next) => {
 
     // Fetch categories with necessary fields and batch attribute IDs
     const result = await prisma.categoryMaster.findMany({
-      where: { parent_id: parent_id },
+      where: {
+        parent_id: parent_id,
+        ...searchFilter,
+      },
       orderBy: { position: "asc" },
       select: {
         id: true,
@@ -196,8 +207,6 @@ const categoryPagination = async (req, res, next) => {
         meta_keyword: true,
         meta_description: true,
         isActive: true,
-        createdAt: true,
-        updatedAt: true,
         image: true,
         CategoryAttribute: {
           select: {

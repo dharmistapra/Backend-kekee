@@ -1,6 +1,7 @@
 import slug from "slug";
 import prisma from "../../../db/config.js";
 import { deleteData, updateStatus } from "../../../helper/common.js";
+import createSearchFilter from "../../../helper/searchFilter.js";
 
 // HANDELE ADD ATTRIBUTE API
 const postAttributeValue = async (req, res, next) => {
@@ -88,14 +89,20 @@ const getAllAttributeValue = async (req, res, next) => {
 // HANDLE ALL PAGINATION API
 const getAttributeValuePagination = async (req, res, next) => {
   try {
-    const { attribute_id, perPage, pageNo } = req.body;
+    const { attribute_id, perPage, pageNo, search } = req.body;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
+    const filter = [
+      { name: { contains: search, mode: "insensitive" } },
+      { value: { contains: search, mode: "insensitive" } }
+    ]
+
+    const searchFilter = createSearchFilter(search, filter);
     const totalCount = await prisma.attributeValue.count({
       where: { attr_id: attribute_id },
     });
-    console.log("attr_id", totalCount);
+
     if (totalCount === 0)
       return res.status(200).json({
         isSuccess: false,
@@ -104,7 +111,9 @@ const getAttributeValuePagination = async (req, res, next) => {
       });
 
     const isAttributeExists = await prisma.attributeMaster.findUnique({
-      where: { id: attribute_id },
+      where: {
+        id: attribute_id,
+      },
     });
 
     if (!isAttributeExists)
@@ -115,6 +124,7 @@ const getAttributeValuePagination = async (req, res, next) => {
     const data = await prisma.attributeValue.findMany({
       where: {
         attr_id: attribute_id,
+        ...searchFilter
       },
       include: {
         attribute: {
@@ -140,6 +150,7 @@ const getAttributeValuePagination = async (req, res, next) => {
       pagesize: take,
     });
   } catch (error) {
+    console.log("errr", error)
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }

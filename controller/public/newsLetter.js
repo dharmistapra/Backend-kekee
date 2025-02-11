@@ -30,7 +30,6 @@ const postNewsLetter = async (req, res, next) => {
 
 const getNewsLetter = async (req, res, next) => {
   try {
-
     const { perPage, pageNo, search } = req.body;
     const page = +pageNo || 1;
     const take = +perPage || 10;
@@ -50,8 +49,12 @@ const getNewsLetter = async (req, res, next) => {
       isSuccess: true,
       message: "News letters get successfully.",
       data: getNewsLetter,
+      totalCount: count,
+      currentPage: page,
+      pageSize: take,
     });
   } catch (err) {
+    console.log(err);
     const error = new Error("Something went wrong, please try again!");
     next(error);
   }

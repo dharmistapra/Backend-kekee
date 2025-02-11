@@ -31,7 +31,7 @@ const postMenu = async (req, res, next) => {
           .json({ status: false, message: "Parent Menu is not found!" });
     }
 
-    let filter = {};
+    let filter = { where: { parent_id: null } };
     if (parent_id) filter = { where: { parent_id: parent_id } };
 
     const [uniqueMenu, count] = await Promise.all([

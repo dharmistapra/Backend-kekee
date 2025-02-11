@@ -93,10 +93,10 @@ const postCategory = async (req, res, next) => {
         image: filepath,
         ...(attributes &&
           attributes.length > 0 && {
-          CategoryAttribute: {
-            create: attributeConnection, // connect attributes to the category
-          },
-        }),
+            CategoryAttribute: {
+              create: attributeConnection, // connect attributes to the category
+            },
+          }),
       },
     });
     return res.status(200).json({
@@ -202,6 +202,7 @@ const categoryPagination = async (req, res, next) => {
       select: {
         id: true,
         parent_id: true,
+        position: true,
         name: true,
         meta_title: true,
         meta_keyword: true,
@@ -227,10 +228,7 @@ const categoryPagination = async (req, res, next) => {
             products: {
               where: {
                 product: {
-                  AND: [
-                    { showInSingle: true },
-                    { catalogue_id: null }
-                  ]
+                  AND: [{ showInSingle: true }, { catalogue_id: null }],
 
                   // showInSingle: true,
                 },
@@ -241,8 +239,8 @@ const categoryPagination = async (req, res, next) => {
                 catalogue: {
                   deletedAt: null,
                 },
-              }
-            }
+              },
+            },
             // CatalogueCategory: true,
           },
         },
@@ -375,13 +373,18 @@ const updateCategory = async (req, res, next) => {
         meta_keyword,
         image: newImage ? newImage : categoryData.image,
         meta_description,
-        ...(attributes &&
-          attributes.length > 0 && {
-          CategoryAttribute: {
-            deleteMany: {},
-            create: attributeConnections,
-          },
-        }),
+        ...(attributes !== ""
+          ? attributes.length > 0 && {
+              CategoryAttribute: {
+                deleteMany: {},
+                create: attributeConnections,
+              },
+            }
+          : {
+              CategoryAttribute: {
+                deleteMany: {},
+              },
+            }),
       },
     });
 

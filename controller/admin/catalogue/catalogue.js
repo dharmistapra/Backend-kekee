@@ -1380,7 +1380,7 @@ const addCatalogue = async (req, res, next) => {
       }),
       prisma.categoryMaster.findMany({
         where: { id: { in: category_id } },
-        select: { id: true },
+        select: { id: true, parent_id: true },
       }),
     ]);
 
@@ -1389,6 +1389,27 @@ const addCatalogue = async (req, res, next) => {
       return res
         .status(400)
         .json({ isSuccess: false, message: "Catalogue code already exists!" });
+    }
+
+    if (stitching === "true" && isCategoryExists.length > 0) {
+      const parentCategory = isCategoryExists.find(
+        (cat) => cat.parent_id === null
+      );
+
+      if (parentCategory) {
+        const isStitchingExists = await prisma.stitchingGroup.findMany({
+          where: { category_id: parentCategory.id },
+        });
+
+        if (isStitchingExists.length === 0) {
+          if (req.file) await deleteFile(filepath);
+          return res.status(404).json({
+            isSuccess: false,
+            message:
+              "Please select Stitching in category before uploading Catalogue!",
+          });
+        }
+      }
     }
 
     const existingCategoryIds = isCategoryExists.map((cat) => cat.id);

@@ -191,6 +191,7 @@ const categoryPagination = async (req, res, next) => {
       select: {
         id: true,
         parent_id: true,
+        position: true,
         name: true,
         meta_title: true,
         meta_keyword: true,
@@ -373,7 +374,6 @@ const updateCategory = async (req, res, next) => {
           : {
               CategoryAttribute: {
                 deleteMany: {},
-                // create: attributeConnections,
               },
             }),
       },

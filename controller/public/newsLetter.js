@@ -29,16 +29,39 @@ const postNewsLetter = async (req, res, next) => {
 
 const getNewsLetter = async (req, res, next) => {
   try {
+    const { perPage, pageNo, search } = req.body;
+    const page = +pageNo || 1;
+    const take = +perPage || 10;
+    const skip = (page - 1) * take;
+    let condition = {};
+    if (search) {
+      condition = {
+        email: {
+          contains: search,
+          mode: "insensitive",
+        },
+      };
+    }
+
+    const count = await prisma.newsLetter.count({ where: condition });
     const getNewsLetter = await prisma.newsLetter.findMany({
+      where: condition,
       select: { id: true, email: true },
+      skip,
+      take,
+      orderBy: { updatedAt: "desc" },
     });
 
     return res.status(200).json({
       isSuccess: true,
       message: "News letters get successfully.",
       data: getNewsLetter,
+      totalCount: count,
+      currentPage: page,
+      pageSize: take,
     });
   } catch (err) {
+    console.log(err);
     const error = new Error("Something went wrong, please try again!");
     next(error);
   }

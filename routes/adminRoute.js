@@ -279,6 +279,10 @@ import {
   deleteNewsLetter,
   getNewsLetter,
 } from "../controller/public/newsLetter.js";
+import {
+  paginationusers,
+  updateUsersStatus,
+} from "../controller/admin/users.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -653,4 +657,6 @@ adminRouter.post("/collection-position", positionSchema, collectionPosition);
 adminRouter.get("/newsletter", getNewsLetter);
 adminRouter.delete("/newsletter/:id", deleteNewsLetter);
 
+adminRouter.post("/users-pagination", paginationusers);
+adminRouter.get("/users-status/:id", updateUsersStatus);
 export default adminRouter;

@@ -117,6 +117,7 @@ const SendOtp = async (req, res, next) => {
         return res.status(500).json({ "status": false, "message": "Internal Server Error" })
     }
 }
+
 const GenerateOtp = () => {
     const secret = speakeasy.generateSecret({ length: 20 })
     const otp = speakeasy.totp({
@@ -124,15 +125,12 @@ const GenerateOtp = () => {
         encoding: 'base32',
         step: 120,
         digits: 6
-
     })
 
     return { secret: secret.base32, otp }
 }
 const VerifyOtp = async (req, res, next) => {
     const { otp, secret } = req.body
-
-
     let verified = speakeasy.totp.verify({
         secret: secret,
         encoding: 'base32',
@@ -148,15 +146,28 @@ const VerifyOtp = async (req, res, next) => {
 
 }
 
-
 const resetPassword = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
-        const findAdmin = await prisma.adminMaster.findFirst({
+        const { email, password, otp, secret } = req.body;
+
+        let otpVerified = speakeasy.totp.verify({
+            secret: secret,
+            encoding: 'base32',
+            token: otp,
+            window: 2,
+            step: 120
+        });
+
+        if (!otpVerified) {
+            return res.status(400).json({ isSuccess: false, message: 'OTP verification failed. Cannot reset password.' });
+        }
+
+
+        const finduser = await prisma.users.findFirst({
             where: { email: email },
         });
 
-        if (!findAdmin) {
+        if (!finduser) {
             return res
                 .status(400)
                 .json({ isSuccess: false, message: "Email not exists!" });
@@ -164,47 +175,44 @@ const resetPassword = async (req, res, next) => {
 
 
         const hashpassword = await bcrypt.hash(password, 10);
-        const updatePassword = await prisma.adminMaster.update({
+        const updatePassword = await prisma.users.update({
             where: { email: email },
             data: {
                 password: hashpassword,
-                otp: null,
-                otpVerified: false,
-                otpExpireIn: null,
             },
         });
         return res
             .status(200)
             .json({ isSuccess: true, message: "Password reset successfully." });
     } catch (error) {
+        console.log("errror", error)
         let err = new Error("Something went wrong, please try again!");
         next(err);
     }
 };
 
-const changePassword = async (req, res) => {
-    const id = req.user.id;
-
-    let { oldPassword, newPassword } = req.body;
+const changePasswordusers = async (req, res) => {
+    let { oldPassword, newPassword, user_id } = req.body;
     try {
-        const findadmin = await prisma.adminMaster.findUnique({
-            where: { id: id },
-        });
-        if (!findadmin) {
-            return res.status(404).json({
-                isSuccess: false,
-                message: "Admin not found!",
-            });
+
+        if (!/^[a-fA-F0-9]{24}$/.test(user_id)) {
+            return res
+                .status(400)
+                .json({ isSuccess: false, message: "Invalid ID format!" });
         }
 
-        const checkPassword = await bcrypt.compare(oldPassword, findadmin.password);
+        const finduser = await prisma.users.findUnique({ where: { id: user_id }, });
+        if (!finduser) return res.status(404).json({ isSuccess: false, message: "user not found!", });
+
+
+        const checkPassword = await bcrypt.compare(oldPassword, finduser.password);
 
         if (checkPassword) {
             try {
                 newPassword = await bcrypt.hash(newPassword, 10);
-                const updatePassword = await prisma.adminMaster.update({
+                const updatePassword = await prisma.users.update({
                     where: {
-                        id: id,
+                        id: user_id,
                     },
                     data: {
                         password: newPassword,
@@ -236,4 +244,40 @@ const changePassword = async (req, res) => {
     }
 };
 
-export { userRegister, userlogin, SendOtp, VerifyOtp }
+
+const updateUserbasicInfo = async (req, res) => {
+    let { name, mobile_number, user_id } = req.body;
+    try {
+
+        if (!/^[a-fA-F0-9]{24}$/.test(user_id)) {
+            return res
+                .status(400)
+                .json({ isSuccess: false, message: "Invalid ID format!" });
+        }
+
+        const finduser = await prisma.users.findUnique({ where: { id: user_id }, });
+        if (!finduser) return res.status(404).json({ isSuccess: false, message: "user not found!", });
+        const updateuser = await prisma.users.update({
+            where: {
+                id: user_id,
+            },
+            data: {
+                name: name,
+                mobile_number: mobile_number
+            },
+        });
+        return res.status(409).send({
+            message: "info update successfully",
+            isSuccess: false,
+        });
+
+    } catch (error) {
+        return res.status(500).send({
+            error: error.message,
+            message: "Something went wrong, please try again!",
+            isSuccess: false,
+        });
+    }
+};
+
+export { userRegister, userlogin, SendOtp, VerifyOtp, resetPassword, changePasswordusers, updateUserbasicInfo }

@@ -5,6 +5,7 @@ import {
   deleteFile,
   updateStatus,
 } from "../../helper/common.js";
+import createSearchFilter from "../../helper/searchFilter.js";
 
 // INSERT CURRENCY
 const postCurrency = async (req, res, next) => {
@@ -73,17 +74,26 @@ const getAllCurrency = async (req, res, next) => {
 // GET CURRENCY BY PAGINATION
 const paginationCurrency = async (req, res, next) => {
   try {
-    const { perPage, pageNo } = req.body;
+    const { perPage, pageNo, search } = req.body;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
+    const filter = [
+      { code: { contains: search, mode: "insensitive" } },
+      { rate: isNaN(search) ? undefined : { equals: parseFloat(search) } }
+    ]
 
-    const count = await prisma.currencyMaster.count();
+    const searchFilter = createSearchFilter(search, filter);
+
+    const count = await prisma.currencyMaster.count({
+      where: searchFilter || undefined
+    });
     if (count === 0)
       return res
         .status(200)
         .json({ isSuccess: true, message: "Currency not found!", data: [] });
     const result = await prisma.currencyMaster.findMany({
+      where: searchFilter || undefined,
       skip,
       take,
     });
@@ -97,6 +107,7 @@ const paginationCurrency = async (req, res, next) => {
       pagesize: take,
     });
   } catch (error) {
+    console.log(error)
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }

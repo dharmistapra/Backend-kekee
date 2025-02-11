@@ -275,6 +275,10 @@ import {
   updateCollection,
   updateCollectionStatus,
 } from "../controller/admin/collection.js";
+import {
+  deleteNewsLetter,
+  getNewsLetter,
+} from "../controller/public/newsLetter.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -643,5 +647,10 @@ adminRouter.get("/collection", getAllCollection);
 adminRouter.get("/collection-status/:id", updateCollectionStatus);
 adminRouter.post("/collection-pagination", collectionPagination);
 adminRouter.post("/collection-position", positionSchema, collectionPosition);
+
+// NEWS LETTER API
+
+adminRouter.get("/newsletter", getNewsLetter);
+adminRouter.delete("/newsletter/:id", deleteNewsLetter);
 
 export default adminRouter;

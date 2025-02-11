@@ -774,6 +774,18 @@ const wishListSchema = async (req, res, next) => {
 
 /** END USER WISH LIST */
 
+/** NEWS LETTER */
+
+const newsLetterSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+  });
+
+  await JoiSchemaValidation(schema, req, next);
+};
+
+/** END NEWS LETTER */
+
 export {
   categorySchema,
   subCategorySchema,
@@ -814,4 +826,5 @@ export {
   cartSchema,
   editCartSchema,
   wishListSchema,
+  newsLetterSchema,
 };

@@ -491,6 +491,8 @@ model users {
   updatedAt         DateTime   @updatedAt
   cart              cart[]
   WishList          WishList[]
+  // Order             Order[]
+  // Address           Address[]
 }
 
 model size {
@@ -673,4 +675,63 @@ model CatalogueSize {
   size         size      @relation(fields: [size_id], references: [id], onDelete: Cascade)
 
   @@unique([catalogue_id, size_id])
+}
+
+// model PaymentMethod {
+//   id       String   @id @default(auto()) @map("_id") @db.ObjectId
+//   name     String
+//   isActive Boolean? @default(false)
+//   Order    Order[]
+// }
+
+// model Order {
+//   id               String        @id @default(auto()) @map("_id") @db.ObjectId
+//   orderID          String        @unique
+//   orderDate        DateTime
+//   user_id          String        @db.ObjectId
+//   paymentMethod_id String        @db.ObjectId
+//   status           OrderStatus
+//   createdAt        DateTime      @default(now())
+//   updatedAt        DateTime      @updatedAt
+//   user             users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+//   paymentMethod    PaymentMethod @relation(fields: [paymentMethod_id], references: [id], onDelete: NoAction)
+// }
+
+// enum OrderStatus {
+//   Pending
+//   OrderPlaced
+//   ShippedComplete
+//   Cancel
+// }
+
+// model Address {
+//   id         String      @id @default(auto()) @map("_id") @db.ObjectId
+//   user_id    String      @db.ObjectId
+//   email      String
+//   type       AddressType
+//   first_name String
+//   last_name  String
+//   address    String
+//   pinCode    String
+//   city       String
+//   state      String
+//   country    String
+//   mobile_no  Int
+//   phone_no   Int?        @default(0)
+//   isShipping Boolean     @default(false)
+//   createdAt  DateTime    @default(now())
+//   updatedAt  DateTime    @updatedAt
+//   user       users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+// }
+
+// enum AddressType {
+//   Billing
+//   Shipping
+// }
+
+model NewsLetter {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

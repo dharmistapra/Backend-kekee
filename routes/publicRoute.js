@@ -29,10 +29,12 @@ import {
 } from "../controller/public/user/register.js";
 import {
   loginSchema,
+  newsLetterSchema,
   registerSchema,
   verifyOtpSchema,
 } from "../schema/joi_schema.js";
 import { getCollection } from "../controller/public/collection.js";
+import { postNewsLetter } from "../controller/public/newsLetter.js";
 const router = express.Router();
 
 // MENU API
@@ -102,7 +104,10 @@ router.post("/verify-otp", [verifyOtpSchema], VerifyOtp);
 // COLLECTION ROUTE
 router.get("/collection", getCollection);
 
-//SEARCH
+// SEARCH
 router.post("/search", searchCatalogueAndProduct);
+
+// News Latter
+router.post("/newsletter", [newsLetterSchema], postNewsLetter);
 
 export default router;

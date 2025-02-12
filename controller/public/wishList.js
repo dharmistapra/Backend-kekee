@@ -42,36 +42,40 @@ const postWishList = async (req, res, next) => {
       condition["catalogue_id"] = catalogue_id;
       data = "Catalogue";
     }
-    console.log(condition);
     const isWishListExists = await prisma.wishList.findFirst({
       where: condition,
     });
-    if (isWishListExists)
+    if (isWishListExists) {
+      const result = await prisma.wishList.delete({
+        where: { id: isWishListExists.id },
+      });
+
       return res.status(200).json({
         isSuccess: true,
-        message: `This ${data} is already in your wishlist!`,
+        message: `wishlist record deleted successfully.`,
       });
-    const result = await prisma.wishList.create({
-      data: {
-        user_id,
-        product_id: product_id || null,
-        catalogue_id: catalogue_id || null,
-      },
-      select: {
-        product_id: true,
-        catalogue_id: true,
-      },
-    });
-
-    return res.status(200).json({
-      isSuccess: true,
-      message: "wishlist store successfully.",
-      data: result,
-    });
+    } else {
+      const result = await prisma.wishList.create({
+        data: {
+          user_id,
+          product_id: product_id || null,
+          catalogue_id: catalogue_id || null,
+        },
+        select: {
+          product_id: true,
+          catalogue_id: true,
+        },
+      });
+      return res.status(200).json({
+        isSuccess: true,
+        message: "wishlist store successfully.",
+        data: result,
+      });
+    }
   } catch (err) {
     console.log(err);
     const error = new Error("Something went wrong, Please try again!");
-    next(err);
+    next(error);
   }
 };
 

@@ -1,4 +1,5 @@
 import prisma from "../../db/config.js";
+import createSearchFilter from "../../helper/searchFilter.js";
 
 const postNewsLetter = async (req, res, next) => {
   try {
@@ -33,23 +34,15 @@ const getNewsLetter = async (req, res, next) => {
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
-    let condition = {};
-    if (search) {
-      condition = {
-        email: {
-          contains: search,
-          mode: "insensitive",
-        },
-      };
-    }
+    const filter = [
+      { email: { contains: search, mode: "insensitive" } },
+    ]
+    const searchFilter = createSearchFilter(search, filter);
 
-    const count = await prisma.newsLetter.count({ where: condition });
+
     const getNewsLetter = await prisma.newsLetter.findMany({
-      where: condition,
-      select: { id: true, email: true },
-      skip,
-      take,
-      orderBy: { updatedAt: "desc" },
+      where: searchFilter || undefined,
+      select: { id: true, email: true, createdAt: true },
     });
 
     return res.status(200).json({

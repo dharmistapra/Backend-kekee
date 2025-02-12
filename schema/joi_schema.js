@@ -98,6 +98,7 @@ const attributeValuePageSchema = async (req, res, next) => {
     attribute_id: Joi.string().required(),
     perPage: Joi.number().required(),
     pageNo: Joi.number().required(),
+    search: Joi.string().optional().allow('')
   });
   await JoiSchemaValidation(schema, req, next);
 };

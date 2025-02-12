@@ -654,7 +654,7 @@ adminRouter.post("/collection-position", positionSchema, collectionPosition);
 
 // NEWS LETTER API
 
-adminRouter.get("/newsletter", getNewsLetter);
+adminRouter.post("/newsletter-pagination", getNewsLetter);
 adminRouter.delete("/newsletter/:id", deleteNewsLetter);
 
 adminRouter.post("/users-pagination", paginationusers);

@@ -8,6 +8,7 @@ import {
   handleCatalogueAttributeConnection,
   updateStatus,
 } from "../../helper/common.js";
+import createSearchFilter from "../../helper/searchFilter.js";
 import { readProductsFromFile } from "./product/tempData.js";
 
 const postCatalogue = async (req, res, next) => {
@@ -175,8 +176,8 @@ const postCatalogue = async (req, res, next) => {
         // }),
         ...(attributes &&
           attributes.length > 0 && {
-            attributeValues: { create: attributeValueConnection },
-          }),
+          attributeValues: { create: attributeValueConnection },
+        }),
         tag: tag,
         isActive,
       },
@@ -212,10 +213,25 @@ const postCatalogue = async (req, res, next) => {
 
 const paginationCatalogue = async (req, res, next) => {
   try {
-    const { category_id, perPage, pageNo } = req.body;
+    const { category_id, perPage, pageNo, search } = req.body;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
+
+    const filter = [
+      { name: { contains: search, mode: "insensitive" } },
+      { cat_code: { contains: search, mode: "insensitive" } },
+      { url: { contains: search, mode: "insensitive" } },
+      { no_of_product: isNaN(search) ? undefined : { equals: parseFloat(search) } },
+      { quantity: isNaN(search) ? undefined : { equals: parseFloat(search) } },
+      { price: isNaN(search) ? undefined : { equals: parseFloat(search) } },
+      { catalogue_discount: isNaN(search) ? undefined : { equals: parseFloat(search) } },
+      { average_price: isNaN(search) ? undefined : { equals: parseFloat(search) } },
+      { GST: isNaN(search) ? undefined : { equals: parseFloat(search) } },
+      { offer_price: isNaN(search) ? undefined : { equals: parseFloat(search) } },
+    ]
+
+    const searchFilter = createSearchFilter(search, filter);
 
     if (!category_id) {
       return res
@@ -226,6 +242,7 @@ const paginationCatalogue = async (req, res, next) => {
     const condition = {
       CatalogueCategory: { some: { category_id: category_id } },
       deletedAt: null,
+      ...searchFilter
     };
     const count = await prisma.catalogue.count({ where: condition });
     if (count === 0)
@@ -236,7 +253,6 @@ const paginationCatalogue = async (req, res, next) => {
     const result = await prisma.catalogue.findMany({
       where: condition,
       include: {
-        // categories: true,
         _count: {
           select: {
             Product: true,
@@ -399,11 +415,11 @@ const updateCatalogue = async (req, res, next) => {
         },
         ...(attributes && attributes.length > 0
           ? {
-              attributeValues: {
-                deleteMany: {},
-                create: attributeValueConnection,
-              },
-            }
+            attributeValues: {
+              deleteMany: {},
+              create: attributeValueConnection,
+            },
+          }
           : { attributeValues: { deleteMany: {} } }),
         tag,
         isActive,

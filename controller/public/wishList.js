@@ -11,6 +11,8 @@ const postWishList = async (req, res, next) => {
       return res
         .status(404)
         .json({ isSuccess: false, message: "User not found!" });
+
+
     if (product_id) {
       const isProductExists = await prisma.product.findUnique({
         where: { id: product_id },
@@ -21,6 +23,7 @@ const postWishList = async (req, res, next) => {
           .json({ isSuccess: false, message: "Product not found!" });
     }
 
+
     if (catalogue_id) {
       const isCatalogueExists = await prisma.catalogue.findUnique({
         where: { id: catalogue_id },
@@ -30,6 +33,7 @@ const postWishList = async (req, res, next) => {
           .status(404)
           .json({ isSuccess: false, message: "Catalogue not found!" });
     }
+
     let condition = {
       user_id: user_id,
     };
@@ -52,7 +56,9 @@ const postWishList = async (req, res, next) => {
 
       return res.status(200).json({
         isSuccess: true,
+        isDeleted: true,
         message: `wishlist record deleted successfully.`,
+        data: result
       });
     } else {
       const result = await prisma.wishList.create({
@@ -68,6 +74,7 @@ const postWishList = async (req, res, next) => {
       });
       return res.status(200).json({
         isSuccess: true,
+        isDeleted: false,
         message: "wishlist store successfully.",
         data: result,
       });
@@ -78,6 +85,8 @@ const postWishList = async (req, res, next) => {
     next(error);
   }
 };
+
+
 
 const deleteWishListItem = async (req, res, next) => {
   try {

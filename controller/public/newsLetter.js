@@ -39,7 +39,7 @@ const getNewsLetter = async (req, res, next) => {
     ]
     const searchFilter = createSearchFilter(search, filter);
 
-
+    const count = await prisma.newsLetter.count();
     const getNewsLetter = await prisma.newsLetter.findMany({
       where: searchFilter || undefined,
       select: { id: true, email: true, createdAt: true },

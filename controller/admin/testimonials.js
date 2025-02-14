@@ -9,7 +9,7 @@ import {
 
 const postTestimonial = async (req, res, next) => {
   const image = req.file;
-  const { review_date, review, customer_name } = req.body;
+  const { review_date, review, customer_name, rating } = req.body;
   let filepath = null;
   if (image?.path) {
     filepath = await convertFilePathSlashes(image.path);
@@ -22,6 +22,7 @@ const postTestimonial = async (req, res, next) => {
         review,
         customer_name,
         image: filepath,
+        rating: rating,
         position: count + 1,
       },
     });
@@ -84,6 +85,7 @@ const paginationTestimonial = async (req, res, next) => {
       pagesize: take,
     });
   } catch (error) {
+
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
@@ -91,7 +93,7 @@ const paginationTestimonial = async (req, res, next) => {
 
 const updateTestimonial = async (req, res, next) => {
   const image = req.file;
-  const { review_date, review, customer_name } = req.body;
+  const { review_date, review, customer_name, rating } = req.body;
   let filepath = null;
   if (image?.path) {
     filepath = await convertFilePathSlashes(image.path);
@@ -127,6 +129,7 @@ const updateTestimonial = async (req, res, next) => {
         review,
         customer_name,
         image: filepath,
+        rating: rating,
       },
     });
 

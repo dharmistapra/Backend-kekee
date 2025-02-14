@@ -41,6 +41,7 @@ import {
   stitchingGroupSchema,
   singleStitchingSchema,
   collectionSchema,
+  shippingchargesSchema,
 } from "../schema/joi_schema.js";
 import {
   getAllSubCategory,
@@ -283,6 +284,7 @@ import {
   paginationusers,
   updateUsersStatus,
 } from "../controller/admin/users.js";
+import { deleteShippingcharges, paginationShippingcharges, postShippingcharges, updateShippingcharges } from "../controller/admin/shippingcharges.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -659,4 +661,11 @@ adminRouter.delete("/newsletter/:id", deleteNewsLetter);
 
 adminRouter.post("/users-pagination", paginationusers);
 adminRouter.get("/users-status/:id", updateUsersStatus);
+
+
+
+adminRouter.post("/shipping-charges-pagination", paginationShippingcharges);
+adminRouter.post("/shipping-charges", [shippingchargesSchema], postShippingcharges);
+adminRouter.put("/shipping-charges/:id", [shippingchargesSchema], updateShippingcharges);
+adminRouter.delete("/shipping-charges/:id", deleteShippingcharges);
 export default adminRouter;

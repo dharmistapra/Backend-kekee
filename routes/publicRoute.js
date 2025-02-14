@@ -40,6 +40,7 @@ import nodeIplocate from "node-iplocate";
 import fetch from "node-fetch";
 // import { resetPassword } from "../auth/auth.js";
 import { resetPassword } from "../controller/public/user/register.js";
+import { gettestimonial } from "../controller/public/testimonial.js";
 const router = express.Router();
 
 // MENU API
@@ -158,5 +159,6 @@ router.post("/search", searchCatalogueAndProduct);
 
 // News Latter
 router.post("/newsletter", [newsLetterSchema], postNewsLetter);
+router.get("/testimonials", gettestimonial);
 
 export default router;

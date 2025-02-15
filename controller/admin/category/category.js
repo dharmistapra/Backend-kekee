@@ -93,10 +93,10 @@ const postCategory = async (req, res, next) => {
         image: filepath,
         ...(attributes &&
           attributes.length > 0 && {
-            CategoryAttribute: {
-              create: attributeConnection, // connect attributes to the category
-            },
-          }),
+          CategoryAttribute: {
+            create: attributeConnection, // connect attributes to the category
+          },
+        }),
       },
     });
     return res.status(200).json({
@@ -112,7 +112,7 @@ const postCategory = async (req, res, next) => {
   }
 };
 // GET ALL CATEGORY
-const getAllCategory = async (req, res, next) => {
+const getAllParentCategory = async (req, res, next) => {
   try {
     const data = await prisma.categoryMaster.findMany({
       where: { parent_id: null },
@@ -375,16 +375,16 @@ const updateCategory = async (req, res, next) => {
         meta_description,
         ...(attributes !== ""
           ? attributes.length > 0 && {
-              CategoryAttribute: {
-                deleteMany: {},
-                create: attributeConnections,
-              },
-            }
+            CategoryAttribute: {
+              deleteMany: {},
+              create: attributeConnections,
+            },
+          }
           : {
-              CategoryAttribute: {
-                deleteMany: {},
-              },
-            }),
+            CategoryAttribute: {
+              deleteMany: {},
+            },
+          }),
       },
     });
 
@@ -625,9 +625,36 @@ const deleteCategoryImage = async (req, res, next) => {
   }
 };
 
+
+
+
+const getAllCategories = async (req, res, next) => {
+  try {
+    const result = await prisma.categoryMaster.findMany({
+      where: { isActive: true },
+      orderBy: { position: "asc" },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "Categories get successfully.",
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+    const error = new Error("Something went wrong, please try again!");
+    next(error);
+  }
+};
+
+
 export {
   postCategory,
-  getAllCategory,
+  getAllParentCategory,
   categoryPagination,
   updateCategory,
   deleteCategory,
@@ -636,4 +663,5 @@ export {
   getCategories,
   getSubCategory,
   deleteCategoryImage,
+  getAllCategories
 };

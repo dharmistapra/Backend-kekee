@@ -4,12 +4,13 @@ import {
   postCategory,
   updateCategory,
   deleteCategory,
-  getAllCategory,
   updateCategoryStatus,
   categoryPagination,
   categoryPosition,
   getSubCategory,
   deleteCategoryImage,
+  getAllParentCategory,
+  getAllCategories,
 } from "../controller/admin/category/category.js";
 import {
   attributeMasterSchema,
@@ -305,7 +306,11 @@ adminRouter.put(
   updateCategory
 );
 adminRouter.delete("/category/:id", deleteCategory);
-adminRouter.get("/category", getAllCategory);
+adminRouter.get("/category", getAllParentCategory);
+
+adminRouter.get("/all-category", getAllParentCategory);
+adminRouter.get("/mixed-category", getAllCategories);
+
 
 adminRouter.get("/category-status/:id", updateCategoryStatus);
 adminRouter.post("/category-pagination", categoryPagination);

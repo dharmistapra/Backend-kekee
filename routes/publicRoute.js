@@ -34,7 +34,7 @@ import {
   resetPasswordUsersSchema,
   verifyOtpSchema,
 } from "../schema/joi_schema.js";
-import { getCollection } from "../controller/public/collection.js";
+import { getCollection, getCollectionHome } from "../controller/public/collection.js";
 import { postNewsLetter } from "../controller/public/newsLetter.js";
 import nodeIplocate from "node-iplocate";
 import fetch from "node-fetch";
@@ -160,5 +160,7 @@ router.post("/search", searchCatalogueAndProduct);
 // News Latter
 router.post("/newsletter", [newsLetterSchema], postNewsLetter);
 router.get("/testimonials", gettestimonial);
+
+router.get("/home-collection", getCollectionHome);
 
 export default router;

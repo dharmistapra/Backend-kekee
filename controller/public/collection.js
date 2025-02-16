@@ -136,4 +136,42 @@ const getCollection = async (req, res, next) => {
   }
 };
 
-export { getCollection };
+
+const getCollectionHome=async(req,res,next)=>{
+  try {
+
+    const collections = await prisma.collectionAll.findMany({
+      select: {
+        id: true,
+        sub_title:true,
+        title: true,
+        Manual:true,
+        coverimage:true,
+      }
+    });
+
+
+    const groupedCollections = collections.reduce((acc, collection) => {
+      if (!acc[collection.title]) {
+        acc[collection.title] = [];
+      }
+      acc[collection.title].push(collection);
+      return acc;
+    }, {});
+
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "collection get successfully.",
+      data: groupedCollections,
+    });
+
+
+  }catch(error){
+    console.log("eeeee",error)
+    const err = new Error("Something went wrong, Please try again!");
+    next(err);
+  }
+}
+
+export { getCollection,getCollectionHome };

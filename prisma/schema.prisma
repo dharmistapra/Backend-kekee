@@ -293,6 +293,7 @@ model Product {
   id            String  @id @default(auto()) @map("_id") @db.ObjectId
   name          String
   catalogue_id  String? @db.ObjectId
+  collection_id  String? @db.ObjectId
   sku           String
   url           String  @unique
   quantity      Int
@@ -329,6 +330,7 @@ model Product {
   collection       CatalogueCollection[]
   CartItem         CartItem[]
   WishList         WishList[]
+
 }
 
 model Labels {
@@ -609,7 +611,7 @@ model Collection {
   showInHome          Boolean?              @default(false)
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
-  CatalogueCollection CatalogueCollection[]
+  // CatalogueCollection CatalogueCollection[]
 }
 
 model CatalogueCollection {
@@ -621,8 +623,8 @@ model CatalogueCollection {
   updatedAt     DateTime   @updatedAt
   catalogue     Catalogue? @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
   product       Product?   @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  collection    Collection @relation(fields: [collection_id], references: [id], onDelete: Cascade)
 
+ collection    collectionAll @relation("ProductCollections", fields: [collection_id], references: [id], onDelete: Cascade)
   // @@unique([catalogue_id, product_id])
 }
 
@@ -745,6 +747,18 @@ model ShippingCharges {
   pcs     String?
   type    ShippingChargestype
   amount  Float
+}
+
+
+model collectionAll{
+ id      String              @id @default(auto()) @map("_id") @db.ObjectId
+ title   String?
+ sub_title  String?
+ redirect_url String?
+ Manual Boolean
+ coverimage   String?
+CatalogueCollection CatalogueCollection[] @relation("ProductCollections")
+
 }
 
 enum ShippingChargestype {

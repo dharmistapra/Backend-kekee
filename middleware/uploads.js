@@ -192,6 +192,26 @@ let uploadProductImges = multer({
   fileFilter: filefilter,
 }).array("images", 6);
 
+
+
+
+const collectionImagestorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads/collection");
+  },
+  filename: async (req, file, cb) => {
+    let filename = await uniqueFilename(file);
+    cb(null, filename);
+  },
+});
+
+let collectionImages = multer({
+  storage: collectionImagestorage,
+  limits: { fileSize: 10000000 * 5 },
+  fileFilter: filefilter,
+}).single("coverimage");
+
+
 const data = {
   uploadHomeBanner: uploadConfiguration.homeBanner,
   uploadPageWiseBanner: uploadConfiguration.pageWiseBanner,
@@ -199,6 +219,8 @@ const data = {
   uploadProduct: uploadConfiguration.product,
   uploadContactDetails: uploadConfiguration.contactDetails,
   uploadstitchingmeasuremnt: uploadConfiguration.stitchingMeasurement,
+  // uploadCollectionImage:uploadConfiguration.co
+
 };
 
 const Categorystorage = multer.diskStorage({
@@ -222,5 +244,6 @@ export {
   uploadtestimonialImg,
   uploadProductImges,
   uploadCategorystorageImg,
+  collectionImages,
   data,
 };

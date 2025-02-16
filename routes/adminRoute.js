@@ -63,6 +63,7 @@ import {
   data,
   uploadProductImges,
   uploadCategorystorageImg,
+  collectionImages,
 } from "../middleware/uploads.js";
 import {
   deleteAttribute,
@@ -286,6 +287,7 @@ import {
   updateUsersStatus,
 } from "../controller/admin/users.js";
 import { deleteShippingcharges, paginationShippingcharges, postShippingcharges, updateShippingcharges } from "../controller/admin/shippingcharges.js";
+import { collectionToProduct, deleteCollectionbyId, getAllNewCollection, paginationAllCollection, paginationCollectionProduct, romoveProductInCollection, searchCollection, updateAllcollection, uploadImages } from "../controller/admin/newCollection.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -654,7 +656,7 @@ adminRouter.get(
 adminRouter.post("/collection", collectionSchema, postCollection);
 adminRouter.put("/collection/:id", collectionSchema, updateCollection);
 adminRouter.delete("/collection/:id", deleteCollection);
-adminRouter.get("/collection", getAllCollection);
+adminRouter.get("/collection", getAllNewCollection);
 adminRouter.get("/collection-status/:id", updateCollectionStatus);
 adminRouter.post("/collection-pagination", collectionPagination);
 adminRouter.post("/collection-position", positionSchema, collectionPosition);
@@ -673,4 +675,15 @@ adminRouter.post("/shipping-charges-pagination", paginationShippingcharges);
 adminRouter.post("/shipping-charges", [shippingchargesSchema], postShippingcharges);
 adminRouter.put("/shipping-charges/:id", [shippingchargesSchema], updateShippingcharges);
 adminRouter.delete("/shipping-charges/:id", deleteShippingcharges);
+
+
+adminRouter.post("/new-collection", collectionImages, uploadImages);
+adminRouter.put("/new-collection/:id", collectionImages, updateAllcollection);
+adminRouter.delete("/new-collection/:id",  deleteCollectionbyId);
+adminRouter.post("/collectionall-pagination",  paginationAllCollection);
+adminRouter.post("/search-collection",  searchCollection);
+adminRouter.get("/newall-collection",  getAllNewCollection);
+adminRouter.post("/product-collection",  collectionToProduct);
+adminRouter.post("/collection-product", paginationCollectionProduct);
+adminRouter.delete("/remove-product-collection/:id", romoveProductInCollection);
 export default adminRouter;

@@ -30,20 +30,7 @@ const getCollection = async (req, res, next) => {
         position: "asc",
       },
     });
-    // const transformedData = collection.map((item) => {
-    //   const catalogueCollection = item.CatalogueCollection.map((val) => {
-    //     const hasSingle = val.catalogue.Product.some(
-    //       (product) => product.showInSingle
-    //     );
-    //     delete val.catalogue.Product;
-    //     return {
-    //       ...val.catalogue,
-    //       type: hasSingle ? "Full Set + Single" : "Full Set",
-    //     };
-    //   });
-    //   delete item.CatalogueCollection;
-    //   return { ...item, catalogueCollection };
-    // });
+
 
     const transformedData = await Promise.all(
       collection.map(async (item) => {
@@ -137,41 +124,106 @@ const getCollection = async (req, res, next) => {
 };
 
 
-const getCollectionHome=async(req,res,next)=>{
-  try {
 
+
+
+
+
+
+
+
+
+const getCollectionHome = async (req, res, next) => {
+  try {
     const collections = await prisma.collectionAll.findMany({
       select: {
         id: true,
-        sub_title:true,
+        sub_title: true,
         title: true,
-        Manual:true,
-        coverimage:true,
-      }
+        Manual: true,
+        coverimage: true,
+        CatalogueCollection: {
+          take: 10,
+          where: { catalogue: { isNot: null } },
+          select: {
+            catalogue: {
+              select: {
+                id: true,
+                name: true,
+                cat_code: true,
+                no_of_product: true,
+                url: true,
+                price: true,
+                average_price: true,
+                offer_price: true,
+                coverImage: true,
+                _count: {
+                  select: {
+                    Product: {
+                      where: { showInSingle: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
+    const processedCatalogues = collections.map((collection) => {
+      return {
+        ...collection,
+        CatalogueCollection: collection.CatalogueCollection.map(
+          (catalogueCollectionItem) => {
+            const catalogue = catalogueCollectionItem.catalogue;
+            const hasSingle = catalogue._count.Product > 0;
+            delete catalogue._count;
+            return {
+              ...catalogue,
+              type: hasSingle ? "Full Set + Single" : "Full Set",
+            };
+          }
+        ),
+      };
+    });
 
-    const groupedCollections = collections.reduce((acc, collection) => {
-      if (!acc[collection.title]) {
-        acc[collection.title] = [];
-      }
-      acc[collection.title].push(collection);
-      return acc;
-    }, {});
+    const { groupedByTitle, manualCollections } = separateCollections(
+      processedCatalogues
+    );
 
-
-    return res.status(200).json({
+    return res.json({
       isSuccess: true,
-      message: "collection get successfully.",
-      data: groupedCollections,
+      message: "Collections retrieved successfully.",
+      data: { groupedByTitle, manualCollections },
     });
-
-
-  }catch(error){
-    console.log("eeeee",error)
-    const err = new Error("Something went wrong, Please try again!");
-    next(err);
+  } catch (error) {
+    console.error(error);
+    next(error);
   }
-}
+};
 
-export { getCollection,getCollectionHome };
+const groupCollectionsByTitle = (collections) => {
+  return collections.reduce((acc, collection) => {
+    if (!collection.Manual) {
+      acc[collection.title] = acc[collection.title] || [];
+      acc[collection.title].push(collection);
+    }
+    return acc;
+  }, {});
+};
+
+const separateCollections = (collections) => {
+  const groupedByTitle = groupCollectionsByTitle(collections);
+  const manualCollections = collections.filter((collection) => collection.Manual);
+
+  return { groupedByTitle, manualCollections };
+};
+
+
+
+
+
+
+
+export { getCollection, getCollectionHome };

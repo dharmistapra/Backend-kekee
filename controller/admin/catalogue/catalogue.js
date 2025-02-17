@@ -1427,7 +1427,7 @@ const addCatalogue = async (req, res, next) => {
     }
 
     if (collection_id && collection_id.length > 0) {
-      const isCollectionExists = await prisma.collection.findMany({
+      const isCollectionExists = await prisma.collectionAll.findMany({
         where: { id: { in: collection_id } },
         select: { id: true },
       });

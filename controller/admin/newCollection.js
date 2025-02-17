@@ -182,7 +182,6 @@ const collectionToProduct = async (req, res, next) => {
 
       if (type === "product") {
         for (const item of collections || []) {
-          // Check if the record already exists
           const existingRecord = await prisma.catalogueCollection.findFirst({
             where: {
               product_id: productId,
@@ -191,15 +190,13 @@ const collectionToProduct = async (req, res, next) => {
           });
 
           if (existingRecord) {
-            // Update the record (optional: add other fields if necessary)
             await prisma.catalogueCollection.update({
-              where: { id: existingRecord.id }, // Ensure `id` is available in your model
+              where: { id: existingRecord.id },
               data: {
-                product_id: productId, // Any additional update fields if necessary
+                product_id: productId,
               },
             });
           } else {
-            // Create a new record if it doesn't exist
             await prisma.catalogueCollection.create({
               data: {
                 product_id: productId,
@@ -210,7 +207,6 @@ const collectionToProduct = async (req, res, next) => {
         }
       } else if (type === "catalogue") {
         for (const item of collections || []) {
-          // Check if the record already exists
           const existingRecord = await prisma.catalogueCollection.findFirst({
             where: {
               catalogue_id: catalogueId,
@@ -219,15 +215,13 @@ const collectionToProduct = async (req, res, next) => {
           });
 
           if (existingRecord) {
-            // Update the record
             await prisma.catalogueCollection.update({
               where: { id: existingRecord.id },
               data: {
-                catalogue_id: catalogueId, // Any additional update fields if necessary
+                catalogue_id: catalogueId,
               },
             });
           } else {
-            // Create a new record if it doesn't exist
             await prisma.catalogueCollection.create({
               data: {
                 catalogue_id: catalogueId,
@@ -337,6 +331,90 @@ const deleteCollectionbyId = async (req, res, next) => {
 
 
 
+// const paginationCollectionProduct = async (req, res, next) => {
+//   try {
+//     const { perPage, pageNo, search, collectionId } = req.body;
+//     const page = +pageNo || 1;
+//     const take = +perPage || 10;
+//     const skip = (page - 1) * take;
+//     const filter = [
+//       { title: { contains: search, mode: "insensitive" } },
+//       { sub_title: { contains: search, mode: "insensitive" } },
+//       { redirect_url: { contains: search, mode: "insensitive" } },
+//     ];
+
+//     let searchFilter = createSearchFilter(search, filter);
+
+//     if (collectionId) {
+//       searchFilter = {
+//         ...searchFilter,
+//         collection_id: collectionId,
+//       };
+//     }
+
+//     const count = await prisma.catalogueCollection.count({
+//       where: searchFilter || undefined,
+//     });
+
+//     if (count === 0) {
+//       return res.status(200).json({
+//         isSuccess: true,
+//         message: "Collection not found!",
+//         data: [],
+//       });
+//     }
+
+//     const result = await prisma.catalogueCollection.findMany({
+//       where: searchFilter || undefined,
+//       select: {
+//         id: true,
+//         product: {
+//           select: {
+//             id: true,
+//             name: true,
+//             sku: true,
+//             image: true,
+//           },
+//         },
+//         catalogue: {
+//           select: {
+//             id: true,
+//             name: true,
+//             no_of_product: true,
+//             cat_code: true,
+//             coverImage: true
+//           },
+//         },
+//       },
+//       skip,
+//       take,
+//     });
+
+//     const cleanedResult = result.map((item) => ({
+//       ...item.product,
+//       catalogue: item.catalogue || null,
+//       catalogueCollectionId: item.id,
+//     }));
+
+
+
+//     return res.status(200).json({
+//       isSuccess: true,
+//       message: "Collection product get successfully.",
+//       data: cleanedResult,
+//       totalCount: count,
+//       currentPage: page,
+//       pagesize: take,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     let err = new Error("Something went wrong, please try again!");
+//     next(err);
+//   }
+// };
+
+
+
 const paginationCollectionProduct = async (req, res, next) => {
   try {
     const { perPage, pageNo, search, collectionId } = req.body;
@@ -366,14 +444,17 @@ const paginationCollectionProduct = async (req, res, next) => {
       return res.status(200).json({
         isSuccess: true,
         message: "Collection not found!",
-        data: [],
+        data: {
+          products: [],
+          catalogues: [],
+        },
       });
     }
 
     const result = await prisma.catalogueCollection.findMany({
       where: searchFilter || undefined,
       select: {
-        id:true,
+        id: true,
         product: {
           select: {
             id: true,
@@ -388,6 +469,7 @@ const paginationCollectionProduct = async (req, res, next) => {
             name: true,
             no_of_product: true,
             cat_code: true,
+            coverImage: true,
           },
         },
       },
@@ -395,18 +477,27 @@ const paginationCollectionProduct = async (req, res, next) => {
       take,
     });
 
-    const cleanedResult = result.map((item) => ({
-      ...item.product,
-      catalogue: item.catalogue || null,
-      catalogueCollectionId: item.id, 
-    }));
+    const products = result
+      .filter((item) => item.product)
+      .map((item) => ({
+        ...item.product,
+        catalogueCollectionId: item.id,
+      }));
 
-
+    const catalogues = result
+      .filter((item) => item.catalogue)
+      .map((item) => ({
+        ...item.catalogue,
+        catalogueCollectionId: item.id,
+      }));
 
     return res.status(200).json({
       isSuccess: true,
       message: "Collection product get successfully.",
-      data: cleanedResult,
+      data: {
+        products,
+        catalogues,
+      },
       totalCount: count,
       currentPage: page,
       pagesize: take,
@@ -417,8 +508,6 @@ const paginationCollectionProduct = async (req, res, next) => {
     next(err);
   }
 };
-
-
 
 
 const romoveProductInCollection = async (req, res, next) => {
@@ -450,5 +539,5 @@ const romoveProductInCollection = async (req, res, next) => {
     next(err);
   }
 }
-export { uploadImages, paginationAllCollection, searchCollection, getAllNewCollection, collectionToProduct, updateAllcollection, deleteCollectionbyId, paginationCollectionProduct,romoveProductInCollection };
+export { uploadImages, paginationAllCollection, searchCollection, getAllNewCollection, collectionToProduct, updateAllcollection, deleteCollectionbyId, paginationCollectionProduct, romoveProductInCollection };
 

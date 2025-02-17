@@ -154,7 +154,8 @@ const models = {
   stitchingValue: prisma.stitchingValue,
   collection: prisma.collection,
   users: prisma.users,
-  shippingCharges: prisma.shippingCharges
+  shippingCharges: prisma.shippingCharges,
+  collectionAll: prisma.collectionAll
 };
 
 const updatePosition = async (model, data) => {

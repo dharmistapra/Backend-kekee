@@ -1,10 +1,10 @@
 import prisma from "../../db/config.js";
-import { convertFilePathSlashes, deleteFile } from "../../helper/common.js";
+import { convertFilePathSlashes, deleteFile, updateStatus } from "../../helper/common.js";
 import createSearchFilter from "../../helper/searchFilter.js";
 
 const uploadImages = async (req, res, next) => {
   try {
-    const { title, sub_title, slug, Manual } = req.body;
+    const { title, sub_title, slug, Manual, position } = req.body;
 
     let path = "";
     if (req.file) {
@@ -17,6 +17,7 @@ const uploadImages = async (req, res, next) => {
         sub_title: sub_title,
         redirect_url: slug ? slug : '',
         coverimage: path,
+        position: Number(position),
         Manual: Manual == "Yes" ? true : false
       }
     })
@@ -250,7 +251,7 @@ const updateAllcollection = async (req, res, next) => {
   try {
 
     const { id } = req.params
-    const { title, sub_title, slug, Manual } = req.body;
+    const { title, sub_title, slug, Manual, position } = req.body;
     let path = "";
     if (req.file) {
       path = await convertFilePathSlashes(req.file.path);
@@ -278,6 +279,7 @@ const updateAllcollection = async (req, res, next) => {
       data: {
         title: title,
         sub_title: sub_title,
+        position: Number(position),
         redirect_url: slug && Manual == "No" ? slug : '',
         coverimage: Manual === "Yes" ? "" : path || undefined,
         Manual: Manual == "Yes" ? true : false
@@ -539,5 +541,53 @@ const romoveProductInCollection = async (req, res, next) => {
     next(err);
   }
 }
-export { uploadImages, paginationAllCollection, searchCollection, getAllNewCollection, collectionToProduct, updateAllcollection, deleteCollectionbyId, paginationCollectionProduct, romoveProductInCollection };
+
+
+
+const updateNewCollectionStatus = async (req, res, next) => {
+  try {
+    let id = req.params.id.trim();
+    const result = await updateStatus("collectionAll", id);
+    if (result.status === false)
+      return res
+        .status(400)
+        .json({ isSuccess: false, message: result.message });
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: result.message,
+      data: result.data,
+    });
+  } catch (error) {
+    console.log(error)
+    let err = new Error("Something went wrong, please try again!");
+    next(err);
+  }
+};
+
+
+const updateNewCollectionIsHome = async (req, res, next) => {
+  try {
+    let id = req.params.id.trim();
+    const findData = await prisma.collectionAll.findUnique({ where: { id: id } });
+    if (!findData) return { status: false, message: `collection not found!` };
+    const newStatus = !findData.showInHome;
+    const result = await prisma.collectionAll.update({
+      where: { id: id },
+      data: { showInHome: newStatus },
+    });
+
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: 'collection showin home active successfully',
+      data: result,
+    });
+  } catch (error) {
+    console.log(error)
+    let err = new Error("Something went wrong, please try again!");
+    next(err);
+  }
+};
+export { uploadImages, paginationAllCollection, searchCollection, getAllNewCollection, collectionToProduct, updateAllcollection, deleteCollectionbyId, paginationCollectionProduct, romoveProductInCollection, updateNewCollectionStatus, updateNewCollectionIsHome };
 

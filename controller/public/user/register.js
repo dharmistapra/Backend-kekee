@@ -110,7 +110,7 @@ const SendOtp = async (req, res, next) => {
             if (error) {
                 return res.status(500).json({ error: "Mail Send To Fail" })
             } else {
-                return res.status(200).json({ "status": 200, "message": "Mail Send Successfully", secret: secret, "email": email, })
+                return res.status(200).json({ "status": 200, "message": "An OTP has been sent to your email.", secret: secret, "email": email, })
             }
         })
     } catch (err) {
@@ -143,7 +143,6 @@ const VerifyOtp = async (req, res, next) => {
     } else {
         res.status(400).json({ isSuccess: false, message: 'Invalid Otp' });
     }
-
 }
 
 const resetPassword = async (req, res, next) => {

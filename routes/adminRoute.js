@@ -287,7 +287,7 @@ import {
   updateUsersStatus,
 } from "../controller/admin/users.js";
 import { deleteShippingcharges, paginationShippingcharges, postShippingcharges, updateShippingcharges } from "../controller/admin/shippingcharges.js";
-import { collectionToProduct, deleteCollectionbyId, getAllNewCollection, paginationAllCollection, paginationCollectionProduct, romoveProductInCollection, searchCollection, updateAllcollection, uploadImages } from "../controller/admin/newCollection.js";
+import { collectionToProduct, deleteCollectionbyId, getAllNewCollection, paginationAllCollection, paginationCollectionProduct, romoveProductInCollection, searchCollection, updateAllcollection, updateNewCollectionIsHome, updateNewCollectionStatus, uploadImages } from "../controller/admin/newCollection.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -679,11 +679,14 @@ adminRouter.delete("/shipping-charges/:id", deleteShippingcharges);
 
 adminRouter.post("/new-collection", collectionImages, uploadImages);
 adminRouter.put("/new-collection/:id", collectionImages, updateAllcollection);
-adminRouter.delete("/new-collection/:id",  deleteCollectionbyId);
-adminRouter.post("/collectionall-pagination",  paginationAllCollection);
-adminRouter.post("/search-collection",  searchCollection);
-adminRouter.get("/newall-collection",  getAllNewCollection);
-adminRouter.post("/product-collection",  collectionToProduct);
+adminRouter.delete("/new-collection/:id", deleteCollectionbyId);
+adminRouter.post("/collectionall-pagination", paginationAllCollection);
+adminRouter.post("/search-collection", searchCollection);
+adminRouter.get("/newall-collection", getAllNewCollection);
+adminRouter.post("/product-collection", collectionToProduct);
 adminRouter.post("/collection-product", paginationCollectionProduct);
 adminRouter.delete("/remove-product-collection/:id", romoveProductInCollection);
+
+adminRouter.get("/collection-all-status/:id", updateNewCollectionStatus);
+adminRouter.get("/collection-all-home/:id", updateNewCollectionIsHome);
 export default adminRouter;

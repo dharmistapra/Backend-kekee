@@ -293,7 +293,7 @@ model Product {
   id            String  @id @default(auto()) @map("_id") @db.ObjectId
   name          String
   catalogue_id  String? @db.ObjectId
-  collection_id  String? @db.ObjectId
+  collection_id String? @db.ObjectId
   sku           String
   url           String  @unique
   quantity      Int
@@ -330,7 +330,6 @@ model Product {
   collection       CatalogueCollection[]
   CartItem         CartItem[]
   WishList         WishList[]
-
 }
 
 model Labels {
@@ -599,18 +598,18 @@ model StitchingGroupOption {
 }
 
 model Collection {
-  id                  String                @id @default(auto()) @map("_id") @db.ObjectId
-  position            Int
-  name                String                @unique
-  title               String?               @default("")
-  meta_title          String?               @default("")
-  meta_keyword        String?               @default("")
-  meta_description    String?               @default("")
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  position         Int
+  name             String   @unique
+  title            String?  @default("")
+  meta_title       String?  @default("")
+  meta_keyword     String?  @default("")
+  meta_description String?  @default("")
   // image             String?             @default("")
-  isActive            Boolean               @default(true)
-  showInHome          Boolean?              @default(false)
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
+  isActive         Boolean  @default(true)
+  showInHome       Boolean? @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   // CatalogueCollection CatalogueCollection[]
 }
 
@@ -624,7 +623,7 @@ model CatalogueCollection {
   catalogue     Catalogue? @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
   product       Product?   @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
- collection    collectionAll @relation("ProductCollections", fields: [collection_id], references: [id], onDelete: Cascade)
+  collection collectionAll @relation("ProductCollections", fields: [collection_id], references: [id], onDelete: Cascade)
   // @@unique([catalogue_id, product_id])
 }
 
@@ -749,16 +748,19 @@ model ShippingCharges {
   amount  Float
 }
 
-
-model collectionAll{
- id      String              @id @default(auto()) @map("_id") @db.ObjectId
- title   String?
- sub_title  String?
- redirect_url String?
- Manual Boolean
- coverimage   String?
-CatalogueCollection CatalogueCollection[] @relation("ProductCollections")
-
+model collectionAll {
+  id                  String                @id @default(auto()) @map("_id") @db.ObjectId
+  title               String?
+  sub_title           String?
+  redirect_url        String?
+  Manual              Boolean
+  coverimage          String?
+  position            Int
+  isActive            Boolean               @default(true)
+  showInHome          Boolean?              @default(false)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  CatalogueCollection CatalogueCollection[] @relation("ProductCollections")
 }
 
 enum ShippingChargestype {

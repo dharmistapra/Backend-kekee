@@ -135,13 +135,23 @@ const getCollection = async (req, res, next) => {
 
 const getCollectionHome = async (req, res, next) => {
   try {
+    const position = parseInt(req.params.id) || 1
+    // let position = parseInt(req.query.position, 10) || 1;
     const collections = await prisma.collectionAll.findMany({
+      where: {
+        AND: [
+          { showInHome: true },
+          { isActive: true },
+        ]
+      },
       select: {
         id: true,
         sub_title: true,
         title: true,
         Manual: true,
         coverimage: true,
+        position: true,
+        redirect_url: true,
         CatalogueCollection: {
           take: 10,
           where: { catalogue: { isNot: null } },
@@ -157,6 +167,16 @@ const getCollectionHome = async (req, res, next) => {
                 average_price: true,
                 offer_price: true,
                 coverImage: true,
+                CatalogueCategory: {
+                  select: {
+                    category: {
+                      select: {
+                        id: true,
+                        name: true,
+                      }
+                    }
+                  }
+                },
                 _count: {
                   select: {
                     Product: {
@@ -171,6 +191,8 @@ const getCollectionHome = async (req, res, next) => {
       },
     });
 
+
+    console.log("collections", collections)
     const processedCatalogues = collections.map((collection) => {
       return {
         ...collection,
@@ -203,19 +225,27 @@ const getCollectionHome = async (req, res, next) => {
   }
 };
 
-const groupCollectionsByTitle = (collections) => {
-  return collections.reduce((acc, collection) => {
+const groupCollectionsByPosition = (collections) => {
+  // Group by position first
+  const result = collections.reduce((acc, collection) => {
     if (!collection.Manual) {
-      acc[collection.title] = acc[collection.title] || [];
-      acc[collection.title].push(collection);
+      const pos = collection.position;
+      if (!acc[pos]) {
+        acc[pos] = [];
+      }
+      acc[pos].push(collection); // Group collections by position
     }
     return acc;
   }, {});
+
+  return result;
 };
 
 const separateCollections = (collections) => {
-  const groupedByTitle = groupCollectionsByTitle(collections);
+  const groupedByTitle = groupCollectionsByPosition(collections);
   const manualCollections = collections.filter((collection) => collection.Manual);
+
+
 
   return { groupedByTitle, manualCollections };
 };

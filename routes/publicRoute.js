@@ -63,6 +63,7 @@ router.get("/location", async (req, res) => {
     if (userIp === "::1" || userIp === "127.0.0.1") {
       const response = await fetch("https://api64.ipify.org?format=json");
       const data = await response.json();
+      console.log("response=============>", data.ip)
       userIp = data.ip;
     }
 
@@ -84,6 +85,7 @@ router.get("/location", async (req, res) => {
     results.code = countryToCurrency[results.country_code] || "Unknown";
     res.json(results);
   } catch (error) {
+    console.log("errr", error)
     res.status(500).json({ error: "Unable to fetch location" });
   }
 });

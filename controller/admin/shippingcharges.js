@@ -1,7 +1,11 @@
 import prisma from "../../db/config.js";
-import { deleteData } from "../../helper/common.js";
+import { deleteData, deleteFile } from "../../helper/common.js";
 import createSearchFilter from "../../helper/searchFilter.js";
-
+import { getName } from "country-list";
+import csvtojson from "csvtojson";
+import xlsx from "xlsx";
+import fs from "fs"
+import iso from "iso-3166-1";
 const postShippingcharges = async (req, res, next) => {
     try {
         const { country, from, to, amount, type, pcs } = req.body;
@@ -120,6 +124,81 @@ const deleteShippingcharges = async (req, res, next) => {
     }
 };
 
+const uploadShippingChargeCSV = async (req, res, next) => {
+    if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const filePath = req.file.path;
+    try {
+        const workbook = xlsx.readFile(filePath);
+        const sheetName = workbook.SheetNames[0];
+        const jsonArray = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+        // Remove empty rows
+        const validEntries = jsonArray.filter((item) => item.Country);
+
+        // Create unique keys for lookup
+        const uniqueKeys = validEntries.map(item => ({
+            country: item.Country.toUpperCase(),
+            from: item.From,
+            to: item.To,
+            type: "weight"
+        }));
+
+        // Fetch all existing records in one query
+        const existingRecords = await prisma.shippingCharges.findMany({
+            where: {
+                OR: uniqueKeys
+            },
+            select: {
+                country: true,
+                from: true,
+                to: true,
+                type: true
+            }
+        });
+
+        // Create a set of existing keys for quick lookup
+        const existingSet = new Set(
+            existingRecords.map(record => `${record.country}_${record.from}_${record.to}_${record.type}`)
+        );
+
+        // Filter only new entries (not in existing records)
+        const newEntries = validEntries.filter(item => {
+            const key = `${item.Country.toUpperCase()}_${item.From}_${item.To}_weight`;
+            return !existingSet.has(key);
+        });
+
+        // Insert new records
+        if (newEntries.length > 0) {
+            await prisma.shippingCharges.createMany({
+                data: newEntries.map(item => ({
+                    country: item.Country.toUpperCase(),
+                    from: item.From,
+                    to: item.To,
+                    amount: parseFloat(item.Amount) || 0,
+                    type: "weight",
+                    pcs: item.Pcs || null
+                }))
+            });
+        }
+
+        // Delete the file after processing
+        await deleteFile(filePath);
+
+        return res.status(200).json({
+            isSuccess: true,
+            message: "File uploaded successfully",
+            insertedCount: newEntries.length
+        });
+    } catch (error) {
+        console.error(error);
+        await deleteFile(filePath);
+        next(new Error("Internal Server Error!"));
+    }
+};
 
 
-export { postShippingcharges, paginationShippingcharges, updateShippingcharges, deleteShippingcharges };
+
+export { postShippingcharges, paginationShippingcharges, updateShippingcharges, deleteShippingcharges, uploadShippingChargeCSV };

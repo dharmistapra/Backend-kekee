@@ -174,13 +174,9 @@ const categoryPagination = async (req, res, next) => {
     const take = +perPage || 10;
     const skip = (page - 1) * take;
 
-    const filter = [
-      { name: { contains: search, mode: "insensitive" } },
-    ]
-
+    const filter = [{ name: { contains: search, mode: "insensitive" } }];
 
     const searchFilter = createSearchFilter(search, filter);
-
 
     const count = await prisma.categoryMaster.count({
       where: { parent_id: parent_id },

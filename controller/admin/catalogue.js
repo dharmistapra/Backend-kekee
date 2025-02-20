@@ -176,8 +176,8 @@ const postCatalogue = async (req, res, next) => {
         // }),
         ...(attributes &&
           attributes.length > 0 && {
-          attributeValues: { create: attributeValueConnection },
-        }),
+            attributeValues: { create: attributeValueConnection },
+          }),
         tag: tag,
         isActive,
       },
@@ -222,14 +222,28 @@ const paginationCatalogue = async (req, res, next) => {
       { name: { contains: search, mode: "insensitive" } },
       { cat_code: { contains: search, mode: "insensitive" } },
       { url: { contains: search, mode: "insensitive" } },
-      { no_of_product: isNaN(search) ? undefined : { equals: parseFloat(search) } },
+      {
+        no_of_product: isNaN(search)
+          ? undefined
+          : { equals: parseFloat(search) },
+      },
       { quantity: isNaN(search) ? undefined : { equals: parseFloat(search) } },
       { price: isNaN(search) ? undefined : { equals: parseFloat(search) } },
-      { catalogue_discount: isNaN(search) ? undefined : { equals: parseFloat(search) } },
-      { average_price: isNaN(search) ? undefined : { equals: parseFloat(search) } },
+      {
+        catalogue_discount: isNaN(search)
+          ? undefined
+          : { equals: parseFloat(search) },
+      },
+      {
+        average_price: isNaN(search)
+          ? undefined
+          : { equals: parseFloat(search) },
+      },
       { GST: isNaN(search) ? undefined : { equals: parseFloat(search) } },
-      { offer_price: isNaN(search) ? undefined : { equals: parseFloat(search) } },
-    ]
+      {
+        offer_price: isNaN(search) ? undefined : { equals: parseFloat(search) },
+      },
+    ];
 
     const searchFilter = createSearchFilter(search, filter);
 
@@ -242,7 +256,7 @@ const paginationCatalogue = async (req, res, next) => {
     const condition = {
       CatalogueCategory: { some: { category_id: category_id } },
       deletedAt: null,
-      ...searchFilter
+      ...searchFilter,
     };
     const count = await prisma.catalogue.count({ where: condition });
     if (count === 0)
@@ -415,11 +429,11 @@ const updateCatalogue = async (req, res, next) => {
         },
         ...(attributes && attributes.length > 0
           ? {
-            attributeValues: {
-              deleteMany: {},
-              create: attributeValueConnection,
-            },
-          }
+              attributeValues: {
+                deleteMany: {},
+                create: attributeValueConnection,
+              },
+            }
           : { attributeValues: { deleteMany: {} } }),
         tag,
         isActive,

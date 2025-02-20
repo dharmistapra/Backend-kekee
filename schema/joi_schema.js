@@ -89,6 +89,7 @@ const attributeValueSchema = async (req, res, next) => {
     value: Joi.string().optional().default(""),
     colour: Joi.string().optional().allow("").default(""),
     attribute_id: Joi.string().required(),
+    search: Joi.string().optional().allow(""),
   });
   await JoiSchemaValidation(schema, req, next);
 };
@@ -98,7 +99,7 @@ const attributeValuePageSchema = async (req, res, next) => {
     attribute_id: Joi.string().required(),
     perPage: Joi.number().required(),
     pageNo: Joi.number().required(),
-    search: Joi.string().optional().allow('')
+    search: Joi.string().optional().allow(""),
   });
   await JoiSchemaValidation(schema, req, next);
 };
@@ -488,6 +489,259 @@ const catalogueSchema = async (req, res, next) => {
   return schema;
 
   // await JoiSchemaValidation(schema, req, next);
+};
+
+const importCatalogueSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    category: Joi.array().items(Joi.string().required()).optional(),
+    collection: Joi.array().items(Joi.string()).optional(),
+    name: Joi.string().required(),
+    cat_code: Joi.string().required(),
+    url: Joi.string().optional().default(""),
+    quantity: Joi.number().required(),
+    no_of_product: Joi.number().required(),
+    price: Joi.number().required(),
+    catalogue_discount: Joi.number().allow("").optional().default(0),
+    average_price: Joi.number().required(),
+    GST: Joi.number().optional(),
+    offer_price: Joi.number().optional(),
+    stitching: Joi.boolean().optional().default(false),
+    size: Joi.boolean().optional().default(false),
+    weight: Joi.number().required(),
+    attributes: Joi.array()
+      .items({
+        attribute_id: Joi.string().required(),
+        attributeValue_id: Joi.string()
+          // .items({
+          //   id: Joi.string().required(),
+          //   value: Joi.string().optional().allow("").default(""),
+          // })
+          .optional()
+          .default([]),
+        // value: Joi.string().optional().allow("").default(""),
+      })
+      .optional()
+      .default([]),
+    meta_title: Joi.string().optional().default(""),
+    meta_keyword: Joi.string().optional().default(""),
+    meta_description: Joi.string().optional().default(""),
+    coverImage: Joi.any(),
+    // mobileImage: Joi.any(),
+    description: Joi.string().required(),
+    tag: Joi.array().items(Joi.string().required()).required(),
+    isActive: Joi.boolean().optional().default(true),
+    product: Joi.array().items({
+      // id: Joi.string().optional(),
+      name: Joi.string().required(),
+      // catalogue_id: Joi.optional().allow(null).default(null),
+      cat_code: Joi.string().optional(),
+      sku: Joi.string().required(),
+      // url: Joi.string().optional().default(""),
+      showInSingle: Joi.boolean().optional().default(false),
+      quantity: Joi.number().required(),
+      weight: Joi.number().required(),
+      // price: Joi.number().required(),
+      average_price: Joi.number().optional().default(0),
+      retail_price: Joi.when("showInSingle", {
+        is: true,
+        then: Joi.number().required(),
+        otherwise: Joi.number().optional().default(0),
+      }),
+      retail_GST: Joi.number().optional().default(0),
+      retail_discount: Joi.optional().default(0),
+      offer_price: Joi.when("retail_price", {
+        is: "retail_price",
+        then: Joi.number().required(),
+        otherwise: Joi.number().optional().default(0),
+      }),
+      description: Joi.string().required(),
+      // label: Joi.string().optional().default(null),
+      tag: Joi.array().optional().default([]),
+
+      // readyToShip: Joi.boolean().optional().default(false),
+      // images: Joi.optional(),
+      image: Joi.array().items(Joi.string().required()).required(),
+      category_id: Joi.array().optional().min(1),
+      collection_id: Joi.array().optional().default([]),
+      // attributeValue_id: Joi.array().optional().min(1),
+      attributes: Joi.array()
+        .items({
+          attribute_id: Joi.string().required(),
+          attributeValue: Joi.array()
+            .items({
+              id: Joi.string().required(),
+              value: Joi.string().optional().allow("").default(""),
+            })
+            .optional()
+            .default([]),
+          // value: Joi.string().optional().allow("").default(""),
+        })
+        .optional()
+        .default([]),
+      size: Joi.array()
+        .items({
+          id: Joi.string().required(),
+          price: Joi.number().required().default(0),
+          quantity: Joi.number().required().default(0),
+        })
+        .optional()
+        .default([]),
+      stitching: Joi.boolean().optional().default(false),
+      meta_title: Joi.string().optional().allow("").default(""),
+      meta_keyword: Joi.string().optional().allow("").default(""),
+      meta_description: Joi.string().optional().allow("").default(""),
+      product: Joi.array().items().optional(),
+    }),
+  });
+
+  return schema;
+};
+
+const importProductSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    // id: Joi.string().optional(),
+    category: Joi.array().items().optional(),
+    collection: Joi.array().items().optional(),
+    name: Joi.string().required(),
+    // catalogue_id: Joi.optional().allow(null).default(null),
+    // cat_code: Joi.string().optional(),
+    sku: Joi.string().required(),
+    url: Joi.string().optional(),
+    showInSingle: Joi.boolean().optional().default(false),
+    quantity: Joi.number().required(),
+    weight: Joi.number().required(),
+    // price: Joi.number().required(),
+    average_price: Joi.number().optional().default(0),
+    retail_price: Joi.number().when("showInSingle", {
+      is: true,
+      then: Joi.number().required(),
+      otherwise: Joi.number().optional().default(0),
+    }),
+    retail_GST: Joi.number().optional().default(0),
+    retail_discount: Joi.optional().default(0),
+    offer_price: Joi.when("retail_price", {
+      is: "retail_price",
+      then: Joi.number().required(),
+      otherwise: Joi.number().optional().default(0),
+    }),
+    description: Joi.string().required(),
+    // label: Joi.string().optional().default(null),
+    tag: Joi.array().optional().default([]),
+
+    // readyToShip: Joi.boolean().optional().default(false),
+    // images: Joi.optional(),
+    image: Joi.array().items(Joi.string().required()).required(),
+    category_id: Joi.array().optional().min(1),
+    collection_id: Joi.array().optional().default([]),
+    // attributeValue_id: Joi.array().optional().min(1),
+    attributes: Joi.array()
+      .items({
+        attribute_id: Joi.string().required(),
+        attributeValue_id: Joi.string()
+          // .items({
+          //   id: Joi.string().required(),
+          //   value: Joi.string().optional().allow("").default(""),
+          // })
+          .optional()
+          .default([]),
+        // value: Joi.string().optional().allow("").default(""),
+      })
+      .optional()
+      .default([]),
+    size: Joi.array()
+      .items({
+        id: Joi.string().required(),
+        price: Joi.number().required().default(0),
+        quantity: Joi.number().required().default(0),
+      })
+      .optional()
+      .default([]),
+    stitching: Joi.boolean().optional().default(false),
+    readyToShip: Joi.boolean().optional().default(false),
+    isActive: Joi.boolean().optional().default(false),
+    meta_title: Joi.string().optional().allow("").default(""),
+    meta_keyword: Joi.string().optional().allow("").default(""),
+    meta_description: Joi.string().optional().allow("").default(""),
+  });
+
+  return schema;
+};
+
+const importCatalogue = async (req, res, next) => {
+  const schema = Joi.object({
+    category: Joi.array().items(Joi.string().required()).required(),
+    collection: Joi.array().items(Joi.string()).optional(),
+    catCode: Joi.string().optional(),
+    productCode: Joi.string().optional(),
+    productName: Joi.string()
+      .when(
+        Joi.object({
+          catCode: Joi.exist(),
+          productCode: Joi.exist(),
+        }).unknown(),
+        {
+          then: Joi.required(),
+          otherwise: Joi.forbidden(),
+        }
+      )
+      .optional(),
+    description: Joi.string().required(),
+    noOfProduct: Joi.number().when("cat_code", {
+      is: Joi.exist(),
+      then: Joi.required(),
+      otherwise: Joi.optional(),
+    }),
+    quantity: Joi.number().required(),
+    catalogueItemMarketPrice: Joi.number()
+      .when("cat_code", {
+        is: Joi.exist(),
+        then: Joi.required(),
+        otherwise: Joi.forbidden(),
+      })
+      .optional(),
+    catalogueDiscount: Joi.number()
+      .when("cat_code", {
+        is: Joi.exist(),
+        then: Joi.optional().default(0),
+        otherwise: Joi.forbidden(),
+      })
+      .optional(),
+    retailPrice: Joi.number()
+      .when(
+        Joi.object({
+          showInSingle: Joi.valid(true),
+          productCode: Joi.exist(),
+        }).unknown(),
+        {
+          then: Joi.required().messages({
+            "any.required":
+              "retailPrice is required when showInSingle is true and productCode is available",
+          }),
+          otherwise: Joi.optional().default(0),
+        }
+      )
+
+      .optional(),
+    retailDiscount: Joi.number().optional(),
+    showInSingle: Joi.boolean().optional().default(false),
+    GST: Joi.number().optional(),
+    metaTitle: Joi.string().optional(),
+    metaKeyword: Joi.string().optional(),
+    metaDescription: Joi.string().optional(),
+    weight: Joi.number().optional(),
+    tag: Joi.array().items().optional(),
+    cat_image: Joi.string().when("catCode", {
+      is: Joi.exist(),
+      then: Joi.required(),
+      otherwise: Joi.optional(),
+    }),
+    image: Joi.array().items().optional(),
+    isStitching: Joi.boolean().optional(),
+    isSize: Joi.boolean().optional(),
+    isActive: Joi.boolean().optional(),
+  });
+
+  return schema;
 };
 
 /** END CATALOGUE */
@@ -909,5 +1163,8 @@ export {
   userchangePasswordSchema,
   resetPasswordUsersSchema,
   updateUserbasicInfoSchema,
+  importCatalogueSchema,
+  importProductSchema,
+  importCatalogue,
   shippingchargesSchema
 };

@@ -95,8 +95,8 @@ const getAttributeValuePagination = async (req, res, next) => {
     const skip = (page - 1) * take;
     const filter = [
       { name: { contains: search, mode: "insensitive" } },
-      { value: { contains: search, mode: "insensitive" } }
-    ]
+      { value: { contains: search, mode: "insensitive" } },
+    ];
 
     const searchFilter = createSearchFilter(search, filter);
     const totalCount = await prisma.attributeValue.count({
@@ -124,7 +124,7 @@ const getAttributeValuePagination = async (req, res, next) => {
     const data = await prisma.attributeValue.findMany({
       where: {
         attr_id: attribute_id,
-        ...searchFilter
+        ...searchFilter,
       },
       include: {
         attribute: {
@@ -150,7 +150,7 @@ const getAttributeValuePagination = async (req, res, next) => {
       pagesize: take,
     });
   } catch (error) {
-    console.log("errr", error)
+    console.log("errr", error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }

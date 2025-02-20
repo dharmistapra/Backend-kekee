@@ -18,6 +18,7 @@ const folderPaths = {
 
   contactDetails: "./uploads/contactDetails",
   measurement: "./uploads/measurement",
+  importcsv: "./uploads/importcsv",
 };
 
 const storage = multer.diskStorage({
@@ -68,6 +69,16 @@ const filefilter1 = (req, file, cb) => {
     req.fileValidationError = "Please upload valid image or video.";
     return cb(null, false);
   }
+};
+
+const csvFile = (req, file, cb) => {
+  if (file) {
+    if (!file.originalname.match(/\.(csv)$/)) {
+      req.fileValidationError = "Only csv file are allowed!";
+      return cb(null, false);
+    }
+  }
+  cb(null, true);
 };
 
 const dynamicStorage = (entityType) => {
@@ -139,10 +150,13 @@ const uploadConfiguration = {
     fileFilter: filefilter,
     limits: { fileSize: 10000000 * 5 },
   }).array("image"),
+
+  importcsv: multer({
+    storage: dynamicStorage("importcsv"),
+    fileFilter: csvFile,
+    limits: { fileSize: 10000000 * 5 },
+  }).single("csv"),
 };
-
-
-
 
 const currencystorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -219,6 +233,7 @@ const data = {
   uploadProduct: uploadConfiguration.product,
   uploadContactDetails: uploadConfiguration.contactDetails,
   uploadstitchingmeasuremnt: uploadConfiguration.stitchingMeasurement,
+  uploadCSV: uploadConfiguration.importcsv,
   // uploadCollectionImage:uploadConfiguration.co
 
 };
@@ -239,11 +254,44 @@ let uploadCategorystorageImg = multer({
   fileFilter: filefilter,
 }).single("image");
 
+
+
+
+
+const fileFilterCSV = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (ext === ".csv") {
+    cb(null, true);
+  } else {
+    cb(new Error("Only .csv files are allowed!"), false);
+  }
+}
+
+const ShippingChagrestorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads/shippingcharges");
+  },
+  filename: async (req, file, cb) => {
+    let filename = await uniqueFilename(file);
+    cb(null, filename);
+  },
+});
+
+let uploadShippingChagresCSV = multer({
+  storage: ShippingChagrestorage,
+  limits: { fileSize: 10000000 * 5 },
+  fileFilter: fileFilterCSV,
+}).single("files");
+
+
+
+
 export {
   uploadcurrencyImg,
   uploadtestimonialImg,
   uploadProductImges,
   uploadCategorystorageImg,
   collectionImages,
+  uploadShippingChagresCSV,
   data,
 };

@@ -1,7 +1,11 @@
 import prisma from "../../db/config.js";
-import { deleteData } from "../../helper/common.js";
+import { deleteData, deleteFile } from "../../helper/common.js";
 import createSearchFilter from "../../helper/searchFilter.js";
-
+import { getName } from "country-list";
+import csvtojson from "csvtojson";
+import xlsx from "xlsx";
+import fs from "fs"
+import iso from "iso-3166-1";
 const postShippingcharges = async (req, res, next) => {
     try {
         const { country, from, to, amount, type, pcs } = req.body;
@@ -120,6 +124,135 @@ const deleteShippingcharges = async (req, res, next) => {
     }
 };
 
+const uploadShippingChargeCSV = async (req, res, next) => {
+    if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const filePath = req.file.path;
+    try {
+        const workbook = xlsx.readFile(filePath);
+        const sheetName = workbook.SheetNames[0];
+        const jsonArray = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+        const validEntries = jsonArray.filter((item) => item.Country);
+        const uniqueKeys = validEntries.map(item => ({
+            country: item.Country.toUpperCase(),
+            from: item.From,
+            to: item.To,
+            type: "weight"
+        }));
+
+        const existingRecords = await prisma.shippingCharges.findMany({
+            where: {
+                OR: uniqueKeys
+            },
+            select: {
+                country: true,
+                from: true,
+                to: true,
+                type: true
+            }
+        });
+
+        const existingSet = new Set(
+            existingRecords.map(record => `${record.country}_${record.from}_${record.to}_${record.type}`)
+        );
+
+        const newEntries = validEntries.filter(item => {
+            const key = `${item.Country.toUpperCase()}_${item.From}_${item.To}_weight`;
+            return !existingSet.has(key);
+        });
+
+        if (newEntries.length > 0) {
+            await prisma.shippingCharges.createMany({
+                data: newEntries.map(item => ({
+                    country: item.Country.toUpperCase(),
+                    from: item.From,
+                    to: item.To,
+                    amount: parseFloat(item.Amount) || 0,
+                    type: "weight",
+                    pcs: item.Pcs || null
+                }))
+            });
+        }
+
+        await deleteFile(filePath);
+
+        return res.status(200).json({
+            isSuccess: true,
+            message: "File uploaded successfully",
+            insertedCount: newEntries.length
+        });
+    } catch (error) {
+        console.error(error);
+        await deleteFile(filePath);
+        next(new Error("Internal Server Error!"));
+    }
+};
 
 
-export { postShippingcharges, paginationShippingcharges, updateShippingcharges, deleteShippingcharges };
+
+
+const countrylistGroup = async (req, res, next) => {
+    try {
+
+        const result = await prisma.shippingCharges.groupBy({
+            by: ['country'],
+        });
+
+        return res.status(200).json({ isSuccess: true, "message": "country get successfully", data: result })
+
+    } catch (error) {
+        next(new Error("Internal Server Error!"));
+    }
+}
+
+
+
+const findShippingPrice = async (req, res, next) => {
+    try {
+        const { weight, country } = req.body;
+        const shippingRules = await prisma.shippingCharges.findMany({
+            where: { country: country },
+            orderBy: { to: 'asc' }
+        });
+
+        if (!shippingRules || shippingRules.length === 0) {
+            return res.status(404).json({ isSuccess: false, message: "No shipping rules found for this country" });
+        }
+        let shippingCost = null;
+
+        for (let rule of shippingRules) {
+            let minWeight = parseFloat(rule.from);
+            let maxWeight = parseFloat(rule.to);
+
+            if (weight >= minWeight && weight <= maxWeight) {
+                shippingCost = rule.amount;
+                break;
+            }
+        }
+
+        if (shippingCost === null) {
+            return res.status(404).json({ isSuccess: false, message: "No matching shipping rule found for this weight" });
+        }
+
+        res.status(200).json({ isSuccess: true, data: { shippingCost } });
+
+    } catch (error) {
+        console.error("Error finding shipping price:", error);
+        res.status(500).json({ isSuccess: false, message: "Internal server error" });
+    }
+};
+
+
+
+export {
+    postShippingcharges,
+    paginationShippingcharges,
+    updateShippingcharges,
+    deleteShippingcharges,
+    uploadShippingChargeCSV,
+    countrylistGroup,
+    findShippingPrice
+
+};

@@ -54,41 +54,93 @@ const countryToCurrency = {
   AU: "AUD",
 };
 
+// router.get("/location", async (req, res) => {
+//   try {
+//     let userIp =
+//       req.clientIp ||
+//       req.headers["x-forwarded-for"] ||
+//       req.socket.remoteAddress;
+//     if (userIp === "::1" || userIp === "127.0.0.1") {
+//       const response = await fetch("https://api64.ipify.org?format=json");
+//       const data = await response.json();
+//       console.log("response=============>", data.ip)
+//       userIp = data.ip;
+//     }
+
+//     if (userIp.startsWith("::ffff:")) {
+//       userIp = userIp.replace("::ffff:", "");
+//     }
+
+//     const privateIpPattern =
+//       /^(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)$/;
+//     if (privateIpPattern.test(userIp)) {
+//       return res.json({
+//         message:
+//           "Private network IP detected. No public location data available.",
+//         ip: userIp,
+//       });
+//     }
+
+//     const results = await nodeIplocate(userIp);
+//     results.code = countryToCurrency[results.country_code] || "Unknown";
+//     res.json(results);
+//   } catch (error) {
+//     console.log("errr", error)
+//     res.status(500).json({ error: "Unable to fetch location" });
+//   }
+// });
+
 router.get("/location", async (req, res) => {
   try {
     let userIp =
       req.clientIp ||
       req.headers["x-forwarded-for"] ||
       req.socket.remoteAddress;
+
+    console.log("Detected IP before processing:", userIp);
+
+    if (!userIp) {
+      return res.status(500).json({ error: "User IP not detected" });
+    }
+
     if (userIp === "::1" || userIp === "127.0.0.1") {
       const response = await fetch("https://api64.ipify.org?format=json");
       const data = await response.json();
-      console.log("response=============>", data.ip)
       userIp = data.ip;
+      console.log("Public IP from API:", userIp);
     }
 
     if (userIp.startsWith("::ffff:")) {
       userIp = userIp.replace("::ffff:", "");
     }
 
+    console.log("Final IP:", userIp);
+
     const privateIpPattern =
       /^(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)$/;
     if (privateIpPattern.test(userIp)) {
       return res.json({
-        message:
-          "Private network IP detected. No public location data available.",
+        message: "Private network IP detected. No public location data available.",
         ip: userIp,
       });
     }
 
-    const results = await nodeIplocate(userIp);
-    results.code = countryToCurrency[results.country_code] || "Unknown";
+    // ✅ Using ip-api.com instead of node-iplocate
+    const response = await fetch(`http://ip-api.com/json/${userIp}`);
+    const results = await response.json();
+
+    if (results.status !== "success") {
+      return res.status(500).json({ error: "Failed to fetch location" });
+    }
+
+    results.code = countryToCurrency?.[results.countryCode] || "Unknown";
     res.json(results);
   } catch (error) {
-    console.log("errr", error)
+    console.error("Location Fetch Error:", error);
     res.status(500).json({ error: "Unable to fetch location" });
   }
 });
+
 
 router.get("/menu", getAllMenu);
 router.get("/homebanner", getHomeBanner);

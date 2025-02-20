@@ -741,11 +741,18 @@ const paginationReatilProduct = async (req, res, next) => {
             category: true,
           },
         },
-        collection: {
-          include: {
-            collection: true,
-          },
+
+        collection:{
+          include:{
+            collection:true
+          }
         },
+        
+        // collection: {
+        //   include: {
+        //     collection: true,
+        //   },
+        // },
         colours: {
           include: {
             colour: true,
@@ -770,7 +777,7 @@ const paginationReatilProduct = async (req, res, next) => {
       orderBy: { updatedAt: "desc" },
     });
 
-    const formattedData = data.map((product) => {
+    const formattedData = data?.map((product) => {
       const newProduct = {};
       Object.keys(product).forEach((key) => {
         if (key !== "attributeValues" && key !== "colours") {
@@ -851,7 +858,7 @@ const paginationReatilProduct = async (req, res, next) => {
           : null
       );
 
-      newProduct.collection = product.collection.map((cat) =>
+      newProduct.collection = product?.collection?.map((cat) =>
         cat.collection
           ? {
             id: cat.collection.id,

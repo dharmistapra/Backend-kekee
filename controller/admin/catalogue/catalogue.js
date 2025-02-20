@@ -1427,7 +1427,7 @@ const addCatalogue = async (req, res, next) => {
     }
 
     if (collection_id && collection_id.length > 0) {
-      const isCollectionExists = await prisma.collection.findMany({
+      const isCollectionExists = await prisma.collectionAll.findMany({
         where: { id: { in: collection_id } },
         select: { id: true },
       });
@@ -1488,7 +1488,6 @@ const addCatalogue = async (req, res, next) => {
     // Validate and process product updates
     const productId = product.map((value) => value.id);
 
-    // const productId = product.map((value) => value.id);
     if (no_of_product !== product.length) {
       if (req.file) await deleteFile(filepath);
       return res

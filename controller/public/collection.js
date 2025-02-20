@@ -30,20 +30,7 @@ const getCollection = async (req, res, next) => {
         position: "asc",
       },
     });
-    // const transformedData = collection.map((item) => {
-    //   const catalogueCollection = item.CatalogueCollection.map((val) => {
-    //     const hasSingle = val.catalogue.Product.some(
-    //       (product) => product.showInSingle
-    //     );
-    //     delete val.catalogue.Product;
-    //     return {
-    //       ...val.catalogue,
-    //       type: hasSingle ? "Full Set + Single" : "Full Set",
-    //     };
-    //   });
-    //   delete item.CatalogueCollection;
-    //   return { ...item, catalogueCollection };
-    // });
+
 
     const transformedData = await Promise.all(
       collection.map(async (item) => {
@@ -136,4 +123,137 @@ const getCollection = async (req, res, next) => {
   }
 };
 
-export { getCollection };
+
+
+
+
+
+
+
+
+
+
+const getCollectionHome = async (req, res, next) => {
+  try {
+    const position = parseInt(req.params.id) || 1
+    // let position = parseInt(req.query.position, 10) || 1;
+    const collections = await prisma.collectionAll.findMany({
+      where: {
+        AND: [
+          { showInHome: true },
+          { isActive: true },
+        ]
+      },
+      select: {
+        id: true,
+        sub_title: true,
+        title: true,
+        Manual: true,
+        coverimage: true,
+        position: true,
+        redirect_url: true,
+        CatalogueCollection: {
+          take: 10,
+          where: { catalogue: { isNot: null } },
+          select: {
+            catalogue: {
+              select: {
+                id: true,
+                name: true,
+                cat_code: true,
+                no_of_product: true,
+                url: true,
+                price: true,
+                average_price: true,
+                offer_price: true,
+                coverImage: true,
+                CatalogueCategory: {
+                  select: {
+                    category: {
+                      select: {
+                        id: true,
+                        name: true,
+                      }
+                    }
+                  }
+                },
+                _count: {
+                  select: {
+                    Product: {
+                      where: { showInSingle: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+
+    console.log("collections", collections)
+    const processedCatalogues = collections.map((collection) => {
+      return {
+        ...collection,
+        CatalogueCollection: collection.CatalogueCollection.map(
+          (catalogueCollectionItem) => {
+            const catalogue = catalogueCollectionItem.catalogue;
+            const hasSingle = catalogue._count.Product > 0;
+            delete catalogue._count;
+            return {
+              ...catalogue,
+              type: hasSingle ? "Full Set + Single" : "Full Set",
+            };
+          }
+        ),
+      };
+    });
+
+    const { groupedByTitle, manualCollections } = separateCollections(
+      processedCatalogues
+    );
+
+    return res.json({
+      isSuccess: true,
+      message: "Collections retrieved successfully.",
+      data: { groupedByTitle, manualCollections },
+    });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
+
+const groupCollectionsByPosition = (collections) => {
+  // Group by position first
+  const result = collections.reduce((acc, collection) => {
+    if (!collection.Manual) {
+      const pos = collection.position;
+      if (!acc[pos]) {
+        acc[pos] = [];
+      }
+      acc[pos].push(collection); // Group collections by position
+    }
+    return acc;
+  }, {});
+
+  return result;
+};
+
+const separateCollections = (collections) => {
+  const groupedByTitle = groupCollectionsByPosition(collections);
+  const manualCollections = collections.filter((collection) => collection.Manual);
+
+
+
+  return { groupedByTitle, manualCollections };
+};
+
+
+
+
+
+
+
+export { getCollection, getCollectionHome };

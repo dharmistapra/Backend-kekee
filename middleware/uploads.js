@@ -206,6 +206,26 @@ let uploadProductImges = multer({
   fileFilter: filefilter,
 }).array("images", 6);
 
+
+
+
+const collectionImagestorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads/collection");
+  },
+  filename: async (req, file, cb) => {
+    let filename = await uniqueFilename(file);
+    cb(null, filename);
+  },
+});
+
+let collectionImages = multer({
+  storage: collectionImagestorage,
+  limits: { fileSize: 10000000 * 5 },
+  fileFilter: filefilter,
+}).single("coverimage");
+
+
 const data = {
   uploadHomeBanner: uploadConfiguration.homeBanner,
   uploadPageWiseBanner: uploadConfiguration.pageWiseBanner,
@@ -214,6 +234,8 @@ const data = {
   uploadContactDetails: uploadConfiguration.contactDetails,
   uploadstitchingmeasuremnt: uploadConfiguration.stitchingMeasurement,
   uploadCSV: uploadConfiguration.importcsv,
+  // uploadCollectionImage:uploadConfiguration.co
+
 };
 
 const Categorystorage = multer.diskStorage({
@@ -232,10 +254,44 @@ let uploadCategorystorageImg = multer({
   fileFilter: filefilter,
 }).single("image");
 
+
+
+
+
+const fileFilterCSV = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (ext === ".csv") {
+    cb(null, true);
+  } else {
+    cb(new Error("Only .csv files are allowed!"), false);
+  }
+}
+
+const ShippingChagrestorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads/shippingcharges");
+  },
+  filename: async (req, file, cb) => {
+    let filename = await uniqueFilename(file);
+    cb(null, filename);
+  },
+});
+
+let uploadShippingChagresCSV = multer({
+  storage: ShippingChagrestorage,
+  limits: { fileSize: 10000000 * 5 },
+  fileFilter: fileFilterCSV,
+}).single("files");
+
+
+
+
 export {
   uploadcurrencyImg,
   uploadtestimonialImg,
   uploadProductImges,
   uploadCategorystorageImg,
+  collectionImages,
+  uploadShippingChagresCSV,
   data,
 };

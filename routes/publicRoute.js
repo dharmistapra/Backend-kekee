@@ -34,12 +34,14 @@ import {
   resetPasswordUsersSchema,
   verifyOtpSchema,
 } from "../schema/joi_schema.js";
-import { getCollection } from "../controller/public/collection.js";
+import { getCollection, getCollectionHome } from "../controller/public/collection.js";
 import { postNewsLetter } from "../controller/public/newsLetter.js";
 import nodeIplocate from "node-iplocate";
 import fetch from "node-fetch";
 // import { resetPassword } from "../auth/auth.js";
 import { resetPassword } from "../controller/public/user/register.js";
+import { gettestimonial } from "../controller/public/testimonial.js";
+import { countrylistGroup, findShippingPrice } from "../controller/admin/shippingcharges.js";
 const router = express.Router();
 
 // MENU API
@@ -62,6 +64,7 @@ router.get("/location", async (req, res) => {
     if (userIp === "::1" || userIp === "127.0.0.1") {
       const response = await fetch("https://api64.ipify.org?format=json");
       const data = await response.json();
+      console.log("response=============>", data.ip)
       userIp = data.ip;
     }
 
@@ -83,6 +86,7 @@ router.get("/location", async (req, res) => {
     results.code = countryToCurrency[results.country_code] || "Unknown";
     res.json(results);
   } catch (error) {
+    console.log("errr", error)
     res.status(500).json({ error: "Unable to fetch location" });
   }
 });
@@ -158,5 +162,10 @@ router.post("/search", searchCatalogueAndProduct);
 
 // News Latter
 router.post("/newsletter", [newsLetterSchema], postNewsLetter);
+router.get("/testimonials", gettestimonial);
+
+router.get("/home-collection", getCollectionHome);
+router.get("/shipping-list", countrylistGroup);
+router.post("/shipping-charge", findShippingPrice);
 
 export default router;

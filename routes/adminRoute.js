@@ -4,12 +4,13 @@ import {
   postCategory,
   updateCategory,
   deleteCategory,
-  getAllCategory,
   updateCategoryStatus,
   categoryPagination,
   categoryPosition,
   getSubCategory,
   deleteCategoryImage,
+  getAllParentCategory,
+  getAllCategories,
 } from "../controller/admin/category/category.js";
 import {
   attributeMasterSchema,
@@ -41,6 +42,7 @@ import {
   stitchingGroupSchema,
   singleStitchingSchema,
   collectionSchema,
+  shippingchargesSchema,
 } from "../schema/joi_schema.js";
 import {
   getAllSubCategory,
@@ -61,6 +63,8 @@ import {
   data,
   uploadProductImges,
   uploadCategorystorageImg,
+  collectionImages,
+  uploadShippingChagresCSV,
 } from "../middleware/uploads.js";
 import {
   deleteAttribute,
@@ -287,6 +291,8 @@ import {
   // importCatalogue,
   importCatalogues,
 } from "../controller/admin/catalogue/importSheet.js";
+import { countrylistGroup, deleteShippingcharges, paginationShippingcharges, postShippingcharges, updateShippingcharges, uploadShippingChargeCSV } from "../controller/admin/shippingcharges.js";
+import { collectionToProduct, deleteCollectionbyId, getAllNewCollection, paginationAllCollection, paginationCollectionProduct, romoveProductInCollection, searchCollection, updateAllcollection, updateNewCollectionIsHome, updateNewCollectionStatus, uploadImages } from "../controller/admin/newCollection.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -307,7 +313,11 @@ adminRouter.put(
   updateCategory
 );
 adminRouter.delete("/category/:id", deleteCategory);
-adminRouter.get("/category", getAllCategory);
+adminRouter.get("/category", getAllParentCategory);
+
+adminRouter.get("/all-category", getAllParentCategory);
+adminRouter.get("/mixed-category", getAllCategories);
+
 
 adminRouter.get("/category-status/:id", updateCategoryStatus);
 adminRouter.post("/category-pagination", categoryPagination);
@@ -651,7 +661,7 @@ adminRouter.get(
 adminRouter.post("/collection", collectionSchema, postCollection);
 adminRouter.put("/collection/:id", collectionSchema, updateCollection);
 adminRouter.delete("/collection/:id", deleteCollection);
-adminRouter.get("/collection", getAllCollection);
+adminRouter.get("/collection", getAllNewCollection);
 adminRouter.get("/collection-status/:id", updateCollectionStatus);
 adminRouter.post("/collection-pagination", collectionPagination);
 adminRouter.post("/collection-position", positionSchema, collectionPosition);
@@ -664,6 +674,26 @@ adminRouter.delete("/newsletter/:id", deleteNewsLetter);
 adminRouter.post("/users-pagination", paginationusers);
 adminRouter.get("/users-status/:id", updateUsersStatus);
 
-// IMPORT CATALOGUE PRODUCTS
-adminRouter.post("/importsheet", data.uploadCSV, importCatalogues);
+
+
+adminRouter.post("/shipping-charges-pagination", paginationShippingcharges);
+adminRouter.post("/shipping-charges", [shippingchargesSchema], postShippingcharges);
+adminRouter.put("/shipping-charges/:id", [shippingchargesSchema], updateShippingcharges);
+adminRouter.delete("/shipping-charges/:id", deleteShippingcharges);
+adminRouter.get("/shipping-list", countrylistGroup);
+adminRouter.post("/shipping-charges-upload", [uploadShippingChagresCSV], uploadShippingChargeCSV);
+
+
+adminRouter.post("/new-collection", collectionImages, uploadImages);
+adminRouter.put("/new-collection/:id", collectionImages, updateAllcollection);
+adminRouter.delete("/new-collection/:id", deleteCollectionbyId);
+adminRouter.post("/collectionall-pagination", paginationAllCollection);
+adminRouter.post("/search-collection", searchCollection);
+adminRouter.get("/newall-collection", getAllNewCollection);
+adminRouter.post("/product-collection", collectionToProduct);
+adminRouter.post("/collection-product", paginationCollectionProduct);
+adminRouter.delete("/remove-product-collection/:id", romoveProductInCollection);
+
+adminRouter.get("/collection-all-status/:id", updateNewCollectionStatus);
+adminRouter.get("/collection-all-home/:id", updateNewCollectionIsHome);
 export default adminRouter;

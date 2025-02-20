@@ -296,6 +296,7 @@ const testimonialSchema = async (req, res, next) => {
     review: Joi.string().required(),
     customer_name: Joi.string().required(),
     image: Joi.string().optional().allow(""),
+    rating: Joi.number().required()
   });
   await JoiSchemaValidation(schema, req, next);
 };
@@ -1100,6 +1101,24 @@ const resetPasswordUsersSchema = async (req, res, next) => {
 };
 /** USER RESET PASSWORD */
 
+
+
+const shippingchargesSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    country: Joi.string().required(),
+    type: Joi.string().valid("weight", "pcs").required(),
+    from: Joi.string()
+      .when("type", { is: "weight", then: Joi.required(), otherwise: Joi.forbidden() }),
+    to: Joi.string()
+      .when("type", { is: "weight", then: Joi.required(), otherwise: Joi.forbidden() }),
+    pcs: Joi.string()
+      .when("type", { is: "pcs", then: Joi.required(), otherwise: Joi.forbidden() }),
+    amount: Joi.number().required(),
+  });
+
+  await JoiSchemaValidation(schema, req, next);
+};
+
 export {
   categorySchema,
   subCategorySchema,
@@ -1147,4 +1166,5 @@ export {
   importCatalogueSchema,
   importProductSchema,
   importCatalogue,
+  shippingchargesSchema
 };

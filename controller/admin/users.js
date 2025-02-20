@@ -1,7 +1,6 @@
 import prisma from "../../db/config.js";
 import { updateStatus } from "../../helper/common.js";
 import createSearchFilter from "../../helper/searchFilter.js";
-
 const paginationusers = async (req, res, next) => {
     try {
         const { perPage, pageNo, search } = req.body;
@@ -40,8 +39,6 @@ const paginationusers = async (req, res, next) => {
         next(err);
     }
 };
-
-
 const updateUsersStatus = async (req, res, next) => {
     try {
         let id = req.params.id.trim();

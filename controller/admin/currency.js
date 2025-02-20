@@ -85,29 +85,41 @@ const paginationCurrency = async (req, res, next) => {
 
     const searchFilter = createSearchFilter(search, filter);
 
-    const count = await prisma.currencyMaster.count({
-      where: searchFilter || undefined
-    });
-    if (count === 0)
-      return res
-        .status(200)
-        .json({ isSuccess: true, message: "Currency not found!", data: [] });
-    const result = await prisma.currencyMaster.findMany({
-      where: searchFilter || undefined,
-      skip,
-      take,
-    });
+    const [count, result] = await Promise.all([
+      prisma.currencyMaster.count({ where: searchFilter }),
+      prisma.currencyMaster.findMany({
+        where: searchFilter,
+        select: {
+          id: true,
+          code: true,
+          symbol: true,
+          rate: true,
+          isActive: true,
+          flag: true,
+        },
+        skip,
+        take,
+        orderBy: { id: "asc" }
+      }),
+    ]);
+
+    if (!count) {
+      return res.status(200).json({
+        isSuccess: true,
+        message: "Currency not found!",
+        data: [],
+      });
+    }
 
     return res.status(200).json({
       isSuccess: true,
-      message: "Currencies get successfully.",
+      message: "Currencies fetched successfully.",
       data: result,
       totalCount: count,
       currentPage: page,
-      pagesize: take,
+      pageSize: take,
     });
   } catch (error) {
-    console.log(error)
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }

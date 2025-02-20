@@ -293,7 +293,6 @@ const getAllcartitem = async (req, res, next) => {
         .status(400)
         .json({ isSuccess: false, message: "Cart item not found" });
     }
-
     const cartItems = await prisma.cartItem.findMany({
       where: { cart_id: finduser?.id },
       select: {
@@ -316,6 +315,7 @@ const getAllcartitem = async (req, res, next) => {
             retail_discount: true,
             offer_price: true,
             image: true,
+            weight: true,
             categories: {
               select: {
                 id: true,
@@ -343,6 +343,7 @@ const getAllcartitem = async (req, res, next) => {
             GST: true,
             offer_price: true,
             coverImage: true,
+            weight: true,
             CatalogueCategory: {
               select: {
                 category: {
@@ -496,9 +497,11 @@ const getAllcartitem = async (req, res, next) => {
           catalogue_id: item?.catalogue_id,
           isCatalogue: item.isCatalogue,
           stitching: stitchingDataMap,
+          url: item?.catalogue ? item?.catalogue.url : item?.product?.url,
           name: item?.catalogue ? item?.catalogue.name : item?.product?.name,
           quantity: item.quantity,
           sku: item?.catalogue ? item?.catalogue.cat_code : item?.product?.sku,
+          weight: item?.catalogue ? item?.catalogue.weight : item.product?.weight,
           price: item?.catalogue
             ? item?.catalogue.offer_price
             : item?.product.offer_price,

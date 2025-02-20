@@ -287,7 +287,7 @@ import {
   paginationusers,
   updateUsersStatus,
 } from "../controller/admin/users.js";
-import { deleteShippingcharges, paginationShippingcharges, postShippingcharges, updateShippingcharges, uploadShippingChargeCSV } from "../controller/admin/shippingcharges.js";
+import { countrylistGroup, deleteShippingcharges, paginationShippingcharges, postShippingcharges, updateShippingcharges, uploadShippingChargeCSV } from "../controller/admin/shippingcharges.js";
 import { collectionToProduct, deleteCollectionbyId, getAllNewCollection, paginationAllCollection, paginationCollectionProduct, romoveProductInCollection, searchCollection, updateAllcollection, updateNewCollectionIsHome, updateNewCollectionStatus, uploadImages } from "../controller/admin/newCollection.js";
 
 /* GET home page. */
@@ -676,6 +676,7 @@ adminRouter.post("/shipping-charges-pagination", paginationShippingcharges);
 adminRouter.post("/shipping-charges", [shippingchargesSchema], postShippingcharges);
 adminRouter.put("/shipping-charges/:id", [shippingchargesSchema], updateShippingcharges);
 adminRouter.delete("/shipping-charges/:id", deleteShippingcharges);
+adminRouter.get("/shipping-list", countrylistGroup);
 adminRouter.post("/shipping-charges-upload", [uploadShippingChagresCSV], uploadShippingChargeCSV);
 
 

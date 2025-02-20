@@ -134,11 +134,7 @@ const uploadShippingChargeCSV = async (req, res, next) => {
         const workbook = xlsx.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
         const jsonArray = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
-        // Remove empty rows
         const validEntries = jsonArray.filter((item) => item.Country);
-
-        // Create unique keys for lookup
         const uniqueKeys = validEntries.map(item => ({
             country: item.Country.toUpperCase(),
             from: item.From,
@@ -146,7 +142,6 @@ const uploadShippingChargeCSV = async (req, res, next) => {
             type: "weight"
         }));
 
-        // Fetch all existing records in one query
         const existingRecords = await prisma.shippingCharges.findMany({
             where: {
                 OR: uniqueKeys
@@ -159,18 +154,15 @@ const uploadShippingChargeCSV = async (req, res, next) => {
             }
         });
 
-        // Create a set of existing keys for quick lookup
         const existingSet = new Set(
             existingRecords.map(record => `${record.country}_${record.from}_${record.to}_${record.type}`)
         );
 
-        // Filter only new entries (not in existing records)
         const newEntries = validEntries.filter(item => {
             const key = `${item.Country.toUpperCase()}_${item.From}_${item.To}_weight`;
             return !existingSet.has(key);
         });
 
-        // Insert new records
         if (newEntries.length > 0) {
             await prisma.shippingCharges.createMany({
                 data: newEntries.map(item => ({
@@ -184,7 +176,6 @@ const uploadShippingChargeCSV = async (req, res, next) => {
             });
         }
 
-        // Delete the file after processing
         await deleteFile(filePath);
 
         return res.status(200).json({
@@ -201,4 +192,67 @@ const uploadShippingChargeCSV = async (req, res, next) => {
 
 
 
-export { postShippingcharges, paginationShippingcharges, updateShippingcharges, deleteShippingcharges, uploadShippingChargeCSV };
+
+const countrylistGroup = async (req, res, next) => {
+    try {
+
+        const result = await prisma.shippingCharges.groupBy({
+            by: ['country'],
+        });
+
+        return res.status(200).json({ isSuccess: true, "message": "country get successfully", data: result })
+
+    } catch (error) {
+        next(new Error("Internal Server Error!"));
+    }
+}
+
+
+
+const findShippingPrice = async (req, res, next) => {
+    try {
+        const { weight, country } = req.body;
+        const shippingRules = await prisma.shippingCharges.findMany({
+            where: { country: country },
+            orderBy: { to: 'asc' }
+        });
+
+        if (!shippingRules || shippingRules.length === 0) {
+            return res.status(404).json({ isSuccess: false, message: "No shipping rules found for this country" });
+        }
+        let shippingCost = null;
+
+        for (let rule of shippingRules) {
+            let minWeight = parseFloat(rule.from);
+            let maxWeight = parseFloat(rule.to);
+
+            if (weight >= minWeight && weight <= maxWeight) {
+                shippingCost = rule.amount;
+                break;
+            }
+        }
+
+        if (shippingCost === null) {
+            return res.status(404).json({ isSuccess: false, message: "No matching shipping rule found for this weight" });
+        }
+
+        res.status(200).json({ isSuccess: true, data: { shippingCost } });
+
+    } catch (error) {
+        console.error("Error finding shipping price:", error);
+        res.status(500).json({ isSuccess: false, message: "Internal server error" });
+    }
+};
+
+
+
+export {
+    postShippingcharges,
+    paginationShippingcharges,
+    updateShippingcharges,
+    deleteShippingcharges,
+    uploadShippingChargeCSV,
+    countrylistGroup,
+    findShippingPrice
+
+};

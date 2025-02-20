@@ -41,6 +41,7 @@ import fetch from "node-fetch";
 // import { resetPassword } from "../auth/auth.js";
 import { resetPassword } from "../controller/public/user/register.js";
 import { gettestimonial } from "../controller/public/testimonial.js";
+import { countrylistGroup, findShippingPrice } from "../controller/admin/shippingcharges.js";
 const router = express.Router();
 
 // MENU API
@@ -164,5 +165,7 @@ router.post("/newsletter", [newsLetterSchema], postNewsLetter);
 router.get("/testimonials", gettestimonial);
 
 router.get("/home-collection", getCollectionHome);
+router.get("/shipping-list", countrylistGroup);
+router.post("/shipping-charge", findShippingPrice);
 
 export default router;

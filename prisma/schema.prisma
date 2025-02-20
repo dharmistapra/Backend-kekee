@@ -292,7 +292,7 @@ model Product {
   id            String  @id @default(auto()) @map("_id") @db.ObjectId
   name          String
   catalogue_id  String? @db.ObjectId
-  sku           String
+  sku           String  @unique
   url           String  @unique
   quantity      Int
   // category        String[] @db.ObjectId

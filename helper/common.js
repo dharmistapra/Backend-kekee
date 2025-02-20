@@ -153,7 +153,7 @@ const models = {
   stitchingGroup: prisma.stitchingGroup,
   stitchingValue: prisma.stitchingValue,
   collection: prisma.collection,
-  users: prisma.users
+  users: prisma.users,
 };
 
 const updatePosition = async (model, data) => {
@@ -593,6 +593,65 @@ const handleCatalogueAttributeConnection = async (attributes, image) => {
   return { status: true, message: "", data: attribute };
 };
 
+const isNameRecordsExist = async (names, model) => {
+  if (!names || names.length === 0)
+    return { exists: false, missingNames: names };
+
+  let totalNames = names.length;
+  if (totalNames == 0) return false;
+
+  let totalDocuments = 0;
+  try {
+    totalDocuments = await models[model].count({
+      where: { name: { in: names } },
+    });
+
+    let data = await models[model].findMany({
+      where: { name: { in: names } },
+      select: { id: true, name: true },
+    });
+
+    const existingNames = data.map((val) => val.name);
+    let existingIds = [];
+
+    const missingNames = names.filter(
+      (value) => !existingNames.includes(value)
+    );
+    if (missingNames.length === 0) existingIds = data.map((val) => val.id);
+
+    return {
+      exists: totalDocuments === names.length,
+      missingNames,
+      existingIds,
+    };
+  } catch (err) {
+    return err;
+  }
+};
+
+const arraySplit = async (value) => {
+  let string = value.split(",");
+  const data = string.map((val) => {
+    return val;
+  });
+  return data;
+};
+
+const getId = async (name, model) => {
+  try {
+    let data = await models[model].findMany({
+      where: { name: { in: name } },
+      select: { id: true },
+    });
+    const document = await data.map((val) => {
+      return val.id;
+    });
+    return document;
+  } catch (err) {
+    return err;
+  }
+};
+
 const deleteImage = async (model, id) => {
   try {
     if (!/^[a-fA-F0-9]{24}$/.test(id)) {
@@ -623,6 +682,60 @@ const deleteImage = async (model, id) => {
   }
 };
 
+const cataloguesProductFields = [
+  "category",
+  "collection",
+  "productCode",
+  "catCode",
+  "productName",
+  "noOfProduct",
+  "quantity",
+  "description",
+  "catalogueItemMarketPrice",
+  "catalogueItemDiscount",
+  "retailPrice",
+  "retailDiscount",
+  "GST",
+  "metaTitle",
+  "metaKeyword",
+  "metaDescription",
+  "weight",
+  "tag",
+  "cat_image",
+  "image",
+  "isStitching",
+  "isSize",
+  "isActive",
+  "showInSingle",
+  // "cat_weight",
+  // "cat_quantity",
+  // "cat_gst",
+  // "cat_meta_title",
+  // "cat_meta_keyword",
+  // "cat_meta_description",
+  // "cat_description",
+  // "cat_tag",
+  // "cat_coverImage",
+  // "cat_isStitching",
+  // "cat_isSize",
+  // "cat_isActive",
+  // "productName",
+  // "product_sku",
+  // "product_quantity",
+  // "product_weight",
+  // "product_retail_price",
+  // "product_retail_GST",
+  // "product_retail_discount",
+  // "product_offer_price",
+  // "product_description",
+  // "product_tags",
+  // "product_showInSingle",
+  // "product_readyToShip",
+  // "product_image",
+  // "product_isActive",
+  // "product_stitching",
+];
+
 export {
   deleteFile,
   uniqueFilename,
@@ -639,7 +752,11 @@ export {
   removeProductAndCatalogueImage,
   handleProductAttributeConnection,
   handleCatalogueAttributeConnection,
+  isNameRecordsExist,
+  arraySplit,
+  getId,
   deleteImage,
   handleLabelConnection,
   handleCatalogueConnection,
+  cataloguesProductFields,
 };

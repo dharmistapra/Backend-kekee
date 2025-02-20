@@ -608,8 +608,8 @@ const updateCatalogueProduct = async (req, res, next) => {
     const processedImages = imagePaths
       ? [...imagePaths, ...(findData?.image || [])]
       : typeof images === "string"
-        ? [images]
-        : images;
+      ? [images]
+      : images;
 
     console.log("stitching =======>", stitching);
     const productData = {
@@ -928,21 +928,21 @@ const catlogtGetSingleProduct = async (req, res, next) => {
       newProduct.categories = product.categories.map((cat) =>
         cat.category
           ? {
-            id: cat.category.id,
-            parentId: cat.category.parent_id ? cat.category.parent_id : null,
-            name: cat.category.name,
-            isActive: cat.category.isActive,
-          }
+              id: cat.category.id,
+              parentId: cat.category.parent_id ? cat.category.parent_id : null,
+              name: cat.category.name,
+              isActive: cat.category.isActive,
+            }
           : null
       );
 
       newProduct.collection = product.collection.map((cat) =>
         cat.collection
           ? {
-            id: cat.collection.id,
-            name: cat.collection.name,
-            isActive: cat.collection.isActive,
-          }
+              id: cat.collection.id,
+              name: cat.collection.name,
+              isActive: cat.collection.isActive,
+            }
           : null
       );
 
@@ -1600,12 +1600,12 @@ const addCatalogue = async (req, res, next) => {
             },
             ...(attributes &&
               attributes.length > 0 && {
-              attributeValues: { create: attributeValueConnection },
-            }),
+                attributeValues: { create: attributeValueConnection },
+              }),
             ...(sizes &&
               sizes.length > 0 && {
-              CatalogueSize: { create: catalogueSizeConnection },
-            }),
+                CatalogueSize: { create: catalogueSizeConnection },
+              }),
             tag,
             isActive: true,
             deletedAt: null,
@@ -1651,19 +1651,19 @@ const addCatalogue = async (req, res, next) => {
             },
             ...(attributes && attributes.length > 0
               ? {
-                attributeValues: {
-                  deleteMany: {},
-                  create: attributeValueConnection,
-                },
-              }
+                  attributeValues: {
+                    deleteMany: {},
+                    create: attributeValueConnection,
+                  },
+                }
               : { attributeValues: { deleteMany: {} } }),
             ...(sizes && sizes.length > 0
               ? {
-                CatalogueSize: {
-                  deleteMany: {},
-                  create: catalogueSizeConnection,
-                },
-              }
+                  CatalogueSize: {
+                    deleteMany: {},
+                    create: catalogueSizeConnection,
+                  },
+                }
               : { CatalogueSize: { deleteMany: {} } }),
             tag,
             isActive: true,
@@ -1788,15 +1788,30 @@ const getCatalogueProducts = async (req, res, next) => {
       { sku: { contains: search, mode: "insensitive" } },
       { url: { contains: search, mode: "insensitive" } },
       { quantity: isNaN(search) ? undefined : { equals: parseFloat(search) } },
-      { retail_price: isNaN(search) ? undefined : { equals: parseFloat(search) } },
-      { retail_discount: isNaN(search) ? undefined : { equals: parseFloat(search) } },
-      { average_price: isNaN(search) ? undefined : { equals: parseFloat(search) } },
-      { retail_GST: isNaN(search) ? undefined : { equals: parseFloat(search) } },
-      { offer_price: isNaN(search) ? undefined : { equals: parseFloat(search) } },
-    ]
+      {
+        retail_price: isNaN(search)
+          ? undefined
+          : { equals: parseFloat(search) },
+      },
+      {
+        retail_discount: isNaN(search)
+          ? undefined
+          : { equals: parseFloat(search) },
+      },
+      {
+        average_price: isNaN(search)
+          ? undefined
+          : { equals: parseFloat(search) },
+      },
+      {
+        retail_GST: isNaN(search) ? undefined : { equals: parseFloat(search) },
+      },
+      {
+        offer_price: isNaN(search) ? undefined : { equals: parseFloat(search) },
+      },
+    ];
 
     const searchFilter = createSearchFilter(search, filter);
-
 
     if (!catalogue_id)
       return res
@@ -1979,32 +1994,32 @@ const getCatalogueProduct = async (req, res, next) => {
       datas.CatalogueCategory = product.CatalogueCategory.map((cat) =>
         cat.category
           ? {
-            id: cat.category.id,
-            parentId: cat.category.parent_id ? cat.category.parent_id : null,
-            name: cat.category.name,
-            isActive: cat.category.isActive,
-          }
+              id: cat.category.id,
+              parentId: cat.category.parent_id ? cat.category.parent_id : null,
+              name: cat.category.name,
+              isActive: cat.category.isActive,
+            }
           : null
       );
 
       datas.CatalogueSize = product.CatalogueSize.map((cat) =>
         cat.size
           ? {
-            id: cat.size.id,
-            value: cat.size.value,
-            isActive: cat.size.isActive,
-          }
+              id: cat.size.id,
+              value: cat.size.value,
+              isActive: cat.size.isActive,
+            }
           : null
       );
 
       datas.CatalogueCollection = product.CatalogueCollection.map((cat) =>
         cat.collection
           ? {
-            id: cat.collection.id,
-            // parentId: cat.category.parent_id ? cat.category.parent_id : null,
-            name: cat.collection.name,
-            isActive: cat.collection.isActive,
-          }
+              id: cat.collection.id,
+              // parentId: cat.category.parent_id ? cat.category.parent_id : null,
+              name: cat.collection.name,
+              isActive: cat.collection.isActive,
+            }
           : null
       );
 
@@ -2073,23 +2088,23 @@ const getCatalogueProduct = async (req, res, next) => {
         newProduct.categories = product.categories.map((cat) =>
           cat.category
             ? {
-              id: cat.category.id,
-              parentId: cat.category.parent_id
-                ? cat.category.parent_id
-                : null,
-              name: cat.category.name,
-              isActive: cat.category.isActive,
-            }
+                id: cat.category.id,
+                parentId: cat.category.parent_id
+                  ? cat.category.parent_id
+                  : null,
+                name: cat.category.name,
+                isActive: cat.category.isActive,
+              }
             : null
         );
 
         newProduct.collection = product.collection.map((cat) =>
           cat.collection
             ? {
-              id: cat.collection.id,
-              name: cat.collection.name,
-              isActive: cat.collection.isActive,
-            }
+                id: cat.collection.id,
+                name: cat.collection.name,
+                isActive: cat.collection.isActive,
+              }
             : null
         );
 

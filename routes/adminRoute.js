@@ -283,6 +283,10 @@ import {
   paginationusers,
   updateUsersStatus,
 } from "../controller/admin/users.js";
+import {
+  // importCatalogue,
+  importCatalogues,
+} from "../controller/admin/catalogue/importSheet.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -659,4 +663,7 @@ adminRouter.delete("/newsletter/:id", deleteNewsLetter);
 
 adminRouter.post("/users-pagination", paginationusers);
 adminRouter.get("/users-status/:id", updateUsersStatus);
+
+// IMPORT CATALOGUE PRODUCTS
+adminRouter.post("/importsheet", data.uploadCSV, importCatalogues);
 export default adminRouter;

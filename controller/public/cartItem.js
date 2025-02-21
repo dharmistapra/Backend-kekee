@@ -46,7 +46,7 @@ const updateCartItem = async (req, res, next) => {
     if (findData.quantity < quantity)
       return res.status(400).json({
         isSuccess: false,
-        message: `Quantity must be less than ${findData.quantity}`,
+        message: `Cart limit reached! Please choose only ${findData.quantity} items.`,
       });
 
     const updatedCartItem = await prisma.cartItem.update({
@@ -501,7 +501,9 @@ const getAllcartitem = async (req, res, next) => {
           name: item?.catalogue ? item?.catalogue.name : item?.product?.name,
           quantity: item.quantity,
           sku: item?.catalogue ? item?.catalogue.cat_code : item?.product?.sku,
-          weight: item?.catalogue ? item?.catalogue.weight : item.product?.weight,
+          weight: item?.catalogue
+            ? item?.catalogue.weight
+            : item.product?.weight,
           price: item?.catalogue
             ? item?.catalogue.offer_price
             : item?.product.offer_price,

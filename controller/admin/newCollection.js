@@ -1,5 +1,9 @@
 import prisma from "../../db/config.js";
-import { convertFilePathSlashes, deleteFile, updateStatus } from "../../helper/common.js";
+import {
+  convertFilePathSlashes,
+  deleteFile,
+  updateStatus,
+} from "../../helper/common.js";
 import createSearchFilter from "../../helper/searchFilter.js";
 
 const uploadImages = async (req, res, next) => {
@@ -15,24 +19,22 @@ const uploadImages = async (req, res, next) => {
       data: {
         title: title,
         sub_title: sub_title,
-        redirect_url: slug ? slug : '',
+        redirect_url: slug ? slug : "",
         coverimage: path,
         position: Number(position),
-        Manual: Manual == "Yes" ? true : false
-      }
-    })
+        Manual: Manual == "Yes" ? true : false,
+      },
+    });
 
     return res.status(200).json({
       isSuccess: true,
       message: "collection created successfully.",
     });
   } catch (error) {
-    console.log("eeee", error)
+    console.log("eeee", error);
     next(new Error("Something went wrong, please try again!", { status: 500 }));
   }
 };
-
-
 
 const paginationAllCollection = async (req, res, next) => {
   try {
@@ -44,12 +46,12 @@ const paginationAllCollection = async (req, res, next) => {
       { title: { contains: search, mode: "insensitive" } },
       { sub_title: { contains: search, mode: "insensitive" } },
       { redirect_url: { contains: search, mode: "insensitive" } },
-    ]
+    ];
 
     const searchFilter = createSearchFilter(search, filter);
 
     const count = await prisma.collectionAll.count({
-      where: searchFilter || undefined
+      where: searchFilter || undefined,
     });
     if (count === 0)
       return res
@@ -62,17 +64,20 @@ const paginationAllCollection = async (req, res, next) => {
           select: {
             product_id: true,
             catalogue_id: true,
-          }
-        }
+          },
+        },
       },
       skip,
       take,
     });
 
-
     const processedResult = result.map((collection) => {
-      const productCount = collection.CatalogueCollection.filter((item) => item.product_id !== null).length;
-      const catalogueCount = collection.CatalogueCollection.filter((item) => item.catalogue_id !== null).length;
+      const productCount = collection.CatalogueCollection.filter(
+        (item) => item.product_id !== null
+      ).length;
+      const catalogueCount = collection.CatalogueCollection.filter(
+        (item) => item.catalogue_id !== null
+      ).length;
       const { CatalogueCollection, ...rest } = collection;
 
       return {
@@ -81,8 +86,6 @@ const paginationAllCollection = async (req, res, next) => {
         catalogueCount,
       };
     });
-
-
 
     return res.status(200).json({
       isSuccess: true,
@@ -93,13 +96,11 @@ const paginationAllCollection = async (req, res, next) => {
       pagesize: take,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
 };
-
-
 
 const searchCollection = async (req, res, next) => {
   try {
@@ -148,8 +149,6 @@ const searchCollection = async (req, res, next) => {
   }
 };
 
-
-
 const getAllNewCollection = async (req, res, next) => {
   try {
     const result = await prisma.collectionAll.findMany({
@@ -159,7 +158,7 @@ const getAllNewCollection = async (req, res, next) => {
       select: {
         sub_title: true,
         id: true,
-      }
+      },
     });
     return res.status(200).json({
       isSuccess: true,
@@ -167,13 +166,11 @@ const getAllNewCollection = async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
 };
-
-
 
 const collectionToProduct = async (req, res, next) => {
   try {
@@ -244,20 +241,18 @@ const collectionToProduct = async (req, res, next) => {
   }
 };
 
-
-
-
 const updateAllcollection = async (req, res, next) => {
   try {
-
-    const { id } = req.params
+    const { id } = req.params;
     const { title, sub_title, slug, Manual, position } = req.body;
     let path = "";
     if (req.file) {
       path = await convertFilePathSlashes(req.file.path);
     }
 
-    const findcollection = await prisma.collectionAll.findUnique({ where: { id: id } })
+    const findcollection = await prisma.collectionAll.findUnique({
+      where: { id: id },
+    });
 
     if (findcollection) {
       if (!path && Manual === "Yes") {
@@ -266,37 +261,35 @@ const updateAllcollection = async (req, res, next) => {
       if (findcollection?.Manual) {
         const collectionproduct = await prisma.catalogueCollection.deleteMany({
           where: {
-            collection_id: id
-          }
-        })
+            collection_id: id,
+          },
+        });
       }
     }
 
     const collectioncreate = await prisma.collectionAll.update({
       where: {
-        id: id
+        id: id,
       },
       data: {
         title: title,
         sub_title: sub_title,
         position: Number(position),
-        redirect_url: slug && Manual == "No" ? slug : '',
+        redirect_url: slug && Manual == "No" ? slug : "",
         coverimage: Manual === "Yes" ? "" : path || undefined,
-        Manual: Manual == "Yes" ? true : false
-      }
-    })
+        Manual: Manual == "Yes" ? true : false,
+      },
+    });
 
     return res.status(200).json({
       isSuccess: true,
       message: "collection update successfully.",
     });
   } catch (error) {
-    console.log("errr", error)
+    console.log("errr", error);
     next(new Error("Something went wrong, please try again!", { status: 500 }));
   }
 };
-
-
 
 const deleteCollectionbyId = async (req, res, next) => {
   try {
@@ -312,26 +305,20 @@ const deleteCollectionbyId = async (req, res, next) => {
         .json({ isSuccess: false, message: "Collection not found!" });
     }
 
-
     const positionToDelete = await prisma.collectionAll.delete({
       where: { id: id },
     });
 
-    deleteFile(positionToDelete?.coverimage)
+    deleteFile(positionToDelete?.coverimage);
 
     return res
       .status(200)
       .json({ isSuccess: true, message: "Collection deleted successfully." });
-
   } catch (error) {
     const err = new Error("Something went wrong, Please try again!");
     next(err);
   }
-}
-
-
-
-
+};
 
 // const paginationCollectionProduct = async (req, res, next) => {
 //   try {
@@ -398,8 +385,6 @@ const deleteCollectionbyId = async (req, res, next) => {
 //       catalogueCollectionId: item.id,
 //     }));
 
-
-
 //     return res.status(200).json({
 //       isSuccess: true,
 //       message: "Collection product get successfully.",
@@ -414,8 +399,6 @@ const deleteCollectionbyId = async (req, res, next) => {
 //     next(err);
 //   }
 // };
-
-
 
 const paginationCollectionProduct = async (req, res, next) => {
   try {
@@ -511,7 +494,6 @@ const paginationCollectionProduct = async (req, res, next) => {
   }
 };
 
-
 const romoveProductInCollection = async (req, res, next) => {
   try {
     const id = req.params.id;
@@ -526,23 +508,18 @@ const romoveProductInCollection = async (req, res, next) => {
         .json({ isSuccess: false, message: "product not found!" });
     }
 
-
     const positionToDelete = await prisma.catalogueCollection.delete({
       where: { id: id },
     });
 
-
     return res
       .status(200)
       .json({ isSuccess: true, message: "product remove in this collection." });
-
   } catch (error) {
     const err = new Error("Something went wrong, Please try again!");
     next(err);
   }
-}
-
-
+};
 
 const updateNewCollectionStatus = async (req, res, next) => {
   try {
@@ -559,17 +536,18 @@ const updateNewCollectionStatus = async (req, res, next) => {
       data: result.data,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
 };
 
-
 const updateNewCollectionIsHome = async (req, res, next) => {
   try {
     let id = req.params.id.trim();
-    const findData = await prisma.collectionAll.findUnique({ where: { id: id } });
+    const findData = await prisma.collectionAll.findUnique({
+      where: { id: id },
+    });
     if (!findData) return { status: false, message: `collection not found!` };
     const newStatus = !findData.showInHome;
     const result = await prisma.collectionAll.update({
@@ -577,17 +555,27 @@ const updateNewCollectionIsHome = async (req, res, next) => {
       data: { showInHome: newStatus },
     });
 
-
     return res.status(200).json({
       isSuccess: true,
-      message: 'collection showin home active successfully',
+      message: "collection showin home active successfully",
       data: result,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
 };
-export { uploadImages, paginationAllCollection, searchCollection, getAllNewCollection, collectionToProduct, updateAllcollection, deleteCollectionbyId, paginationCollectionProduct, romoveProductInCollection, updateNewCollectionStatus, updateNewCollectionIsHome };
-
+export {
+  uploadImages,
+  paginationAllCollection,
+  searchCollection,
+  getAllNewCollection,
+  collectionToProduct,
+  updateAllcollection,
+  deleteCollectionbyId,
+  paginationCollectionProduct,
+  romoveProductInCollection,
+  updateNewCollectionStatus,
+  updateNewCollectionIsHome,
+};

@@ -14,7 +14,8 @@ import {
   importCatalogueSchema,
   importProductSchema,
 } from "../../../schema/joi_schema.js";
-import colors from "color-name";
+import AdmZip from "adm-zip";
+import fs from "fs";
 
 // const importCatalogue = async (req, res, next) => {
 //   try {
@@ -579,8 +580,7 @@ const importCatalogues = async (req, res, next) => {
     const jsonArray = await csvtojson().fromFile(req.file.path);
     let catalogues = [];
     let productArray = [];
-
-    for (const [row, index] of jsonArray.entries()) {
+    for (let [index, row] of jsonArray.entries()) {
       let {
         category,
         collection,
@@ -608,7 +608,7 @@ const importCatalogues = async (req, res, next) => {
         cat_tag,
         showInSingle,
       } = row;
-      console.log(index);
+      index = index + 1;
       if (!catCode && !productCode) {
         return res.status(400).json({
           isSuccess: false,
@@ -646,7 +646,7 @@ const importCatalogues = async (req, res, next) => {
         await deleteFile(filePath);
         return res.status(404).json({
           isSuccess: false,
-          message: `${missingAttributes} attributes not found!`,
+          message: `Row ${index} ${missingAttributes} attributes not found!`,
         });
       }
       const nonDefaultAttributeNames = isAttributeExists
@@ -657,7 +657,7 @@ const importCatalogues = async (req, res, next) => {
         await deleteFile(filePath);
         return res.status(400).json({
           isSuccess: false,
-          message: "Please enter Category or Collection!",
+          message: `Row ${index} Please enter Category or Collection!`,
         });
       }
       let result;
@@ -672,7 +672,7 @@ const importCatalogues = async (req, res, next) => {
           await deleteFile(filePath);
           return res.status(400).json({
             isSuccess: false,
-            message: `${result.missingNames} InValid Categories!`,
+            message: `Row ${index} contains ${result.missingNames} invalid Categories!`,
           });
         }
         category = result.existingIds;
@@ -680,9 +680,10 @@ const importCatalogues = async (req, res, next) => {
         // category = await getId(categories, "category");
         if (category.length === 0) {
           await deleteFile(filePath);
-          return res
-            .status(400)
-            .json({ isSuccess: false, message: "Invalid Categories!" });
+          return res.status(400).json({
+            isSuccess: false,
+            message: `Row ${index} contains invalid Categories!`,
+          });
         }
 
         let missingAttributes = [];
@@ -740,16 +741,17 @@ const importCatalogues = async (req, res, next) => {
           await deleteFile(filePath);
           return res.status(400).json({
             isSuccess: false,
-            message: `${result.missingNames} Invalid Collections!`,
+            message: `Row ${index} ${result.missingNames} invalid Collections!`,
           });
         }
         collection = result.existingIds;
         // collection = await getId(collections, "collection");
         if (collection.length === 0) {
           await deleteFile(filePath);
-          return res
-            .status(400)
-            .json({ isSuccess: false, message: "Invalid Collections!" });
+          return res.status(400).json({
+            isSuccess: false,
+            message: `Row ${index} invalid Collections!`,
+          });
         }
       }
       let attributeData = [];
@@ -776,7 +778,6 @@ const importCatalogues = async (req, res, next) => {
           let valueIds = [];
           for (let val of [].concat(values)) {
             val = _.uniq(await arraySplit(val));
-            console.log(val);
 
             for (const value of val) {
               if (value !== "") {
@@ -791,7 +792,7 @@ const importCatalogues = async (req, res, next) => {
                   await deleteFile(filePath);
                   return res.status(404).json({
                     isSuccess: false,
-                    message: "Some attributeValue are not exists!",
+                    message: `Row ${index} ${key} attribute have ${value} attributeValue are not exist!`,
                   });
                 }
 
@@ -812,7 +813,7 @@ const importCatalogues = async (req, res, next) => {
         if (catalogue) {
           return res.status(400).json({
             isSuccess: false,
-            message: `${catCode} Catcode must be unique! `,
+            message: `Row ${index} ${catCode} Catcode must be unique! `,
           });
         }
         let finalOfferPrice =
@@ -884,11 +885,9 @@ const importCatalogues = async (req, res, next) => {
         // });
         let finalOfferPrice = 0;
         if (showInSingle === "Y") {
-          console.log(retailPrice, retailDiscount);
           if (retailPrice > 0 && retailDiscount > 0) {
             finalOfferPrice =
               parseFloat(retailPrice) * (1 - parseFloat(retailDiscount) / 100);
-            console.log(finalOfferPrice, productCode);
           } else {
             finalOfferPrice = parseFloat(retailPrice);
           }
@@ -1028,9 +1027,6 @@ const importCatalogues = async (req, res, next) => {
             product["attributeValues"] = {
               create: attributeValueConnection,
             };
-
-            console.log(product);
-
             const existingProduct = await tx.product.findFirst({
               where: { sku: product.sku },
               select: { id: true },
@@ -1120,7 +1116,47 @@ const importCatalogues = async (req, res, next) => {
   }
 };
 
+const zipImages = async (req, res, next) => {
+  try {
+    if (!req.file)
+      return res
+        .status(400)
+        .json({ isSuccess: false, message: "Please upload zip file!" });
+
+    const zip = new AdmZip(req.file.path);
+    const outPutDir = `./uploads/product/zip`;
+    zip.extractAllTo(outPutDir, true);
+
+    if (req.file) await deleteFile(req.file.path);
+
+    // await filedir(`uploads/product/`);
+    const files = fs.readdir(outPutDir, async (err, files) => {
+      if (err) return res.status(400).json({ isSuccess: false, message: err });
+      files.forEach(async (file) => {
+        let origionalImage = `uploads/product/zip/${file}`;
+        let productImage = `uploads/product/${file}`;
+
+        fs.rename(origionalImage, productImage, (err) => {
+          if (err) {
+            return res.status(400).json({ isSuccess: false, message: err });
+          }
+          console.log("successfully move file!");
+        });
+      });
+    });
+
+    return res
+      .status(200)
+      .json({ isSuccess: true, message: "File upload successfully." });
+  } catch (err) {
+    console.log(err);
+    const error = new Error("Some thing went wrong, please try again!");
+    next(error);
+  }
+};
+
 export {
   //  importCatalogue,
   importCatalogues,
+  zipImages,
 };

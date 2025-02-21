@@ -34,14 +34,20 @@ import {
   resetPasswordUsersSchema,
   verifyOtpSchema,
 } from "../schema/joi_schema.js";
-import { getCollection, getCollectionHome } from "../controller/public/collection.js";
+import {
+  getCollection,
+  getCollectionHome,
+} from "../controller/public/collection.js";
 import { postNewsLetter } from "../controller/public/newsLetter.js";
 import nodeIplocate from "node-iplocate";
 import fetch from "node-fetch";
 // import { resetPassword } from "../auth/auth.js";
 import { resetPassword } from "../controller/public/user/register.js";
 import { gettestimonial } from "../controller/public/testimonial.js";
-import { countrylistGroup, findShippingPrice } from "../controller/admin/shippingcharges.js";
+import {
+  countrylistGroup,
+  findShippingPrice,
+} from "../controller/admin/shippingcharges.js";
 const router = express.Router();
 
 // MENU API
@@ -121,7 +127,8 @@ router.get("/location", async (req, res) => {
       /^(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)$/;
     if (privateIpPattern.test(userIp)) {
       return res.json({
-        message: "Private network IP detected. No public location data available.",
+        message:
+          "Private network IP detected. No public location data available.",
         ip: userIp,
       });
     }
@@ -141,7 +148,6 @@ router.get("/location", async (req, res) => {
     res.status(500).json({ error: "Unable to fetch location" });
   }
 });
-
 
 router.get("/menu", getAllMenu);
 router.get("/homebanner", getHomeBanner);

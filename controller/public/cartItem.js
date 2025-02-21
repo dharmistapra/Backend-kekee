@@ -337,12 +337,14 @@ const getAllcartitem = async (req, res, next) => {
             id: true,
             name: true,
             cat_code: true,
+            no_of_product: true,
             url: true,
             quantity: true,
             price: true,
             GST: true,
             offer_price: true,
             coverImage: true,
+            average_price: true,
             weight: true,
             CatalogueCategory: {
               select: {
@@ -497,6 +499,8 @@ const getAllcartitem = async (req, res, next) => {
           catalogue_id: item?.catalogue_id,
           isCatalogue: item.isCatalogue,
           stitching: stitchingDataMap,
+          ...(item?.catalogue && { no_of_product: item?.catalogue?.no_of_product }),
+          average_price: item?.catalogue ? item?.catalogue.average_price : item?.product?.price,
           url: item?.catalogue ? item?.catalogue.url : item?.product?.url,
           name: item?.catalogue ? item?.catalogue.name : item?.product?.name,
           quantity: item.quantity,

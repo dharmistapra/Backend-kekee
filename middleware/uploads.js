@@ -19,6 +19,7 @@ const folderPaths = {
   contactDetails: "./uploads/contactDetails",
   measurement: "./uploads/measurement",
   importcsv: "./uploads/importcsv",
+  importZip: "./uploads/zip",
 };
 
 const storage = multer.diskStorage({
@@ -75,6 +76,16 @@ const csvFile = (req, file, cb) => {
   if (file) {
     if (!file.originalname.match(/\.(csv)$/)) {
       req.fileValidationError = "Only csv file are allowed!";
+      return cb(null, false);
+    }
+  }
+  cb(null, true);
+};
+
+const zipFile = (req, file, cb) => {
+  if (file) {
+    if (!file.originalname.match(/\.(zip)$/)) {
+      req.fileValidationError = "Only zip file are allowed!";
       return cb(null, false);
     }
   }
@@ -156,6 +167,12 @@ const uploadConfiguration = {
     fileFilter: csvFile,
     limits: { fileSize: 10000000 * 5 },
   }).single("csv"),
+
+  importZip: multer({
+    storage: dynamicStorage("importZip"),
+    fileFilter: zipFile,
+    limits: { fileSize: 10000000 * 5 },
+  }).single("zip"),
 };
 
 const currencystorage = multer.diskStorage({
@@ -206,9 +223,6 @@ let uploadProductImges = multer({
   fileFilter: filefilter,
 }).array("images", 6);
 
-
-
-
 const collectionImagestorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "./uploads/collection");
@@ -225,7 +239,6 @@ let collectionImages = multer({
   fileFilter: filefilter,
 }).single("coverimage");
 
-
 const data = {
   uploadHomeBanner: uploadConfiguration.homeBanner,
   uploadPageWiseBanner: uploadConfiguration.pageWiseBanner,
@@ -234,8 +247,8 @@ const data = {
   uploadContactDetails: uploadConfiguration.contactDetails,
   uploadstitchingmeasuremnt: uploadConfiguration.stitchingMeasurement,
   uploadCSV: uploadConfiguration.importcsv,
+  uploadZip: uploadConfiguration.importZip,
   // uploadCollectionImage:uploadConfiguration.co
-
 };
 
 const Categorystorage = multer.diskStorage({
@@ -254,10 +267,6 @@ let uploadCategorystorageImg = multer({
   fileFilter: filefilter,
 }).single("image");
 
-
-
-
-
 const fileFilterCSV = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
   if (ext === ".csv") {
@@ -265,7 +274,7 @@ const fileFilterCSV = (req, file, cb) => {
   } else {
     cb(new Error("Only .csv files are allowed!"), false);
   }
-}
+};
 
 const ShippingChagrestorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -282,9 +291,6 @@ let uploadShippingChagresCSV = multer({
   limits: { fileSize: 10000000 * 5 },
   fileFilter: fileFilterCSV,
 }).single("files");
-
-
-
 
 export {
   uploadcurrencyImg,

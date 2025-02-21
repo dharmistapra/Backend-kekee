@@ -424,8 +424,7 @@ const getProductDetails = async (req, res, next) => {
         .flat();
     }
 
-
-    console.log("data.categories", data.categories)
+    console.log("data.categories", data.categories);
     if (data && data.categories) {
       data.categories = data.categories.map((item) => item.category.id);
     }

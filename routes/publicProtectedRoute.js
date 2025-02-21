@@ -19,6 +19,7 @@ import {
   postWishList,
 } from "../controller/public/wishList.js";
 import { changePasswordusers, updateUserbasicInfo } from "../controller/public/user/register.js";
+import OrderPlace from "../controller/public/orderPlace.js";
 
 // publicProtected.post("/cart-item", cartSchema, postCartItem);
 publicProtected.post("/cart-item", cartSchema, postCartItem);
@@ -32,4 +33,5 @@ publicProtected.get("/wish-list", getWishLists);
 publicProtected.post("/change-password", [userchangePasswordSchema], changePasswordusers);
 publicProtected.post("/user-update", [updateUserbasicInfoSchema], updateUserbasicInfo);
 
+publicProtected.post("/oreder/place", OrderPlace);
 export default publicProtected;

@@ -330,6 +330,7 @@ model Product {
   collection       CatalogueCollection[]
   CartItem         CartItem[]
   WishList         WishList[]
+  orderItems       OrderItem[]
 }
 
 model Labels {
@@ -418,6 +419,7 @@ model Catalogue {
   WishList            WishList[]
   CatalogueSize       CatalogueSize[]
   CartItem            CartItem[]
+  orderItems          OrderItem[]
 }
 
 model CatalogueCategory {
@@ -473,11 +475,11 @@ model contactDetails {
 }
 
 model users {
-  id                String     @id @default(auto()) @map("_id") @db.ObjectId
+  id                String        @id @default(auto()) @map("_id") @db.ObjectId
   name              String?
-  email             String     @unique
+  email             String        @unique
   provider_id       String?
-  provider          String?    @default("default")
+  provider          String?       @default("default")
   mobile_number     Int?
   password          String?
   address           String?
@@ -488,13 +490,15 @@ model users {
   business_detail   String?
   image             String?
   verification_code String?
-  isActive          Boolean?   @default(true)
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  isActive          Boolean?      @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
   cart              cart[]
   WishList          WishList[]
+  orders            Order[]
   // Order             Order[]
   // Address           Address[]
+  BankAccount       BankAccount[]
 }
 
 model size {
@@ -679,58 +683,6 @@ model CatalogueSize {
   @@unique([catalogue_id, size_id])
 }
 
-// model PaymentMethod {
-//   id       String   @id @default(auto()) @map("_id") @db.ObjectId
-//   name     String
-//   isActive Boolean? @default(false)
-//   Order    Order[]
-// }
-
-// model Order {
-//   id               String        @id @default(auto()) @map("_id") @db.ObjectId
-//   orderID          String        @unique
-//   orderDate        DateTime
-//   user_id          String        @db.ObjectId
-//   paymentMethod_id String        @db.ObjectId
-//   status           OrderStatus
-//   createdAt        DateTime      @default(now())
-//   updatedAt        DateTime      @updatedAt
-//   user             users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
-//   paymentMethod    PaymentMethod @relation(fields: [paymentMethod_id], references: [id], onDelete: NoAction)
-// }
-
-// enum OrderStatus {
-//   Pending
-//   OrderPlaced
-//   ShippedComplete
-//   Cancel
-// }
-
-// model Address {
-//   id         String      @id @default(auto()) @map("_id") @db.ObjectId
-//   user_id    String      @db.ObjectId
-//   email      String
-//   type       AddressType
-//   first_name String
-//   last_name  String
-//   address    String
-//   pinCode    String
-//   city       String
-//   state      String
-//   country    String
-//   mobile_no  Int
-//   phone_no   Int?        @default(0)
-//   isShipping Boolean     @default(false)
-//   createdAt  DateTime    @default(now())
-//   updatedAt  DateTime    @updatedAt
-//   user       users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
-// }
-
-// enum AddressType {
-//   Billing
-//   Shipping
-// }
-
 model NewsLetter {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
@@ -767,3 +719,136 @@ enum ShippingChargestype {
   pcs
   weight
 }
+
+// ORDER RELATED MODELS
+model Order {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String      @db.ObjectId
+  paymentId   String      @db.ObjectId
+  billingId   String      @db.ObjectId
+  shippingId  String      @db.ObjectId
+  subtotal    Float
+  Tax         Float
+  totalAmount Float
+  status      OrderStatus
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user        users?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+  shipping    Shipping[]
+  billing     Billing[]
+  payment     payment[]
+}
+
+model OrderItem {
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  orderId        String?    @db.ObjectId
+  productId      String?    @db.ObjectId
+  catlogueId     String?    @db.ObjectId
+  quantity       Int
+  customersnotes String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  product        Product?   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  catalogue      Catalogue? @relation(fields: [catlogueId], references: [id], onDelete: Cascade)
+  order          Order?     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Shipping {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  orderId       String         @db.ObjectId
+  fullName      String
+  address1      String
+  adress2       String?
+  city          String
+  country       String
+  state         String
+  zipCode       String
+  mobile        String
+  shippingPrice Float?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  status        ShippingStatus
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Billing {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId     String   @db.ObjectId
+  fullName    String
+  address1    String
+  adress2     String?
+  city        String
+  country     String
+  state       String
+  zipCode     String
+  email       String?
+  mobile      String
+  mobile2     String?
+  companyname String?
+  GstNumber   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model payment {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  orderId       String        @db.ObjectId
+  paymentMethod PaymentMethod
+  transactionId String?
+  bankAccountId String?
+  status        PaymentStatus
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model BankAccount {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String   @db.ObjectId
+  bankName          String
+  accountNumber     String
+  ifscCode          String
+  accountHolderName String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              users?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum ShippingStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  RETURNED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  RAZORPAY
+  STRIPE
+  BANK_TRANSFER
+  COD
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+// ORDER RELATED DATE END HERE EXPLAINATION
+// ORDER TABLE RELATION WITH ==ORDERITEM==, ==SHIPPING==, ==BILLING==, ==PAYMENT==
+// ORDERITEMTABLE RELATION WITH ==PRODUCT==, ==CATALOGUE==, 
+// SHIPPING TABLE RELATION WITH ==ORDER==
+// BILLING TABLE RELATION WITH ==ORDER==
+// PAYMENT TABLE RELATION WITH ==ORDER==
+// BANKACCOUNT TABLE RELATION WITH ==USER==

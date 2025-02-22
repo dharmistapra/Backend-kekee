@@ -845,6 +845,19 @@ enum PaymentStatus {
   REFUNDED
 }
 
+model PaymentMethods {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  position    Int
+  name        String
+  keyId       String?
+  secretKey   String
+  charge      Int      @default(0)
+  description String?  @default("")
+  isActive    Boolean? @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // ORDER RELATED DATE END HERE EXPLAINATION
 // ORDER TABLE RELATION WITH ==ORDERITEM==, ==SHIPPING==, ==BILLING==, ==PAYMENT==
 // ORDERITEMTABLE RELATION WITH ==PRODUCT==, ==CATALOGUE==, 

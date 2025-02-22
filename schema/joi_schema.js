@@ -1126,6 +1126,18 @@ const shippingchargesSchema = async (req, res, next) => {
   await JoiSchemaValidation(schema, req, next);
 };
 
+const paymentMethodsSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    name: Joi.string().required(),
+    keyId: Joi.string().optional(),
+    secretKey: Joi.string().required(),
+    charge: Joi.number().optional().default(0),
+    description: Joi.string().optional(),
+    isActive: Joi.boolean().optional(),
+  });
+  await JoiSchemaValidation(schema, req, next);
+};
+
 export {
   categorySchema,
   subCategorySchema,
@@ -1174,4 +1186,5 @@ export {
   importProductSchema,
   importCatalogue,
   shippingchargesSchema,
+  paymentMethodsSchema,
 };

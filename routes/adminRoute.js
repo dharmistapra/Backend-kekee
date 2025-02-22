@@ -43,6 +43,7 @@ import {
   singleStitchingSchema,
   collectionSchema,
   shippingchargesSchema,
+  paymentMethodsSchema,
 } from "../schema/joi_schema.js";
 import {
   getAllSubCategory,
@@ -313,6 +314,14 @@ import {
   updateNewCollectionStatus,
   uploadImages,
 } from "../controller/admin/newCollection.js";
+import {
+  deletePaymentMethod,
+  getPaymentMethod,
+  paymentMethodPosition,
+  paymentMethodStatus,
+  postPaymentMethod,
+  updatePaymentMethod,
+} from "../controller/admin/paymentMethod.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -690,7 +699,7 @@ adminRouter.post("/collection-position", positionSchema, collectionPosition);
 adminRouter.post("/newsletter-pagination", getNewsLetter);
 adminRouter.delete("/newsletter/:id", deleteNewsLetter);
 
-// IMPORT CATALOGUE PRODUCTS
+// IMPORT CATALOGUE PRODUCTS API
 
 adminRouter.post("/importsheet", data.uploadCSV, importCatalogues);
 adminRouter.post("/importzip", data.uploadZip, zipImages);
@@ -729,4 +738,17 @@ adminRouter.delete("/remove-product-collection/:id", romoveProductInCollection);
 
 adminRouter.get("/collection-all-status/:id", updateNewCollectionStatus);
 adminRouter.get("/collection-all-home/:id", updateNewCollectionIsHome);
+
+// PAYMENT METHOD API
+
+adminRouter.post("/paymentmethod", paymentMethodsSchema, postPaymentMethod);
+adminRouter.put(
+  "/paymentmethod/:id",
+  paymentMethodsSchema,
+  updatePaymentMethod
+);
+adminRouter.get("/paymentmethod", getPaymentMethod);
+adminRouter.delete("/paymentmethod/:id", deletePaymentMethod);
+adminRouter.get("/paymentmethod-status/:id", paymentMethodStatus);
+adminRouter.post("/paymentmethod-position", paymentMethodPosition);
 export default adminRouter;

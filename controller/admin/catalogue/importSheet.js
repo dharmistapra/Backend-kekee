@@ -583,7 +583,6 @@ const importCatalogues = async (req, res, next) => {
     for (let [index, row] of jsonArray.entries()) {
       let {
         category,
-        collection,
         productCode,
         productName,
         description,
@@ -653,11 +652,11 @@ const importCatalogues = async (req, res, next) => {
         .filter((attr) => !attr.isDefault)
         .map((attr) => attr.name);
 
-      if (!category && !collection) {
+      if (!category) {
         await deleteFile(filePath);
         return res.status(400).json({
           isSuccess: false,
-          message: `Row ${index} Please enter Category or Collection!`,
+          message: `Row ${index} Please enter Category!`,
         });
       }
       let result;
@@ -730,28 +729,6 @@ const importCatalogues = async (req, res, next) => {
               }
             }
           }
-        }
-      }
-
-      if (collection) {
-        let collections = await arraySplit(collection);
-        let Collection = _.uniq(collections);
-        result = await isNameRecordsExist(Collection, "collection");
-        if (!result.exists) {
-          await deleteFile(filePath);
-          return res.status(400).json({
-            isSuccess: false,
-            message: `Row ${index} ${result.missingNames} invalid Collections!`,
-          });
-        }
-        collection = result.existingIds;
-        // collection = await getId(collections, "collection");
-        if (collection.length === 0) {
-          await deleteFile(filePath);
-          return res.status(400).json({
-            isSuccess: false,
-            message: `Row ${index} invalid Collections!`,
-          });
         }
       }
       let attributeData = [];
@@ -829,7 +806,6 @@ const importCatalogues = async (req, res, next) => {
 
         let catalog = {
           ...(category.length > 0 && { category: category }),
-          ...(collection.length > 0 && { collection: collection }),
           name: productName,
           cat_code: catCode,
           url: cat_url,
@@ -917,7 +893,6 @@ const importCatalogues = async (req, res, next) => {
           image: product_image,
           isActive: isActive !== "N" ? true : false,
           stitching: isStitching !== "N" ? true : false,
-          ...(collection.length > 0 && { collection: collection }),
           ...(category.length > 0 && { category: category }),
         };
 
@@ -960,11 +935,9 @@ const importCatalogues = async (req, res, next) => {
     await prisma.$transaction(async (tx) => {
       if (catalogues.length > 0) {
         for (let catalogue of catalogues) {
-          let collection = catalogue.collection;
           let category = catalogue.category;
           const products = catalogue.product;
           const attributeValueConnection = catalogue?.attributes;
-          delete catalogue.collection;
           delete catalogue.product;
           delete catalogue.category;
           delete catalogue.attributes;
@@ -1004,23 +977,8 @@ const importCatalogues = async (req, res, next) => {
             create: { ...catalogue },
           });
 
-          await tx.catalogueCollection.deleteMany({
-            where: { catalogue_id: savedCatalogue.id },
-          });
-          if (collection && collection.length > 0) {
-            await tx.catalogueCollection.createMany({
-              data: collection.map((collection) => ({
-                catalogue_id: savedCatalogue.id,
-                collection_id: collection,
-                product_id: null,
-              })),
-            });
-          }
-
           for (let product of products) {
             const attributeValueConnection = product.attributes;
-
-            delete product.collection;
             delete product.attributes;
             delete product.category;
 
@@ -1047,20 +1005,6 @@ const importCatalogues = async (req, res, next) => {
               update: { ...product, catalogue_id: savedCatalogue.id },
               create: { ...product, catalogue_id: savedCatalogue.id },
             });
-
-            await tx.catalogueCollection.deleteMany({
-              where: { product_id: products.id },
-            });
-
-            if (collection && collection.length > 0) {
-              await tx.catalogueCollection.createMany({
-                data: collection.map((collection) => ({
-                  catalogue_id: null,
-                  collection_id: collection,
-                  product_id: products.id,
-                })),
-              });
-            }
           }
         }
       }
@@ -1068,8 +1012,6 @@ const importCatalogues = async (req, res, next) => {
       if (productArray.length > 0) {
         for (let product of productArray) {
           const attributeValueConnection = product.attributes;
-          let collection = product.collection;
-          delete product.collection;
           delete product.attributes;
           delete product.category;
 
@@ -1090,19 +1032,6 @@ const importCatalogues = async (req, res, next) => {
             update: { ...product, catalogue_id: null },
             create: { ...product, catalogue_id: null },
           });
-
-          await tx.catalogueCollection.deleteMany({
-            where: { product_id: products.id },
-          });
-          if (collection && collection.length > 0) {
-            await tx.catalogueCollection.createMany({
-              data: collection.map((collection) => ({
-                catalogue_id: null,
-                collection_id: collection,
-                product_id: products.id,
-              })),
-            });
-          }
         }
       }
     });

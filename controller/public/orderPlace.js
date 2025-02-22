@@ -4,7 +4,9 @@ import { calculateShippingCost } from "../admin/shippingcharges.js";
 import { rozarpay } from "../../config/paymentConfig.js";
 const OrderPlace = async (req, res, next) => {
     try {
-        const { user_id, items, billingform, shippingdata, paymentMethod, shippingPrice, orderTotal } = req.body;
+        const { user_id, items, billingform, shippingdata, paymentMethod, shippingPrice, orderTotal, currency } = req.body;
+
+
         const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
         if (!finduser) return res.status(400).json({ isSuccess: false, message: "User not found", data: null });
         const cartItems = await prisma.cartItem.findMany({
@@ -124,7 +126,6 @@ const OrderPlace = async (req, res, next) => {
                     item.Tax = priceDetails?.tax || 0;
                     item.outOfStock = priceDetails.catalogueOutOfStock;
                     totalweight += Number(catalogue?.weight) * Number(quantity);
-                    console.log("totalweightPPPPPPPPPPPP============>", totalweight)
                     stitchingDataMap = await getAllStitchingData(
                         parsedStitching,
                         parsedStitching
@@ -151,8 +152,6 @@ const OrderPlace = async (req, res, next) => {
                     item.Tax = priceDetails?.tax || 0;
                     item.message = priceDetails.message || "";
                     totalweight += Number(item.product?.weight) * Number(quantity);
-
-                    console.log("totalweight============>", totalweight)
                     stitchingDataMap = await getAllStitchingData(
                         parsedStitching,
                         parsedStitching
@@ -173,11 +172,10 @@ const OrderPlace = async (req, res, next) => {
 
         const order = await prisma.order.create({
             data: {
-                user_id: user_id,
-                subtotal,
+                userId: user_id,
+                subtotal: subtotal,
                 Tax: tax,
-                shippingCharge: shippingconst.shippingCost,
-                totalAmount: ordertotal,
+                shippingcharge: shippingconst.shippingCost,
                 totalAmount: ordertotal,
                 status: 'PENDING',
             },
@@ -185,10 +183,10 @@ const OrderPlace = async (req, res, next) => {
 
 
         await prisma.orderItem.createMany({
-            data: items.map(item => ({
+            data: cartItems.map(item => ({
                 orderId: order.id,
-                productId: item.productId,
-                catalogueId: item.catalogueId,
+                productId: item.product_id,
+                catlogueId: item.catalogue_id,
                 quantity: item.quantity,
                 customersnotes: billingform.customersnotes,
             })),
@@ -196,13 +194,56 @@ const OrderPlace = async (req, res, next) => {
 
 
         const billingData = await prisma.billing.create({
-            data: { orderId: order.id, ...billing },
+            data: {
+                orderId: order.id,
+                email: billingform.email,
+                fullName: billingform.fullName,
+                country: billingform.country,
+                state: billingform.state,
+                city: billingform.city,
+                zipCode: billingform.zipCode,
+                address1: billingform.address1,
+                address2: billingform.address2,
+                companyname: billingform.companyname,
+                GstNumber: billingform.GstNumber,
+                mobile: billingform.mobile,
+                whatsapp: billingform.whatsapp,
+            },
         });
 
 
         const shippingData = await prisma.shipping.create({
-            data: { orderId: order.id, ...shipping, shippingChargeId: shippingCharge },
+            data: {
+                orderId: order.id,
+                fullName: shippingdata.fullName,
+                country: shippingdata.country,
+                state: shippingdata.state,
+                city: shippingdata.city,
+                zipCode: shippingdata.zipCode,
+                address1: shippingdata.address1,
+                address2: shippingdata.address2,
+                mobile: shippingdata.mobile,
+                status: 'PENDING',
+            },
         });
+
+        let paymentData = {
+            orderId: order.id,
+            paymentMethod,
+            status: 'PENDING',
+        };
+
+        if (paymentMethod === 'RAZORPAY') {
+            const razorpayOrder = await rozarpay.orders.create({
+                amount: Math.round(ordertotal * 100),
+                currency: currency,
+                receipt: `order_${order.id}`,
+                payment_capture: 1
+            });
+
+            paymentData.transactionId = razorpayOrder.id;
+        }
+
 
 
         const payment = await prisma.payment.create({ data: paymentData });
@@ -216,33 +257,20 @@ const OrderPlace = async (req, res, next) => {
             },
         });
 
-
-        res.status(201).json({
-            message: 'Order placed successfully',
+        const response = {
             orderId: order.id,
             razorpayOrderId: paymentData.transactionId,
-        });
+            currency: currency,
+            amount: Math.round(ordertotal * 100),
 
-
-        let paymentData = {
-            orderId: order.id,
-            paymentMethod,
-            status: 'PENDING',
-        };
-
-
-
-        if (paymentMethod === 'razorpay') {
-            const razorpayOrder = await razorpay.orders.create({
-                amount: finalAmount,
-                currency: "INR",
-                receipt: `order_${order.id}`,
-                payment_capture: 1
-            });
-
-            paymentData.transactionId = razorpayOrder.id;
         }
 
+        return res.status(201).json({
+            message: 'Order placed successfully',
+            data: response,
+            isSuccess: true
+
+        });
     } catch (error) {
         console.log("error", error);
         let err = new Error("Something went wrong, please try again!");

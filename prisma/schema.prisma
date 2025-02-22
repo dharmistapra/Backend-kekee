@@ -722,22 +722,23 @@ enum ShippingChargestype {
 
 // ORDER RELATED MODELS
 model Order {
-  id          String      @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String      @db.ObjectId
-  paymentId   String      @db.ObjectId
-  billingId   String      @db.ObjectId
-  shippingId  String      @db.ObjectId
-  subtotal    Float
-  Tax         Float
-  totalAmount Float
-  status      OrderStatus
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  user        users?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orderItems  OrderItem[]
-  shipping    Shipping[]
-  billing     Billing[]
-  payment     payment[]
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String      @db.ObjectId
+  paymentId      String?     @db.ObjectId
+  billingId      String?     @db.ObjectId
+  shippingId     String?     @db.ObjectId
+  subtotal       Float
+  Tax            Float
+  shippingcharge Float
+  totalAmount    Float
+  status         OrderStatus
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  user           users?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems     OrderItem[]
+  shipping       Shipping[]
+  billing        Billing[]
+  payment        payment[]
 }
 
 model OrderItem {
@@ -759,12 +760,12 @@ model Shipping {
   orderId       String         @db.ObjectId
   fullName      String
   address1      String
-  adress2       String?
+  address2      String?
   city          String
   country       String
   state         String
   zipCode       String
-  mobile        String
+  mobile        Int
   shippingPrice Float?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -777,14 +778,14 @@ model Billing {
   orderId     String   @db.ObjectId
   fullName    String
   address1    String
-  adress2     String?
+  address2    String?
   city        String
   country     String
   state       String
   zipCode     String
   email       String?
-  mobile      String
-  mobile2     String?
+  mobile      Int
+  whatsapp    Int?
   companyname String?
   GstNumber   String?
   createdAt   DateTime @default(now())

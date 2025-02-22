@@ -1,9 +1,12 @@
 import prisma from "../../db/config.js";
 import { findCatalogueStitchingprice, findproductpriceOnSize, findproductpriceonStitching, getAllStitchingData } from "../../helper/cartItemHelper.js";
-
+import { calculateShippingCost } from "../admin/shippingcharges.js";
+import { rozarpay } from "../../config/paymentConfig.js";
 const OrderPlace = async (req, res, next) => {
     try {
-        const { user_id, items, billingform, shippingdata, paymentMethod, shippingPrice, orderTotal } = req.body;
+        const { user_id, items, billingform, shippingdata, paymentMethod, shippingPrice, orderTotal, currency } = req.body;
+
+
         const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
         if (!finduser) return res.status(400).json({ isSuccess: false, message: "User not found", data: null });
         const cartItems = await prisma.cartItem.findMany({
@@ -98,7 +101,7 @@ const OrderPlace = async (req, res, next) => {
 
         if (cartItems?.length === 0) return res.status(400).json({ isSuccess: false, message: "items not Found", data: null });
 
-        let subtotal = 0, tax = 0;
+        let subtotal = 0, tax = 0, totalweight = 0;
         let stitchingDataMap = [];
         for (let item of cartItems) {
             const { quantity, stitching, size, isCatalogue, catalogue, product_id } = item;
@@ -122,6 +125,7 @@ const OrderPlace = async (req, res, next) => {
                     item.Subtotal = priceDetails?.subtotal * quantity || 0;
                     item.Tax = priceDetails?.tax || 0;
                     item.outOfStock = priceDetails.catalogueOutOfStock;
+                    totalweight += Number(catalogue?.weight) * Number(quantity);
                     stitchingDataMap = await getAllStitchingData(
                         parsedStitching,
                         parsedStitching
@@ -147,6 +151,7 @@ const OrderPlace = async (req, res, next) => {
                     item.Subtotal = priceDetails?.subtotal * quantity || 0;
                     item.Tax = priceDetails?.tax || 0;
                     item.message = priceDetails.message || "";
+                    totalweight += Number(item.product?.weight) * Number(quantity);
                     stitchingDataMap = await getAllStitchingData(
                         parsedStitching,
                         parsedStitching
@@ -155,11 +160,117 @@ const OrderPlace = async (req, res, next) => {
             }
             subtotal += item.Subtotal;
             tax += item.Tax;
+
         }
 
-        let ordertotal = subtotal + tax
-        console.log("subtotal", ordertotal);
+        if (totalweight === 0) {
+            return res.status(200).json({ isSuccess: false, message: "Total weight is 0", data: null });
+        }
 
+        const shippingconst = await calculateShippingCost(totalweight, shippingdata?.country);
+        let ordertotal = (subtotal + tax + shippingconst.shippingCost);
+
+        const order = await prisma.order.create({
+            data: {
+                userId: user_id,
+                subtotal: subtotal,
+                Tax: tax,
+                shippingcharge: shippingconst.shippingCost,
+                totalAmount: ordertotal,
+                status: 'PENDING',
+            },
+        });
+
+
+        await prisma.orderItem.createMany({
+            data: cartItems.map(item => ({
+                orderId: order.id,
+                productId: item.product_id,
+                catlogueId: item.catalogue_id,
+                quantity: item.quantity,
+                customersnotes: billingform.customersnotes,
+            })),
+        });
+
+
+        const billingData = await prisma.billing.create({
+            data: {
+                orderId: order.id,
+                email: billingform.email,
+                fullName: billingform.fullName,
+                country: billingform.country,
+                state: billingform.state,
+                city: billingform.city,
+                zipCode: billingform.zipCode,
+                address1: billingform.address1,
+                address2: billingform.address2,
+                companyname: billingform.companyname,
+                GstNumber: billingform.GstNumber,
+                mobile: billingform.mobile,
+                whatsapp: billingform.whatsapp,
+            },
+        });
+
+
+        const shippingData = await prisma.shipping.create({
+            data: {
+                orderId: order.id,
+                fullName: shippingdata.fullName,
+                country: shippingdata.country,
+                state: shippingdata.state,
+                city: shippingdata.city,
+                zipCode: shippingdata.zipCode,
+                address1: shippingdata.address1,
+                address2: shippingdata.address2,
+                mobile: shippingdata.mobile,
+                status: 'PENDING',
+            },
+        });
+
+        let paymentData = {
+            orderId: order.id,
+            paymentMethod,
+            status: 'PENDING',
+        };
+
+        if (paymentMethod === 'RAZORPAY') {
+            const razorpayOrder = await rozarpay.orders.create({
+                amount: Math.round(ordertotal * 100),
+                currency: currency,
+                receipt: `order_${order.id}`,
+                payment_capture: 1
+            });
+
+            paymentData.transactionId = razorpayOrder.id;
+        }
+
+
+
+        const payment = await prisma.payment.create({ data: paymentData });
+
+        await prisma.order.update({
+            where: { id: order.id },
+            data: {
+                paymentId: payment.id,
+                billingId: billingData.id,
+                shippingId: shippingData.id,
+            },
+        });
+
+        const response = {
+            orderId: order.id,
+            razorpayOrderId: paymentData.transactionId,
+            currency: currency,
+            amount: Math.round(ordertotal * 100),
+
+        }
+
+        return res.status(201).json({
+            message: 'Order placed successfully',
+            data: response,
+            isSuccess: true
+
+        });
     } catch (error) {
         console.log("error", error);
         let err = new Error("Something went wrong, please try again!");

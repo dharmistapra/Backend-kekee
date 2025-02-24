@@ -852,6 +852,7 @@ model PaymentMethods {
   name        String
   keyId       String?
   secretKey   String
+  image       String?  @default("")
   charge      Int      @default(0)
   description String?  @default("")
   isActive    Boolean? @default(true)

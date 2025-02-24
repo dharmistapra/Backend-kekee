@@ -1131,6 +1131,7 @@ const paymentMethodsSchema = async (req, res, next) => {
     name: Joi.string().required(),
     keyId: Joi.string().optional(),
     secretKey: Joi.string().required(),
+    image: Joi.string().optional().default(""),
     charge: Joi.number().optional().default(0),
     description: Joi.string().optional(),
     isActive: Joi.boolean().optional(),

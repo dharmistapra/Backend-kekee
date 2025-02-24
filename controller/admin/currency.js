@@ -80,8 +80,8 @@ const paginationCurrency = async (req, res, next) => {
     const skip = (page - 1) * take;
     const filter = [
       { code: { contains: search, mode: "insensitive" } },
-      { rate: isNaN(search) ? undefined : { equals: parseFloat(search) } }
-    ]
+      { rate: isNaN(search) ? undefined : { equals: parseFloat(search) } },
+    ];
 
     const searchFilter = createSearchFilter(search, filter);
 
@@ -99,7 +99,7 @@ const paginationCurrency = async (req, res, next) => {
         },
         skip,
         take,
-        orderBy: { id: "asc" }
+        orderBy: { id: "asc" },
       }),
     ]);
 

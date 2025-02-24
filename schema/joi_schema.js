@@ -1129,8 +1129,8 @@ const shippingchargesSchema = async (req, res, next) => {
 const paymentMethodsSchema = async (req, res, next) => {
   const schema = Joi.object({
     name: Joi.string().required(),
-    keyId: Joi.string().optional(),
-    secretKey: Joi.string().required(),
+    keyId: Joi.string().optional().allow("").default(""),
+    secretKey: Joi.string().optional().allow("").default(""),
     image: Joi.string().optional().default(""),
     charge: Joi.number().optional().default(0),
     description: Joi.string().optional(),

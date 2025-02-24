@@ -850,8 +850,8 @@ model PaymentMethods {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   position    Int
   name        String
-  keyId       String?
-  secretKey   String
+  keyId       String?  @default("")
+  secretKey   String?  @default("")
   image       String?  @default("")
   charge      Int      @default(0)
   description String?  @default("")

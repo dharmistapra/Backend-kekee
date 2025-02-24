@@ -384,7 +384,7 @@ const findCatalogueStitchingprice = async (catalogue_id, stitching, quantity, ch
     const availableProductCount = checkproductquantity.length - outOfStockCount;
     const stitchingPricePerItem = await findStitchingOptionPrices(extranct_Option_Id) || 0;
     const subtotal = (availableProductCount * catalogue.average_price) + (availableProductCount * stitchingPricePerItem);
-    console.log("outOfStockCount", outOfStockCount)
+
     const taxRate = catalogue.GST || 0;
     const taxPerItem = (subtotal * taxRate) / 100;
     const tax = taxPerItem * quantity;

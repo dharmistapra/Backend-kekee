@@ -795,7 +795,7 @@ model Billing {
 
 model payment {
   id            String        @id @default(auto()) @map("_id") @db.ObjectId
-  orderId       String        @db.ObjectId
+  orderId       String        @unique @db.ObjectId
   paymentMethod PaymentMethod
   transactionId String?
   bankAccountId String?
@@ -827,7 +827,7 @@ enum ShippingStatus {
 enum OrderStatus {
   PENDING
   PROCESSING
-  SHIPPED
+  CONFIRMED
   DELIVERED
   CANCELLED
 }

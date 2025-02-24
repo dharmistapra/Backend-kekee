@@ -160,9 +160,8 @@ const uploadShippingChargeCSV = async (req, res, next) => {
     );
 
     const newEntries = validEntries.filter((item) => {
-      const key = `${item.Country.toUpperCase()}_${item.From}_${
-        item.To
-      }_weight`;
+      const key = `${item.Country.toUpperCase()}_${item.From}_${item.To
+        }_weight`;
       return !existingSet.has(key);
     });
 
@@ -223,66 +222,65 @@ const calculateShippingCost = async (weight, country) => {
       };
     }
 
+    weight = parseInt(weight);
+
+    let shippingCost = null;
+
     for (let rule of shippingRules) {
       let minWeight = parseFloat(rule.from);
       let maxWeight = parseFloat(rule.to);
 
-      if (weight >= minWeight && weight <= maxWeight) {
-        return { success: true, shippingCost: rule.amount };
+      if (weight >= minWeight && weight < maxWeight + 0.01) {
+        shippingCost = rule.amount;
+        break;
       }
+
     }
 
-    return {
-      success: false,
-      message: "No matching shipping rule found for this weight",
-    };
+
+
+    if (shippingCost === null) {
+      return {
+        success: false,
+        message: "No matching shipping rule found for this weight",
+      };
+    }
+
+    return { success: true, shippingCost };
+
   } catch (error) {
     console.error("Error in calculateShippingCost:", error);
     return { success: false, message: "Internal server error" };
   }
 };
 
+
 const findShippingPrice = async (req, res) => {
   try {
     const { weight, country } = req.body;
     const result = await calculateShippingCost(weight, country);
 
-    if (!result.success) {
-      return res
-        .status(404)
-        .json({ isSuccess: false, message: result.message });
+    if (!result || !result.success) {
+      return res.status(404).json({
+        isSuccess: false,
+        message: result.message || "No matching shipping rule found",
+      });
     }
 
-    res
-      .status(200)
-      .json({ isSuccess: true, data: { shippingCost: result.shippingCost } });
+    res.status(200).json({
+      isSuccess: true,
+      data: { shippingCost: result.shippingCost },
+    });
   } catch (error) {
     console.error("Error finding shipping price:", error);
-    res
-      .status(500)
-      .json({ isSuccess: false, message: "Internal server error" });
-  }
-  let shippingCost = null;
-
-  for (let rule of shippingRules) {
-    let minWeight = parseFloat(rule.from);
-    let maxWeight = parseFloat(rule.to);
-
-    if (weight >= minWeight && weight <= maxWeight) {
-      shippingCost = rule.amount;
-      break;
-    }
-  }
-
-  if (shippingCost === null) {
-    return res.status(404).json({
+    res.status(500).json({
       isSuccess: false,
-      message: "No matching shipping rule found for this weight",
+      message: "Internal server error",
     });
   }
-
-  res.status(200).json({ isSuccess: true, data: { shippingCost } });
 };
+
+
 
 export {
   postShippingcharges,

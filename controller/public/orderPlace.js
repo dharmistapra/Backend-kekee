@@ -2,6 +2,8 @@ import prisma from "../../db/config.js";
 import { findCatalogueStitchingprice, findproductpriceOnSize, findproductpriceonStitching, getAllStitchingData } from "../../helper/cartItemHelper.js";
 import { calculateShippingCost } from "../admin/shippingcharges.js";
 import { rozarpay } from "../../config/paymentConfig.js";
+import crypto from "crypto";
+import "dotenv/config";
 const OrderPlace = async (req, res, next) => {
     try {
         const { user_id, items, billingform, shippingdata, paymentMethod, shippingPrice, orderTotal, currency } = req.body;
@@ -169,6 +171,7 @@ const OrderPlace = async (req, res, next) => {
 
         const shippingconst = await calculateShippingCost(totalweight, shippingdata?.country);
         let ordertotal = (subtotal + tax + shippingconst.shippingCost);
+        console.log("shippingconst", shippingconst)
 
         const order = await prisma.order.create({
             data: {
@@ -233,10 +236,13 @@ const OrderPlace = async (req, res, next) => {
             status: 'PENDING',
         };
 
+
+        const convertAmount = ordertotal / currency?.rate
+
         if (paymentMethod === 'RAZORPAY') {
             const razorpayOrder = await rozarpay.orders.create({
-                amount: Math.round(ordertotal * 100),
-                currency: currency,
+                amount: Math.round(convertAmount * 100),
+                currency: currency?.code,
                 receipt: `order_${order.id}`,
                 payment_capture: 1
             });
@@ -261,22 +267,139 @@ const OrderPlace = async (req, res, next) => {
             orderId: order.id,
             razorpayOrderId: paymentData.transactionId,
             currency: currency,
-            amount: Math.round(ordertotal * 100),
+            amount: Math.round(convertAmount * 100),
 
         }
 
         return res.status(201).json({
-            message: 'Order placed successfully',
+            message: 'Order Id generated successfully',
             data: response,
             isSuccess: true
 
         });
     } catch (error) {
-        console.log("error", error);
         let err = new Error("Something went wrong, please try again!");
         next(err);
     }
 }
 
 
+
+
+
+
+
+
+const verifyOrder = async (req, res, next) => {
+    try {
+        const { orderId, transactionId, paymentMethod, status, razorpayOrderId, paymentId, signature } = req.body;
+
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order) return res.status(404).json({ isSuccess: false, message: "Order not found" });
+
+        if (paymentMethod === "RAZORPAY") {
+            const expectedSignature = crypto
+                .createHmac("sha256", process.env.ROZARPAY_KEY_SECRET)
+                .update(`${razorpayOrderId}|${paymentId}`)
+                .digest("hex");
+
+            if (expectedSignature !== signature) {
+                return res.status(400).json({ isSuccess: false, message: "Invalid payment signature" });
+            }
+        }
+
+
+        const stockCheck = await checkStock(orderId);
+        if (!stockCheck.isSuccess) {
+            return res.status(400).json({ isSuccess: false, message: stockCheck.message });
+        }
+
+        if (status === "SUCCESS") {
+            await prisma.order.update({
+                where: { id: orderId },
+                data: { status: "CONFIRMED" },
+            });
+
+            await prisma.payment.update({
+                where: { orderId: orderId },
+                data: { transactionId, status: "SUCCESS" },
+            });
+
+            await reduceProductQuantity(orderId);
+
+            return res.status(200).json({ isSuccess: true, message: "Order placed successfully" });
+        } else {
+            await prisma.order.update({
+                where: { id: orderId },
+                data: { status: "FAILED" },
+            });
+            return res.status(400).json({ isSuccess: false, message: "Payment failed" });
+        }
+    } catch (error) {
+        next(new Error("Something went wrong!"));
+    }
+};
+
+
+
+const checkStock = async (orderId) => {
+    try {
+        const orderItems = await prisma.orderItem.findMany({ where: { orderId } });
+        for (let item of orderItems) {
+            if (item.productId) {
+                const product = await prisma.product.findUnique({ where: { id: item.productId } });
+                if (!product || product.quantity < item.quantity) {
+                    return { isSuccess: false, message: `${product?.name || "Product"} is out of stock` };
+                }
+            }
+            if (item.catlogueId) {
+                const catalogue = await prisma.catalogue.findUnique({ where: { id: item.catlogueId } });
+                if (!catalogue || catalogue.quantity < item.quantity) {
+                    return { isSuccess: false, message: `${catalogue?.name || "Catalogue"} is out of stock` };
+                }
+            }
+        }
+        return { isSuccess: true };
+    } catch (error) {
+        return { isSuccess: false, message: "Stock check failed" };
+    }
+};
+
+
+
+const reduceProductQuantity = async (orderId) => {
+    try {
+        const orderItems = await prisma.orderItem.findMany({ where: { orderId } });
+        for (let item of orderItems) {
+            if (item.productId) {
+                await prisma.product.update({
+                    where: { id: item.productId },
+                    data: { quantity: { decrement: item.quantity } },
+                });
+            }
+            if (item.catlogueId) {
+                const result = await prisma.catalogue.update({
+                    where: { id: item.catlogueId },
+                    data: { quantity: { decrement: item.quantity } },
+                    select: {
+                        id: true
+                    }
+                });
+
+                if (result) {
+                    await prisma.product.updateMany({
+                        where: {
+                            catalogue_id: result.id
+                        },
+                        data: { quantity: { decrement: item.quantity } },
+                    })
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error reducing product quantity:", error);
+    }
+};
+
 export default OrderPlace;
+export { verifyOrder };

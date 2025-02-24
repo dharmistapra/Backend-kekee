@@ -132,6 +132,8 @@ const OrderPlace = async (req, res, next) => {
                         parsedStitching,
                         parsedStitching
                     );
+
+
                 }
             } else {
                 if (size) {

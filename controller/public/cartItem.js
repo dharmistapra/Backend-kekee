@@ -385,150 +385,314 @@ const getAllcartitem = async (req, res, next) => {
       },
     });
 
+    // let subtotal = 0,
+    //   tax = 0;
+    // let stitchingDataMap = [];
+
+    // for (let item of cartItems) {
+    //   const { quantity, stitching, size, isCatalogue, catalogue, product_id } =
+    //     item;
+
+    //   if (item.isCatalogue && item.catalogue_id) {
+    //     const checkproductquantity = catalogue?.Product?.map((data) => {
+    //       if (data.quantity < quantity) {
+    //         return { ...data, outOfStock: true };
+    //       }
+    //       return data;
+    //     });
+
+    //     catalogue.Product = checkproductquantity;
+    //     if (item.stitching) {
+    //       const parsedStitching = JSON.parse(stitching);
+    //       const priceDetails = await findCatalogueStitchingprice(
+    //         catalogue?.id,
+    //         parsedStitching,
+    //         quantity,
+    //         checkproductquantity
+    //       );
+    //       item.Subtotal = priceDetails?.subtotal * quantity || 0;
+    //       item.Tax = priceDetails?.tax || 0;
+    //       item.outOfStock = priceDetails.catalogueOutOfStock;
+    //       stitchingDataMap = await getAllStitchingData(
+    //         parsedStitching,
+    //         parsedStitching
+    //       );
+    //       console.log(JSON.stringify(stitchingDataMap, null, 2));
+
+    //     }
+    //   } else {
+    //     if (size) {
+    //       const priceDetails = await findproductpriceOnSize(
+    //         product_id,
+    //         size,
+    //         quantity
+    //       );
+    //       item.Subtotal = priceDetails?.subtotal || 0;
+    //       item.Tax = priceDetails?.tax || 0;
+    //     } else if (stitching) {
+    //       const parsedStitching = JSON.parse(stitching);
+    //       const priceDetails = await findproductpriceonStitching(
+    //         product_id,
+    //         parsedStitching,
+    //         quantity
+    //       );
+
+    //       item.Subtotal = priceDetails?.subtotal * quantity || 0;
+    //       item.Tax = priceDetails?.tax || 0;
+    //       item.message = priceDetails.message || "";
+    //       stitchingDataMap = await getAllStitchingData(
+    //         parsedStitching,
+    //         parsedStitching
+    //       );
+    //     }
+    //   }
+    //   subtotal += item.Subtotal;
+    //   tax += item.Tax;
+    // }
+
+    // const DataModified =
+    //   cartItems &&
+    //   cartItems?.length > 0 &&
+    //   cartItems?.map((item, index) => {
+    //     let outOfStockProducts = [];
+    //     let outOfStock = false;
+    //     let message = "";
+    //     if (item.isCatalogue && item.catalogue_id) {
+    //       item.catalogue?.Product?.forEach((product) => {
+    //         if (product.outOfStock && product.quantity < item.quantity) {
+    //           outOfStock = item.outOfStock;
+    //           message = "At This Time Product Quantity IS Not Available";
+    //           outOfStockProducts.push({
+    //             sku: product.sku,
+    //             outOfStock: product.outOfStock,
+    //             message: message,
+    //           });
+    //         }
+    //       });
+    //     } else if (item.product.quantity < item.quantity) {
+    //       outOfStock = true;
+    //       message = "At This Time Stock Is Unavailable";
+    //       outOfStockProducts.push({
+    //         sku: item.product.sku,
+    //         outOfStock: item.product.outOfStock,
+    //         message: message,
+    //       });
+    //     }
+
+    //     let menu;
+    //     if (item?.catalogue?.CatalogueCategory) {
+    //       const category = item?.catalogue?.CatalogueCategory.map(
+    //         (value) => value.category.Menu[0].url
+    //       );
+    //       menu = category[0];
+    //       delete item?.catalogue?.CatalogueCategory;
+    //     }
+    //     if (item?.product?.categories) {
+    //       const category = item?.product?.categories.map(
+    //         (value) => value.category.Menu[0].url
+    //       );
+    //       menu = category[0];
+    //       delete item?.product?.categories;
+    //     }
+    //     return {
+    //       id: item.id,
+    //       product_id: item?.product_id,
+    //       catalogue_id: item?.catalogue_id,
+    //       isCatalogue: item.isCatalogue,
+    //       stitching: stitchingDataMap,
+    //       ...(item?.catalogue && { no_of_product: item?.catalogue?.no_of_product }),
+    //       average_price: item?.catalogue ? item?.catalogue.average_price : item?.product?.price,
+    //       url: item?.catalogue ? item?.catalogue.url : item?.product?.url,
+    //       name: item?.catalogue ? item?.catalogue.name : item?.product?.name,
+    //       quantity: item.quantity,
+    //       sku: item?.catalogue ? item?.catalogue.cat_code : item?.product?.sku,
+    //       weight: item?.catalogue
+    //         ? item?.catalogue.weight
+    //         : item.product?.weight,
+    //       price: item?.catalogue
+    //         ? item?.catalogue.offer_price
+    //         : item?.product.offer_price,
+    //       image: item?.catalogue
+    //         ? item?.catalogue.coverImage
+    //         : item?.product?.image[0],
+    //       category: item?.catalogue
+    //         ? item?.catalogue.CatalogueCategory
+    //         : item?.product?.categories,
+    //       menu: menu,
+    //       size: item.size,
+    //       subtotal: item?.Subtotal,
+    //       tax: item?.Tax,
+    //       outOfStock: outOfStock,
+    //       message: outOfStockProducts,
+    //     };
+    //   });
+
+    // const totalOrder = subtotal + tax;
+
+    // return res.status(200).json({
+    //   status: true,
+    //   message: "Cart Items Get Successfully",
+    //   data: DataModified,
+    //   totalSubtotal: subtotal,
+    //   totalTax: tax,
+    //   totalOrder: totalOrder,
+    // });
+
     let subtotal = 0,
       tax = 0;
-    let stitchingDataMap = [];
 
-    for (let item of cartItems) {
-      const { quantity, stitching, size, isCatalogue, catalogue, product_id } =
-        item;
-
-      if (item.isCatalogue && item.catalogue_id) {
-        const checkproductquantity = catalogue?.Product?.map((data) => {
-          if (data.quantity < quantity) {
-            return { ...data, outOfStock: true };
-          }
-          return data;
-        });
-
-        catalogue.Product = checkproductquantity;
-        if (item.stitching) {
-          const parsedStitching = JSON.parse(stitching);
-          const priceDetails = await findCatalogueStitchingprice(
-            catalogue?.id,
-            parsedStitching,
-            quantity,
-            checkproductquantity
-          );
-          console.log("Price Details", priceDetails);
-          item.Subtotal = priceDetails?.subtotal * quantity || 0;
-          item.Tax = priceDetails?.tax || 0;
-          item.outOfStock = priceDetails.catalogueOutOfStock;
-          stitchingDataMap = await getAllStitchingData(
-            parsedStitching,
-            parsedStitching
-          );
-        }
-      } else {
-        if (size) {
-          const priceDetails = await findproductpriceOnSize(
-            product_id,
-            size,
-            quantity
-          );
-          item.Subtotal = priceDetails?.subtotal || 0;
-          item.Tax = priceDetails?.tax || 0;
-        } else if (stitching) {
-          const parsedStitching = JSON.parse(stitching);
-          const priceDetails = await findproductpriceonStitching(
-            product_id,
-            parsedStitching,
-            quantity
-          );
-
-          item.Subtotal = priceDetails?.subtotal * quantity || 0;
-          item.Tax = priceDetails?.tax || 0;
-          item.message = priceDetails.message || "";
-          stitchingDataMap = await getAllStitchingData(
-            parsedStitching,
-            parsedStitching
-          );
-        }
-      }
-      subtotal += item.Subtotal;
-      tax += item.Tax;
-    }
-
-    const DataModified =
+    let DataModified =
       cartItems &&
-      cartItems?.length > 0 &&
-      cartItems?.map((item, index) => {
-        let outOfStockProducts = [];
-        let outOfStock = false;
-        let message = "";
-        if (item.isCatalogue && item.catalogue_id) {
-          item.catalogue?.Product?.forEach((product) => {
-            if (product.outOfStock && product.quantity < item.quantity) {
-              outOfStock = item.outOfStock;
-              message = "At This Time Product Quantity IS Not Available";
-              outOfStockProducts.push({
-                sku: product.sku,
-                outOfStock: product.outOfStock,
-                message: message,
-              });
-            }
-          });
-        } else if (item.product.quantity < item.quantity) {
-          outOfStock = true;
-          message = "At This Time Stock Is Unavailable";
-          outOfStockProducts.push({
-            sku: item.product.sku,
-            outOfStock: item.product.outOfStock,
-            message: message,
-          });
-        }
+      cartItems.length > 0 &&
+      (await Promise.all(
+        cartItems.map(async (item) => {
+          let stitchingData = [];
 
-        let menu;
-        if (item?.catalogue?.CatalogueCategory) {
-          const category = item?.catalogue?.CatalogueCategory.map(
-            (value) => value.category.Menu[0].url
-          );
-          menu = category[0];
-          delete item?.catalogue?.CatalogueCategory;
-        }
-        if (item?.product?.categories) {
-          const category = item?.product?.categories.map(
-            (value) => value.category.Menu[0].url
-          );
-          menu = category[0];
-          delete item?.product?.categories;
-        }
-        return {
-          id: item.id,
-          product_id: item?.product_id,
-          catalogue_id: item?.catalogue_id,
-          isCatalogue: item.isCatalogue,
-          stitching: stitchingDataMap,
-          ...(item?.catalogue && {
-            no_of_product: item?.catalogue?.no_of_product,
-          }),
-          average_price: item?.catalogue
-            ? item?.catalogue.average_price
-            : item?.product?.price,
-          url: item?.catalogue ? item?.catalogue.url : item?.product?.url,
-          name: item?.catalogue ? item?.catalogue.name : item?.product?.name,
-          quantity: item.quantity,
-          sku: item?.catalogue ? item?.catalogue.cat_code : item?.product?.sku,
-          weight: item?.catalogue
-            ? item?.catalogue.weight
-            : item.product?.weight,
-          price: item?.catalogue
-            ? item?.catalogue.offer_price
-            : item?.product.offer_price,
-          image: item?.catalogue
-            ? item?.catalogue.coverImage
-            : item?.product?.image[0],
-          category: item?.catalogue
-            ? item?.catalogue.CatalogueCategory
-            : item?.product?.categories,
-          menu: menu,
-          size: item.size,
-          subtotal: item?.Subtotal,
-          tax: item?.Tax,
-          outOfStock: outOfStock,
-          message: outOfStockProducts,
-        };
-      });
+          const {
+            quantity,
+            stitching,
+            size,
+            isCatalogue,
+            catalogue,
+            product_id,
+          } = item;
+
+          if (isCatalogue && item.catalogue_id) {
+            const checkproductquantity = catalogue?.Product?.map((data) => {
+              if (data.quantity < quantity) {
+                return { ...data, outOfStock: true };
+              }
+              return data;
+            });
+
+            catalogue.Product = checkproductquantity;
+
+            if (stitching) {
+              const parsedStitching = JSON.parse(stitching);
+              const priceDetails = await findCatalogueStitchingprice(
+                catalogue?.id,
+                parsedStitching,
+                quantity,
+                checkproductquantity
+              );
+              item.Subtotal = priceDetails?.subtotal * quantity || 0;
+              item.Tax = priceDetails?.tax || 0;
+              item.outOfStock = priceDetails.catalogueOutOfStock;
+              stitchingData = await getAllStitchingData(
+                parsedStitching,
+                parsedStitching
+              );
+            }
+          } else {
+            if (size) {
+              const priceDetails = await findproductpriceOnSize(
+                product_id,
+                size,
+                quantity
+              );
+              item.Subtotal = priceDetails?.subtotal || 0;
+              item.Tax = priceDetails?.tax || 0;
+            } else if (stitching) {
+              const parsedStitching = JSON.parse(stitching);
+              const priceDetails = await findproductpriceonStitching(
+                product_id,
+                parsedStitching,
+                quantity
+              );
+              item.Subtotal = priceDetails?.subtotal * quantity || 0;
+              item.Tax = priceDetails?.tax || 0;
+              item.message = priceDetails.message || "";
+              stitchingData = await getAllStitchingData(
+                parsedStitching,
+                parsedStitching
+              );
+            }
+          }
+
+          subtotal += item.Subtotal;
+          tax += item.Tax;
+
+          let outOfStockProducts = [];
+          let outOfStock = false;
+          let message = "";
+
+          if (isCatalogue && item.catalogue_id) {
+            item.catalogue?.Product?.forEach((product) => {
+              if (product.outOfStock && product.quantity < item.quantity) {
+                outOfStock = item.outOfStock;
+                message = "At This Time Product Quantity IS Not Available";
+                outOfStockProducts.push({
+                  sku: product.sku,
+                  outOfStock: product.outOfStock,
+                  message: message,
+                });
+              }
+            });
+          } else if (item.product.quantity < item.quantity) {
+            outOfStock = true;
+            message = "At This Time Stock Is Unavailable";
+            outOfStockProducts.push({
+              sku: item.product.sku,
+              outOfStock: item.product.outOfStock,
+              message: message,
+            });
+          }
+
+          let menu;
+          if (item?.catalogue?.CatalogueCategory) {
+            const category = item?.catalogue?.CatalogueCategory.map(
+              (value) => value.category.Menu[0].url
+            );
+            menu = category[0];
+            delete item?.catalogue?.CatalogueCategory;
+          }
+          if (item?.product?.categories) {
+            const category = item?.product?.categories.map(
+              (value) => value.category.Menu[0].url
+            );
+            menu = category[0];
+            delete item?.product?.categories;
+          }
+
+          return {
+            id: item.id,
+            product_id: item?.product_id,
+            catalogue_id: item?.catalogue_id,
+            isCatalogue: item.isCatalogue,
+            stitching: stitchingData,
+            ...(item?.catalogue && {
+              no_of_product: item?.catalogue?.no_of_product,
+            }),
+            average_price: item?.catalogue
+              ? item?.catalogue.average_price
+              : item?.product?.price,
+            url: item?.catalogue ? item?.catalogue.url : item?.product?.url,
+            name: item?.catalogue ? item?.catalogue.name : item?.product?.name,
+            quantity: item.quantity,
+            sku: item?.catalogue
+              ? item?.catalogue.cat_code
+              : item?.product?.sku,
+            weight: item?.catalogue
+              ? item?.catalogue.weight
+              : item.product?.weight,
+            price: item?.catalogue
+              ? item?.catalogue.offer_price
+              : item?.product.offer_price,
+            image: item?.catalogue
+              ? item?.catalogue.coverImage
+              : item?.product?.image[0],
+            category: item?.catalogue
+              ? item?.catalogue.CatalogueCategory
+              : item?.product?.categories,
+            menu: menu,
+            size: item.size,
+            subtotal: item?.Subtotal,
+            tax: item?.Tax,
+            outOfStock: outOfStock,
+            message: outOfStockProducts,
+          };
+        })
+      ));
 
     const totalOrder = subtotal + tax;
 

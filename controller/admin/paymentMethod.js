@@ -32,8 +32,8 @@ const postPaymentMethod = async (req, res, next) => {
       data: {
         position: count + 1,
         name,
-        keyId,
-        secretKey,
+        // keyId,
+        // secretKey,
         image: filepath,
         charge,
         description,

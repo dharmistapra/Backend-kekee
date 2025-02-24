@@ -72,8 +72,6 @@ const validateStitching = async (stitching) => {
   return { isValid: true, message: "Validation passed." };
 };
 
-
-
 const findproductpriceOnSize = async (product_id, size_id, quantity = 1) => {
   const product = await prisma.product.findUnique({
     where: { id: product_id },
@@ -166,7 +164,6 @@ const findStitchingOptionPrices = async (productIds) => {
 
   return subtotalprice;
 };
-
 
 const getAllStitchingData = async (stitching, usermeasuremnetdata) => {
   try {
@@ -294,7 +291,6 @@ const extractMeasurementData = (data) => {
   );
 };
 
-
 const updateStitchingValues = (stitchingData, allStitchingData) => {
   const updatedData = allStitchingData?.reduce((acc, item) => {
     console.log("stitchingData", stitchingData);
@@ -357,7 +353,12 @@ const updateStitchingValues = (stitchingData, allStitchingData) => {
   return updatedData;
 };
 
-const findCatalogueStitchingprice = async (catalogue_id, stitching, quantity, checkproductquantity) => {
+const findCatalogueStitchingprice = async (
+  catalogue_id,
+  stitching,
+  quantity,
+  checkproductquantity
+) => {
   if (!catalogue_id) {
     return { subtotal: 0, tax: 0 };
   }
@@ -366,8 +367,8 @@ const findCatalogueStitchingprice = async (catalogue_id, stitching, quantity, ch
     where: { id: catalogue_id },
     include: {
       CatalogueCategory: true,
-      CatalogueSize: true
-    }
+      CatalogueSize: true,
+    },
   });
   if (catalogue && stitching) {
     const extranct_Option_Id = stitching
@@ -378,29 +379,37 @@ const findCatalogueStitchingprice = async (catalogue_id, stitching, quantity, ch
       })
       .flat();
 
-
-
-    const outOfStockCount = checkproductquantity?.filter(data => data.outOfStock === true).length;
+    const outOfStockCount = checkproductquantity?.filter(
+      (data) => data.outOfStock === true
+    ).length;
     const availableProductCount = checkproductquantity.length - outOfStockCount;
-    const stitchingPricePerItem = await findStitchingOptionPrices(extranct_Option_Id) || 0;
-    const subtotal = (availableProductCount * catalogue.average_price) + (availableProductCount * stitchingPricePerItem);
-    console.log("outOfStockCount", outOfStockCount)
+    const stitchingPricePerItem =
+      (await findStitchingOptionPrices(extranct_Option_Id)) || 0;
+    const subtotal =
+      availableProductCount * catalogue.average_price +
+      availableProductCount * stitchingPricePerItem;
+    console.log("outOfStockCount", outOfStockCount);
     const taxRate = catalogue.GST || 0;
     const taxPerItem = (subtotal * taxRate) / 100;
     const tax = taxPerItem * quantity;
-    let catalogueOutOfStock = availableProductCount === 0 ? true : false
+    let catalogueOutOfStock = availableProductCount === 0 ? true : false;
     return { subtotal, tax, catalogueOutOfStock };
   }
   return { subtotal: 0, tax: 0 };
 };
 
-const findCatalogueSizeprice = async (catalogue_id, size_id, quantity = 1, checkproductquantity) => {
+const findCatalogueSizeprice = async (
+  catalogue_id,
+  size_id,
+  quantity = 1,
+  checkproductquantity
+) => {
   const catalogue = await prisma.catalogue.findUnique({
     where: { id: catalogue_id },
     include: {
       CatalogueCategory: true,
-      CatalogueSize: true
-    }
+      CatalogueSize: true,
+    },
   });
 
   if (!catalogue) {
@@ -443,5 +452,5 @@ export {
   getAllStitchingData,
   extractMeasurementData,
   updateStitchingValues,
-  findCatalogueStitchingprice
+  findCatalogueStitchingprice,
 };

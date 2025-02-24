@@ -1,3 +1,4 @@
+import slug from "slug";
 import prisma from "../../../db/config.js";
 import {
   convertFilePathSlashes,
@@ -14,6 +15,7 @@ const postCategory = async (req, res, next) => {
   try {
     let {
       name,
+      title,
       parent_id,
       meta_title,
       meta_keyword,
@@ -83,6 +85,8 @@ const postCategory = async (req, res, next) => {
     const data = await prisma.categoryMaster.create({
       data: {
         name,
+        title,
+        url: slug(name),
         // parent_id: parent_id || null,
         position: count + 1,
         parent: parent_id ? { connect: { id: parent_id } } : undefined,
@@ -93,10 +97,10 @@ const postCategory = async (req, res, next) => {
         image: filepath,
         ...(attributes &&
           attributes.length > 0 && {
-          CategoryAttribute: {
-            create: attributeConnection, // connect attributes to the category
-          },
-        }),
+            CategoryAttribute: {
+              create: attributeConnection, // connect attributes to the category
+            },
+          }),
       },
     });
     return res.status(200).json({
@@ -121,6 +125,8 @@ const getAllParentCategory = async (req, res, next) => {
         id: true,
         position: true,
         name: true,
+        title: true,
+        url: true,
         meta_title: true,
         meta_keyword: true,
         meta_description: true,
@@ -200,6 +206,8 @@ const categoryPagination = async (req, res, next) => {
         parent_id: true,
         position: true,
         name: true,
+        title: true,
+        url: true,
         meta_title: true,
         meta_keyword: true,
         meta_description: true,
@@ -265,6 +273,7 @@ const updateCategory = async (req, res, next) => {
     const id = req.params.id;
     let {
       name,
+      title,
       parent_id,
       meta_title,
       meta_keyword,
@@ -361,6 +370,8 @@ const updateCategory = async (req, res, next) => {
       where: { id: id },
       data: {
         name,
+        title,
+        url: slug(name),
         ...(categoryData.parent_id !== parent_id && { position: count + 1 }),
         parent: parent_id
           ? { connect: { id: parent_id } }
@@ -371,16 +382,16 @@ const updateCategory = async (req, res, next) => {
         meta_description,
         ...(attributes !== ""
           ? attributes.length > 0 && {
-            CategoryAttribute: {
-              deleteMany: {},
-              create: attributeConnections,
-            },
-          }
+              CategoryAttribute: {
+                deleteMany: {},
+                create: attributeConnections,
+              },
+            }
           : {
-            CategoryAttribute: {
-              deleteMany: {},
-            },
-          }),
+              CategoryAttribute: {
+                deleteMany: {},
+              },
+            }),
       },
     });
 
@@ -548,6 +559,8 @@ const getCategories = async (req, res, next) => {
         id: true,
         position: true,
         name: true,
+        title: true,
+        url: true,
         image: true,
         Menu: {
           select: {
@@ -621,9 +634,6 @@ const deleteCategoryImage = async (req, res, next) => {
   }
 };
 
-
-
-
 const getAllCategories = async (req, res, next) => {
   try {
     const result = await prisma.categoryMaster.findMany({
@@ -647,7 +657,6 @@ const getAllCategories = async (req, res, next) => {
   }
 };
 
-
 export {
   postCategory,
   getAllParentCategory,
@@ -659,5 +668,5 @@ export {
   getCategories,
   getSubCategory,
   deleteCategoryImage,
-  getAllCategories
+  getAllCategories,
 };

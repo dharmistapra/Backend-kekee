@@ -73,6 +73,8 @@ model CategoryMaster {
   id                String              @id @default(auto()) @map("_id") @db.ObjectId
   position          Int
   name              String              @unique
+  title             String?             @unique
+  url               String
   parent_id         String?             @db.ObjectId
   meta_title        String?             @default("")
   meta_keyword      String?             @default("")

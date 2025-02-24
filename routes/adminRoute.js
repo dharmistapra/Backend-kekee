@@ -316,6 +316,7 @@ import {
 } from "../controller/admin/newCollection.js";
 import {
   deletePaymentMethod,
+  deletePaymentMethodImage,
   getPaymentMethod,
   paymentMethodPosition,
   paymentMethodStatus,
@@ -741,14 +742,19 @@ adminRouter.get("/collection-all-home/:id", updateNewCollectionIsHome);
 
 // PAYMENT METHOD API
 
-adminRouter.post("/paymentmethod", paymentMethodsSchema, postPaymentMethod);
+adminRouter.post(
+  "/paymentmethod",
+  [data.uploadPaymentMethod, paymentMethodsSchema],
+  postPaymentMethod
+);
 adminRouter.put(
   "/paymentmethod/:id",
-  paymentMethodsSchema,
+  [data.uploadPaymentMethod, paymentMethodsSchema],
   updatePaymentMethod
 );
 adminRouter.get("/paymentmethod", getPaymentMethod);
 adminRouter.delete("/paymentmethod/:id", deletePaymentMethod);
 adminRouter.get("/paymentmethod-status/:id", paymentMethodStatus);
 adminRouter.post("/paymentmethod-position", paymentMethodPosition);
+adminRouter.get("/paymentmethod-image/:id", deletePaymentMethodImage);
 export default adminRouter;

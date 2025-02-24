@@ -20,6 +20,7 @@ const folderPaths = {
   measurement: "./uploads/measurement",
   importcsv: "./uploads/importcsv",
   importZip: "./uploads/zip",
+  paymentMethod: "./uploads/payment",
 };
 
 const storage = multer.diskStorage({
@@ -173,6 +174,12 @@ const uploadConfiguration = {
     fileFilter: zipFile,
     limits: { fileSize: 10000000 * 5 },
   }).single("zip"),
+
+  paymentMethod: multer({
+    storage: dynamicStorage("paymentMethod"),
+    fileFilter: filefilter,
+    limits: { fileSize: 10000000 * 5 },
+  }).single("image"),
 };
 
 const currencystorage = multer.diskStorage({
@@ -248,6 +255,7 @@ const data = {
   uploadstitchingmeasuremnt: uploadConfiguration.stitchingMeasurement,
   uploadCSV: uploadConfiguration.importcsv,
   uploadZip: uploadConfiguration.importZip,
+  uploadPaymentMethod: uploadConfiguration.paymentMethod,
   // uploadCollectionImage:uploadConfiguration.co
 };
 

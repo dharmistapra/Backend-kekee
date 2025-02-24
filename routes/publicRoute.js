@@ -48,6 +48,7 @@ import {
   countrylistGroup,
   findShippingPrice,
 } from "../controller/admin/shippingcharges.js";
+import { getPaymentMethod, getPaymentMethodpublic } from "../controller/admin/paymentMethod.js";
 const router = express.Router();
 
 // MENU API
@@ -225,5 +226,7 @@ router.get("/testimonials", gettestimonial);
 router.get("/home-collection", getCollectionHome);
 router.get("/shipping-list", countrylistGroup);
 router.post("/shipping-charge", findShippingPrice);
+
+router.get("/payment/method", getPaymentMethodpublic);
 
 export default router;

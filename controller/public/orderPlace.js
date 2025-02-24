@@ -173,7 +173,6 @@ const OrderPlace = async (req, res, next) => {
 
         const shippingconst = await calculateShippingCost(totalweight, shippingdata?.country);
         let ordertotal = (subtotal + tax + shippingconst.shippingCost);
-        console.log("shippingconst", shippingconst)
 
         const order = await prisma.order.create({
             data: {
@@ -241,7 +240,7 @@ const OrderPlace = async (req, res, next) => {
 
         const convertAmount = ordertotal / currency?.rate
 
-        if (paymentMethod === 'RAZORPAY') {
+        if (paymentMethod === 'razorpay') {
             const razorpayOrder = await rozarpay.orders.create({
                 amount: Math.round(convertAmount * 100),
                 currency: currency?.code,
@@ -280,6 +279,7 @@ const OrderPlace = async (req, res, next) => {
 
         });
     } catch (error) {
+        console.log(error)
         let err = new Error("Something went wrong, please try again!");
         next(err);
     }
@@ -299,7 +299,7 @@ const verifyOrder = async (req, res, next) => {
         const order = await prisma.order.findUnique({ where: { id: orderId } });
         if (!order) return res.status(404).json({ isSuccess: false, message: "Order not found" });
 
-        if (paymentMethod === "RAZORPAY") {
+        if (paymentMethod === "razorpay") {
             const expectedSignature = crypto
                 .createHmac("sha256", process.env.ROZARPAY_KEY_SECRET)
                 .update(`${razorpayOrderId}|${paymentId}`)

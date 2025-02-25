@@ -408,10 +408,45 @@ const reduceProductQuantity = async (orderId) => {
         const orderItems = await prisma.orderItem.findMany({ where: { orderId } });
         for (let item of orderItems) {
             if (item.productId) {
-                await prisma.product.update({
+                const result = await prisma.product.update({
                     where: { id: item.productId },
                     data: { quantity: { decrement: item.quantity } },
+                    select: {
+                        id: true,
+                        catalogue_id: true,
+                        quantity: true,
+                        average_price: true,
+                    }
                 });
+                if (result.quantity === 0) {
+                    console.log("IF confiirfiti", result.catalogue_id, result.quantity)
+                    await prisma.product.update({
+                        where: { id: item.productId },
+                        data: {
+                            outofStock: true
+                        }
+                    });
+                }
+
+                if (result.catalogue_id && result.quantity === 0) {
+                    const findacatalogue = await prisma.catalogue.findUnique({
+                        where: { id: result.catalogue_id },
+                        select: {
+                            id: true,
+                            price: true
+                        }
+                    })
+
+                    const updatecataloguePrice = findacatalogue.price - result.average_price
+
+                    await prisma.catalogue.update({
+                        where: { id: result.catalogue_id },
+                        data: {
+                            no_of_product: { decrement: 1 },
+                            price: updatecataloguePrice,
+                        }
+                    });
+                }
             }
             if (item.catlogueId) {
                 const result = await prisma.catalogue.update({

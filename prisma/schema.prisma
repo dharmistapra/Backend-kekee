@@ -318,6 +318,7 @@ model Product {
   showInSingle     Boolean?                @default(false)
   isDraft          Boolean                 @default(false)
   readyToShip      Boolean?                @default(false)
+  outofStock       Boolean?                @default(false)
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
   meta_title       String?                 @default("")

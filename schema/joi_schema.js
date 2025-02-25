@@ -591,7 +591,6 @@ const importCatalogueSchema = async (req, res, next) => {
       meta_title: Joi.string().optional().allow("").default(""),
       meta_keyword: Joi.string().optional().allow("").default(""),
       meta_description: Joi.string().optional().allow("").default(""),
-      deletedAt: Joi.string().optional().default(null),
       product: Joi.array().items().optional(),
     }),
   });

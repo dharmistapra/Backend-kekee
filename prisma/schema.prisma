@@ -73,8 +73,8 @@ model CategoryMaster {
   id                String              @id @default(auto()) @map("_id") @db.ObjectId
   position          Int
   name              String              @unique
-  title             String?             @unique
-  url               String
+  title             String?             @default("")
+  url               String              @default("")
   parent_id         String?             @db.ObjectId
   meta_title        String?             @default("")
   meta_keyword      String?             @default("")
@@ -296,7 +296,7 @@ model Product {
   name          String
   catalogue_id  String? @db.ObjectId
   collection_id String? @db.ObjectId
-  sku           String
+  sku           String  @unique
   url           String  @unique
   quantity      Int
   // category        String[] @db.ObjectId

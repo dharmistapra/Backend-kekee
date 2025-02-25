@@ -73,7 +73,7 @@ model CategoryMaster {
   id                String              @id @default(auto()) @map("_id") @db.ObjectId
   position          Int
   name              String              @unique
-  title             String?             @unique
+  title             String?             @default("")
   url               String
   parent_id         String?             @db.ObjectId
   meta_title        String?             @default("")
@@ -726,11 +726,9 @@ enum ShippingChargestype {
 model Order {
   id             String      @id @default(auto()) @map("_id") @db.ObjectId
   userId         String      @db.ObjectId
-  paymentId      String?     @db.ObjectId
-  billingId      String?     @db.ObjectId
-  shippingId     String?     @db.ObjectId
   subtotal       Float
   Tax            Float
+  discount       Float?
   shippingcharge Float
   totalAmount    Float
   status         OrderStatus
@@ -744,17 +742,18 @@ model Order {
 }
 
 model OrderItem {
-  id             String     @id @default(auto()) @map("_id") @db.ObjectId
-  orderId        String?    @db.ObjectId
-  productId      String?    @db.ObjectId
-  catlogueId     String?    @db.ObjectId
-  quantity       Int
-  customersnotes String?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  product        Product?   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  catalogue      Catalogue? @relation(fields: [catlogueId], references: [id], onDelete: Cascade)
-  order          Order?     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id               String     @id @default(auto()) @map("_id") @db.ObjectId
+  orderId          String?    @db.ObjectId
+  productId        String?    @db.ObjectId
+  catlogueId       String?    @db.ObjectId
+  quantity         Int
+  customersnotes   String?
+  productsnapshots Json?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  product          Product?   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  catalogue        Catalogue? @relation(fields: [catlogueId], references: [id], onDelete: Cascade)
+  order            Order?     @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 model Shipping {
@@ -842,9 +841,9 @@ enum PaymentMethod {
 }
 
 enum PaymentStatus {
-  PENDING
+  PROCESSING
   SUCCESS
-  FAILED
+  CANCELLED
   REFUNDED
 }
 

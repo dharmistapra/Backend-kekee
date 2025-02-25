@@ -289,6 +289,7 @@ import {
   updateUsersStatus,
 } from "../controller/admin/users.js";
 import {
+  exportCatalogue,
   // importCatalogue,
   importCatalogues,
   zipImages,
@@ -703,6 +704,7 @@ adminRouter.delete("/newsletter/:id", deleteNewsLetter);
 // IMPORT CATALOGUE PRODUCTS API
 
 adminRouter.post("/importsheet", data.uploadCSV, importCatalogues);
+adminRouter.get("/exportsheet", exportCatalogue);
 adminRouter.post("/importzip", data.uploadZip, zipImages);
 
 adminRouter.post("/users-pagination", paginationusers);

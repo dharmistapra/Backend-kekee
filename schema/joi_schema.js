@@ -931,7 +931,7 @@ const singleStitchingSchema = async (req, res, next) => {
   const schema = Joi.object({
     name: Joi.string().required(),
     catalogue_price: Joi.number().required().default(0),
-    product_price: Joi.number().required().default(0),
+    price: Joi.number().required().default(0),
     type: Joi.string().valid("Redio", "CheckBox").required(),
     dispatch_time: Joi.string().optional().allow(""),
     stitchingGroup_id: Joi.string().required(),

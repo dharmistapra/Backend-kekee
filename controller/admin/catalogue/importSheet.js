@@ -797,9 +797,9 @@ const importCatalogues = async (req, res, next) => {
         }
         let finalOfferPrice =
           parseFloat(catalogueItemMarketPrice) > 0 &&
-          parseFloat(catalogueItemDiscount) > 0
+            parseFloat(catalogueItemDiscount) > 0
             ? parseFloat(catalogueItemMarketPrice) *
-              (1 - parseFloat(catalogueItemDiscount) / 100)
+            (1 - parseFloat(catalogueItemDiscount) / 100)
             : parseFloat(catalogueItemMarketPrice);
 
         let cat_url = `${slug(productName)}-${catCode}`;

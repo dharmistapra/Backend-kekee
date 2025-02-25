@@ -9,6 +9,8 @@ const OrderPlace = async (req, res, next) => {
         const { user_id, items, billingform, shippingdata, paymentMethod, shippingPrice, orderTotal, currency } = req.body;
 
 
+
+
         const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
         if (!finduser) return res.status(400).json({ isSuccess: false, message: "User not found", data: null });
         const cartItems = await prisma.cartItem.findMany({
@@ -103,7 +105,28 @@ const OrderPlace = async (req, res, next) => {
 
         if (cartItems?.length === 0) return res.status(400).json({ isSuccess: false, message: "items not Found", data: null });
 
-        let subtotal = 0, tax = 0, totalweight = 0;
+        let outOfStockItems = [];
+        for (const item of cartItems) {
+            if (!item.isCatalogue) {
+                if (item.quantity > item.product.quantity) {
+                    outOfStockItems.push(`Product: ${item.product.sku}`);
+                }
+            } else {
+                if (item.quantity > item.catalogue.quantity) {
+                    outOfStockItems.push(`Catalogue: ${item.catalogue.cat_code}`);
+                }
+            }
+        }
+
+        if (outOfStockItems.length > 0) {
+            return res.status(400).json({
+                isSuccess: false,
+                message: `Stock unavailable for: ${outOfStockItems.join(", ")}`,
+                data: null,
+            });
+        }
+
+        let subtotal = 0, tax = 0, totalweight = 0, discount = 0;
         let stitchingDataMap = [];
         for (let item of cartItems) {
             const { quantity, stitching, size, isCatalogue, catalogue, product_id } = item;
@@ -127,6 +150,7 @@ const OrderPlace = async (req, res, next) => {
                     item.Subtotal = priceDetails?.subtotal * quantity || 0;
                     item.Tax = priceDetails?.tax || 0;
                     item.outOfStock = priceDetails.catalogueOutOfStock;
+                    item.discount = item.price - item.offer_price
                     totalweight += Number(catalogue?.weight) * Number(quantity);
                     stitchingDataMap = await getAllStitchingData(
                         parsedStitching,
@@ -155,6 +179,7 @@ const OrderPlace = async (req, res, next) => {
                     item.Subtotal = priceDetails?.subtotal * quantity || 0;
                     item.Tax = priceDetails?.tax || 0;
                     item.message = priceDetails.message || "";
+                    item.discount = item.price - item.offer_price
                     totalweight += Number(item.product?.weight) * Number(quantity);
                     stitchingDataMap = await getAllStitchingData(
                         parsedStitching,
@@ -164,6 +189,7 @@ const OrderPlace = async (req, res, next) => {
             }
             subtotal += item.Subtotal;
             tax += item.Tax;
+            discount += item.discount;
 
         }
 
@@ -179,9 +205,10 @@ const OrderPlace = async (req, res, next) => {
                 userId: user_id,
                 subtotal: subtotal,
                 Tax: tax,
+                discount: discount,
                 shippingcharge: shippingconst.shippingCost,
                 totalAmount: ordertotal,
-                status: 'PENDING',
+                status: 'PROCESSING',
             },
         });
 
@@ -193,6 +220,13 @@ const OrderPlace = async (req, res, next) => {
                 catlogueId: item.catalogue_id,
                 quantity: item.quantity,
                 customersnotes: billingform.customersnotes,
+                productsnapshots: JSON.stringify({
+                    name: item.isCatalogue ? item.catalogue.name : item.product.name,
+                    url: item.isCatalogue ? item.catalogue.url : item.product.url,
+                    price: item.isCatalogue ? item.catalogue.offer_price : item.product.offer_price,
+                    cartQuantity: item.quantity,
+                }),
+
             })),
         });
 
@@ -234,7 +268,7 @@ const OrderPlace = async (req, res, next) => {
         let paymentData = {
             orderId: order.id,
             paymentMethod,
-            status: 'PENDING',
+            status: 'PROCESSING',
         };
 
 
@@ -255,14 +289,14 @@ const OrderPlace = async (req, res, next) => {
 
         const payment = await prisma.payment.create({ data: paymentData });
 
-        await prisma.order.update({
-            where: { id: order.id },
-            data: {
-                paymentId: payment.id,
-                billingId: billingData.id,
-                shippingId: shippingData.id,
-            },
-        });
+        // await prisma.order.update({
+        //     where: { id: order.id },
+        //     data: {
+        //         paymentId: payment.id,
+        //         billingId: billingData.id,
+        //         shippingId: shippingData.id,
+        //     },
+        // });
 
         const response = {
             orderId: order.id,
@@ -403,5 +437,37 @@ const reduceProductQuantity = async (orderId) => {
     }
 };
 
+
+
+
+
+
+
+
+
+
+
+const orderFailed = async (req, res) => {
+    const { orderId, status, paymentMethod } = req.body;
+
+    try {
+        await prisma.order.update({
+            where: { id: orderId },
+            data: { status: status },
+        });
+
+        await prisma.payment.update({
+            where: { orderId: orderId },
+            data: { status: status },
+        });
+
+        return res.json({ success: true, message: "Payment status updated to CANCELLED!" });
+    } catch (error) {
+        console.error("Error updating payment status:", error);
+        return res.status(500).json({ success: false, message: "Failed to update payment status" });
+    }
+}
+
+
 export default OrderPlace;
-export { verifyOrder };
+export { verifyOrder, orderFailed };

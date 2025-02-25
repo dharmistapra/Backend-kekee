@@ -1487,8 +1487,8 @@ const addCatalogue = async (req, res, next) => {
 
     // Validate and process product updates
     const productId = product.map((value) => value.id);
-
-    if (no_of_product !== product.length) {
+    let products = product.filter((value) => value.outofStock === false);
+    if (no_of_product !== products.length) {
       if (req.file) await deleteFile(filepath);
       return res
         .status(404)
@@ -1501,6 +1501,7 @@ const addCatalogue = async (req, res, next) => {
         sku: true,
         retail_discount: true,
         offer_price: true,
+        outofStock: true,
       },
     });
 
@@ -1536,7 +1537,7 @@ const addCatalogue = async (req, res, next) => {
       finalOfferPrice = offer_price ? parseFloat(offer_price) : price;
     }
 
-    const totalPrice = product.reduce(
+    const totalPrice = products.reduce(
       (acc, product) => acc + (parseFloat(product.average_price) || 0),
       0
     );
@@ -1740,6 +1741,7 @@ const addCatalogue = async (req, res, next) => {
                 isDraft: false,
                 stitching: result.stitching,
                 showInSingle: Boolean(value.showInSingle),
+                outofStock: Boolean(value.outofStock),
               },
             })
             .then(async () => {
@@ -1884,9 +1886,9 @@ const getCatalogueProduct = async (req, res, next) => {
         CatalogueCategory: {
           include: { category: true },
         },
-        CatalogueCollection: {
-          include: { collection: true },
-        },
+        // CatalogueCollection: {
+        //   include: { collection: true },
+        // },
         CatalogueSize: {
           include: { size: true },
         },
@@ -1898,11 +1900,11 @@ const getCatalogueProduct = async (req, res, next) => {
                 category: true,
               },
             },
-            collection: {
-              include: {
-                collection: true,
-              },
-            },
+            // collection: {
+            //   include: {
+            //     collection: true,
+            //   },
+            // },
             colours: {
               include: {
                 colour: true,
@@ -2012,16 +2014,16 @@ const getCatalogueProduct = async (req, res, next) => {
           : null
       );
 
-      datas.CatalogueCollection = product.CatalogueCollection.map((cat) =>
-        cat.collection
-          ? {
-              id: cat.collection.id,
-              // parentId: cat.category.parent_id ? cat.category.parent_id : null,
-              name: cat.collection.name,
-              isActive: cat.collection.isActive,
-            }
-          : null
-      );
+      // datas.CatalogueCollection = product.CatalogueCollection.map((cat) =>
+      //   cat.collection
+      //     ? {
+      //         id: cat.collection.id,
+      //         // parentId: cat.category.parent_id ? cat.category.parent_id : null,
+      //         name: cat.collection.name,
+      //         isActive: cat.collection.isActive,
+      //       }
+      //     : null
+      // );
 
       let Product = [];
       const products = product.Product.map((product) => {
@@ -2098,15 +2100,15 @@ const getCatalogueProduct = async (req, res, next) => {
             : null
         );
 
-        newProduct.collection = product.collection.map((cat) =>
-          cat.collection
-            ? {
-                id: cat.collection.id,
-                name: cat.collection.name,
-                isActive: cat.collection.isActive,
-              }
-            : null
-        );
+        // newProduct.collection = product.collection.map((cat) =>
+        //   cat.collection
+        //     ? {
+        //         id: cat.collection.id,
+        //         name: cat.collection.name,
+        //         isActive: cat.collection.isActive,
+        //       }
+        //     : null
+        // );
 
         newProduct.color = product.colours.map((col) => ({
           id: col.colour.id,

@@ -48,7 +48,10 @@ import {
   countrylistGroup,
   findShippingPrice,
 } from "../controller/admin/shippingcharges.js";
-import { getPaymentMethod, getPaymentMethodpublic } from "../controller/admin/paymentMethod.js";
+import {
+  getPaymentMethod,
+  getPaymentMethodpublic,
+} from "../controller/admin/paymentMethod.js";
 const router = express.Router();
 
 // MENU API

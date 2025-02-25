@@ -687,7 +687,7 @@ const deleteImage = async (model, id) => {
 
 const cataloguesProductFields = [
   "category",
-  "collection",
+  // "collection",
   "productCode",
   "catCode",
   "productName",

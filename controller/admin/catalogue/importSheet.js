@@ -1183,6 +1183,9 @@ const exportCatalogue = async (req, res, next) => {
       );
       let attributes = [];
       catalogue.attributeValues.map((value) => {
+        let isAttribute = Object.values(allAttributes).includes(
+          value.attribute.name
+        );
         if (attributes && attributes.length > 0) {
           let isAttributeExist = attributes.find(
             (val) => val.name === value.attribute.name
@@ -1194,12 +1197,14 @@ const exportCatalogue = async (req, res, next) => {
               name: value.attribute.name,
               value: [value.attributeValue.name],
             });
+            !isAttribute && allAttributes.add(value.attribute.name);
           }
         } else {
           attributes.push({
             name: value.attribute.name,
             value: [value.attributeValue.name],
           });
+          !isAttribute && allAttributes.add(value.attribute.name);
         }
       });
       let data = {
@@ -1238,6 +1243,9 @@ const exportCatalogue = async (req, res, next) => {
           let category = product.categories.map((value) => value.category.name);
           let attributes = [];
           product.attributeValues.map((value) => {
+            let isAttribute = Object.values(allAttributes).includes(
+              value.attribute.name
+            );
             if (attributes && attributes.length > 0) {
               let isAttributeExist = attributes.find(
                 (val) => val.name === value.attribute.name
@@ -1249,12 +1257,14 @@ const exportCatalogue = async (req, res, next) => {
                   name: value.attribute.name,
                   value: [value.attributeValue.name],
                 });
+                !isAttribute && allAttributes.add(value.attribute.name);
               }
             } else {
               attributes.push({
                 name: value.attribute.name,
                 value: [value.attributeValue.name],
               });
+              !isAttribute && allAttributes.add(value.attribute.name);
             }
           });
           let data = {
@@ -1297,6 +1307,9 @@ const exportCatalogue = async (req, res, next) => {
         let category = product.categories.map((value) => value.category.name);
         let attributes = [];
         product.attributeValues.map((value) => {
+          let isAttribute = Object.values(allAttributes).includes(
+            value.attribute.name
+          );
           if (attributes && attributes.length > 0) {
             let isAttributeExist = attributes.find(
               (val) => val.name === value.attribute.name
@@ -1308,12 +1321,14 @@ const exportCatalogue = async (req, res, next) => {
                 name: value.attribute.name,
                 value: [value.attributeValue.name],
               });
+              !isAttribute && allAttributes.add(value.attribute.name);
             }
           } else {
             attributes.push({
               name: value.attribute.name,
               value: [value.attributeValue.name],
             });
+            !isAttribute && allAttributes.add(value.attribute.name);
           }
         });
         let data = {
@@ -1349,7 +1364,6 @@ const exportCatalogue = async (req, res, next) => {
         products.push(data);
       }
     }
-
     // let products = catalogueData.flatMap((catalogue) => {
     //   let formattedCatalogue = formatData(catalogue, true);
     //   let formattedProducts = catalogue.Product.map((product) =>
@@ -1359,7 +1373,8 @@ const exportCatalogue = async (req, res, next) => {
     // });
 
     // products.push(...productData.map((product) => formatData(product)));
-
+    cataloguesProductFields.push(...allAttributes);
+    let csvHeaders = cataloguesProductFields;
     const __dirname = path.resolve();
     const csvFilePath = path.join(
       `${__dirname}/uploads/csv`,
@@ -1369,7 +1384,7 @@ const exportCatalogue = async (req, res, next) => {
     const ws = fs.createWriteStream(csvFilePath);
 
     fastCsv
-      .write(products, { headers: true })
+      .write(products, { headers: csvHeaders })
       .pipe(ws)
       .on("finish", () => {
         res.download(csvFilePath, "cataloguedata.csv", (err) => {

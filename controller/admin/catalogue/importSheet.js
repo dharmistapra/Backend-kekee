@@ -16,6 +16,8 @@ import {
 } from "../../../schema/joi_schema.js";
 import AdmZip from "adm-zip";
 import fs from "fs";
+import path from "path";
+import fastCsv from "fast-csv";
 
 // const importCatalogue = async (req, res, next) => {
 //   try {
@@ -827,6 +829,7 @@ const importCatalogues = async (req, res, next) => {
           stitching: isStitching != "N" ? true : false,
           size: isSize != "N" ? true : false,
           isActive: isActive != "N" ? true : false,
+          deletedAt: null,
           product: [],
         };
 
@@ -1084,8 +1087,377 @@ const zipImages = async (req, res, next) => {
   }
 };
 
+const exportCatalogue = async (req, res, next) => {
+  try {
+    const catalogueData = await prisma.catalogue.findMany({
+      include: {
+        Product: {
+          include: {
+            attributeValues: {
+              include: {
+                attribute: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+                attributeValue: {
+                  select: {
+                    id: true,
+                    name: true,
+                    value: true,
+                    colour: true,
+                  },
+                },
+              },
+            },
+            categories: {
+              include: {
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        CatalogueCategory: {
+          select: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        attributeValues: {
+          select: {
+            attribute: { select: { id: true, name: true } },
+            attributeValue: { select: { id: true, name: true, value: true } },
+          },
+        },
+      },
+    });
+
+    const productData = await prisma.product.findMany({
+      where: { catalogue_id: null },
+      include: {
+        attributeValues: {
+          include: {
+            attribute: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            attributeValue: {
+              select: {
+                id: true,
+                name: true,
+                value: true,
+                colour: true,
+              },
+            },
+          },
+        },
+        categories: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    let products = [];
+    for (let catalogue of catalogueData) {
+      let category = catalogue.CatalogueCategory.map(
+        (value) => value.category.name
+      );
+      let attributes = [];
+      catalogue.attributeValues.map((value) => {
+        if (attributes && attributes.length > 0) {
+          let isAttributeExist = attributes.find(
+            (val) => val.name === value.attribute.name
+          );
+          if (isAttributeExist) {
+            isAttributeExist.value.push(value.attributeValue.name);
+          } else {
+            attributes.push({
+              cat_code: catalogue.cat_code,
+              name: value.attribute.name,
+              value: [value.attributeValue.name],
+            });
+          }
+        } else {
+          attributes.push({
+            cat_code: catalogue.cat_code,
+            name: value.attribute.name,
+            value: [value.attributeValue.name],
+          });
+        }
+      });
+      let data = {
+        category: category.join(","),
+        catCode: catalogue.cat_code,
+        productCode: "",
+        productName: catalogue.name,
+        description: catalogue.description,
+        noOfProduct: catalogue.no_of_product,
+        quantity: catalogue.quantity,
+        catalogueItemMarketPrice: catalogue.price,
+        catalogueItemDiscount: catalogue.catalogue_discount,
+        retailPrice: "",
+        retailDiscount: "",
+        GST: catalogue.GST,
+        metaTitle: catalogue.meta_title,
+        metaKeyword: catalogue.meta_keyword,
+        metaDescription: catalogue.meta_description,
+        weight: catalogue.weight,
+        tag: catalogue.tag.join(","),
+        cat_image: catalogue.coverImage,
+        image: "",
+        isStitching: catalogue.stitching === true ? "Y" : "N",
+        isSize: catalogue.size === true ? "Y" : "N",
+        isActive: catalogue.isActive === true ? "Y" : "N",
+        showInSingle: "",
+      };
+      if (attributes.length > 0) {
+        attributes.forEach((value) => {
+          data[value.name] = value.value.join(",");
+        });
+      }
+      products.push(data);
+      if (catalogue.Product.length > 0) {
+        for (const product of catalogue.Product) {
+          let category = product.categories.map((value) => value.category.name);
+          let attributes = [];
+          product.attributeValues.map((value) => {
+            if (attributes && attributes.length > 0) {
+              let isAttributeExist = attributes.find(
+                (val) => val.name === value.attribute.name
+              );
+              if (isAttributeExist) {
+                isAttributeExist.value.push(value.attributeValue.name);
+              } else {
+                attributes.push({
+                  name: value.attribute.name,
+                  value: [value.attributeValue.name],
+                });
+              }
+            } else {
+              attributes.push({
+                name: value.attribute.name,
+                value: [value.attributeValue.name],
+              });
+            }
+          });
+          let data = {
+            category: category.join(","),
+            catCode: catalogue.cat_code,
+            productCode: product.sku,
+            productName: product.name,
+            description: product.description,
+            noOfProduct: "",
+            quantity: product.quantity,
+            catalogueItemMarketPrice: product.average_price,
+            catalogueItemDiscount: catalogue.catalogue_discount,
+            retailPrice: product.retail_price || "",
+            retailDiscount: product.retail_discount || "",
+            GST: product.retail_GST,
+            metaTitle: product.meta_title,
+            metaKeyword: product.meta_keyword,
+            metaDescription: product.meta_description,
+            weight: product.weight,
+            tag: product.tag.join(","),
+            cat_image: "",
+            image: product.image,
+            isStitching: product.stitching === true ? "Y" : "N",
+            isSize: product.size === true ? "Y" : "N",
+            isActive: product.isActive === true ? "Y" : "N",
+            showInSingle: product.showInSingle === true ? "Y" : "N",
+          };
+          if (attributes.length > 0) {
+            attributes.forEach((value) => {
+              data[value.name] = value.value.join(",");
+            });
+          }
+          products.push(data);
+        }
+      }
+    }
+
+    if (productData.length > 0) {
+      for (let product of productData) {
+        let category = product.categories.map((value) => value.category.name);
+        let attributes = [];
+        product.attributeValues.map((value) => {
+          if (attributes && attributes.length > 0) {
+            let isAttributeExist = attributes.find(
+              (val) => val.name === value.attribute.name
+            );
+            if (isAttributeExist) {
+              isAttributeExist.value.push(value.attributeValue.name);
+            } else {
+              attributes.push({
+                name: value.attribute.name,
+                value: [value.attributeValue.name],
+              });
+            }
+          } else {
+            attributes.push({
+              name: value.attribute.name,
+              value: [value.attributeValue.name],
+            });
+          }
+        });
+        let data = {
+          category: category.join(","),
+          catCode: "",
+          productCode: product.sku,
+          productName: product.name,
+          description: product.description,
+          noOfProduct: "",
+          quantity: product.quantity,
+          catalogueItemMarketPrice: "",
+          catalogueItemDiscount: "",
+          retailPrice: product.retail_price,
+          retailDiscount: product.retail_discount,
+          GST: product.retail_GST,
+          metaTitle: product.meta_title,
+          metaKeyword: product.meta_keyword,
+          metaDescription: product.meta_description,
+          weight: product.weight,
+          tag: product.tag.join(","),
+          cat_image: "",
+          image: product.image.join(","),
+          isStitching: product.stitching === true ? "Y" : "N",
+          isSize: product.size === true ? "Y" : "N",
+          isActive: product.isActive === true ? "Y" : "N",
+          showInSingle: product.showInSingle === true ? "Y" : "N",
+        };
+        if (attributes.length > 0) {
+          attributes.forEach((value) => {
+            data[value.name] = value.value.join(",");
+          });
+        }
+        products.push(data);
+      }
+    }
+
+    // let products = catalogueData.flatMap((catalogue) => {
+    //   let formattedCatalogue = formatData(catalogue, true);
+    //   let formattedProducts = catalogue.Product.map((product) =>
+    //     formatData(product)
+    //   );
+    //   return [formattedCatalogue, ...formattedProducts];
+    // });
+
+    // products.push(...productData.map((product) => formatData(product)));
+
+    const __dirname = path.resolve();
+    const csvFilePath = path.join(
+      `${__dirname}/uploads/csv`,
+      "cataloguedata.csv"
+    );
+    console.log(csvFilePath);
+    const ws = fs.createWriteStream(csvFilePath);
+
+    fastCsv
+      .write(products, { headers: true })
+      .pipe(ws)
+      .on("finish", () => {
+        res.download(csvFilePath, "cataloguedata.csv", (err) => {
+          if (err) {
+            console.log(err);
+            return res
+              .status(500)
+              .json({ isSuccess: false, message: "Error exporting CSV" });
+          } else {
+            console.log("File downloaded successfully.");
+          }
+        });
+      });
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "catalogue data get successfully.",
+      data: products,
+    });
+  } catch (err) {
+    console.log(err);
+    const error = new Error("Something went wrong, please try again!");
+    next(error);
+  }
+};
+
+const processAttributes = (attributeValues) => {
+  return attributeValues.reduce((acc, { attribute, attributeValue }) => {
+    let attr = acc.find((item) => item.name === attribute.name);
+    if (attr) {
+      attr.value.push(attributeValue.name);
+    } else {
+      acc.push({ name: attribute.name, value: [attributeValue.name] });
+    }
+    return acc;
+  }, []);
+};
+
+const formatData = (item, isCatalogue = false) => {
+  let category =
+    item.CatalogueCategory?.map((v) => v.category.name) ||
+    item.categories?.map((v) => v.category.name);
+  let attributes = processAttributes(item.attributeValues || []);
+
+  let data = {
+    category: category.join(","),
+    productName: item.name,
+    ...(isCatalogue
+      ? {
+          catCode: item.cat_code,
+          noOfProduct: item.no_of_product,
+          catalogueItemMarketPrice: item.price,
+          catalogueItemDiscount: item.catalogue_discount,
+          GST: item.GST,
+          cat_image: item.coverImage,
+        }
+      : {
+          productCode: item.productCode || item.sku,
+          catalogueItemMarketPrice: item.average_price || 0,
+          catalogueItemDiscount: item.catalogue_discount || 0,
+          retailPrice: item.retail_price,
+          retailDiscount: item.retail_discount,
+          GST: item.retail_GST,
+          image: item.image.join(","),
+          showInSingle: item.showInSingle ? "Y" : "N",
+        }),
+    description: item.description,
+    quantity: item.quantity,
+    metaTitle: item.meta_title,
+    metaKeyword: item.meta_keyword,
+    metaDescription: item.meta_description,
+    weight: item.weight,
+    tag: item.tag.join(","),
+    isStitching: item.stitching ? "Y" : "N",
+    isSize: item.size ? "Y" : "N",
+    isActive: item.isActive ? "Y" : "N",
+  };
+
+  attributes.forEach((attr) => {
+    data[attr.name] = attr.value.join(",");
+  });
+  return data;
+};
+
 export {
   //  importCatalogue,
   importCatalogues,
   zipImages,
+  exportCatalogue,
 };

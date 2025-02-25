@@ -1738,6 +1738,7 @@ const addCatalogue = async (req, res, next) => {
                 offer_price,
                 isActive: true,
                 isDraft: false,
+                stitching: result.stitching,
                 showInSingle: Boolean(value.showInSingle),
               },
             })

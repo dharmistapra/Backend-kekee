@@ -84,8 +84,7 @@ const updatePaymentMethod = async (req, res, next) => {
     const id = req.params.id;
     if (!/^[a-fA-F0-9]{24}$/.test(id)) {
       return res
-        .status(400)
-        .json({ isSuccess: false, message: "Invalid ID format!" });
+        .status(400).json({ isSuccess: false, message: "Invalid ID format!" });
     }
     const { keyId, secretKey, charge, description } = req.body;
     const image = req.file;
@@ -103,6 +102,8 @@ const updatePaymentMethod = async (req, res, next) => {
         .status(404)
         .json({ isSuccess: false, message: "Payment method not found!" });
     }
+
+
     const result = await prisma.paymentMethods.update({
       where: { id: id },
       data: {
@@ -248,6 +249,33 @@ const deletePaymentMethodImage = async (req, res, next) => {
   }
 };
 
+
+const getPaymentMethodpublic = async (req, res, next) => {
+  try {
+    const result = await prisma.paymentMethods.findMany({
+      where: {
+        isActive: true
+      },
+      orderBy: { position: "asc" },
+      select: {
+        name: true,
+        charge: true,
+        description: true,
+        image: true
+      }
+    });
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "Payment methods get successfully.",
+      data: result,
+    });
+  } catch (err) {
+    const error = new Error("Something went wrong, please try again!");
+    next(error);
+  }
+};
+
 export {
   postPaymentMethod,
   getPaymentMethod,
@@ -256,4 +284,5 @@ export {
   paymentMethodStatus,
   paymentMethodPosition,
   deletePaymentMethodImage,
+  getPaymentMethodpublic
 };

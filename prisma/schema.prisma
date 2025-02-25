@@ -835,8 +835,8 @@ enum OrderStatus {
 }
 
 enum PaymentMethod {
-  RAZORPAY
-  STRIPE
+  razorpay
+  stripe
   BANK_TRANSFER
   COD
 }

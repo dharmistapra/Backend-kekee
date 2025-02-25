@@ -797,9 +797,9 @@ const importCatalogues = async (req, res, next) => {
         }
         let finalOfferPrice =
           parseFloat(catalogueItemMarketPrice) > 0 &&
-            parseFloat(catalogueItemDiscount) > 0
+          parseFloat(catalogueItemDiscount) > 0
             ? parseFloat(catalogueItemMarketPrice) *
-            (1 - parseFloat(catalogueItemDiscount) / 100)
+              (1 - parseFloat(catalogueItemDiscount) / 100)
             : parseFloat(catalogueItemMarketPrice);
 
         let cat_url = `${slug(productName)}-${catCode}`;
@@ -829,7 +829,6 @@ const importCatalogues = async (req, res, next) => {
           stitching: isStitching != "N" ? true : false,
           size: isSize != "N" ? true : false,
           isActive: isActive != "N" ? true : false,
-          deletedAt: null,
           product: [],
         };
 
@@ -944,6 +943,7 @@ const importCatalogues = async (req, res, next) => {
           delete catalogue.product;
           delete catalogue.category;
           delete catalogue.attributes;
+          catalogue["deletedAt"] = null;
           category.length > 0 &&
             (catalogue.CatalogueCategory = {
               create: category.map((catId) => ({
@@ -1176,6 +1176,7 @@ const exportCatalogue = async (req, res, next) => {
       },
     });
     let products = [];
+    let allAttributes = new Set();
     for (let catalogue of catalogueData) {
       let category = catalogue.CatalogueCategory.map(
         (value) => value.category.name
@@ -1190,14 +1191,12 @@ const exportCatalogue = async (req, res, next) => {
             isAttributeExist.value.push(value.attributeValue.name);
           } else {
             attributes.push({
-              cat_code: catalogue.cat_code,
               name: value.attribute.name,
               value: [value.attributeValue.name],
             });
           }
         } else {
           attributes.push({
-            cat_code: catalogue.cat_code,
             name: value.attribute.name,
             value: [value.attributeValue.name],
           });

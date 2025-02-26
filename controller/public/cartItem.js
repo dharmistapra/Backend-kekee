@@ -195,30 +195,30 @@ const postCartItem = async (req, res, next) => {
           .status(400)
           .json({ error: "No products found in this catalogue" });
 
-      const existingCatalogueItem = await prisma.cartItem.findFirst({
-        where: {
+      // const existingCatalogueItem = await prisma.cartItem.findFirst({
+      //   where: {
+      //     cart_id: cart.id,
+      //     catalogue_id: catalogue_id,
+      //     isCatalogue: true,
+      //   },
+      // });
+      // if (existingCatalogueItem) {
+      //   await prisma.cartItem.update({
+      //     where: { id: existingCatalogueItem.id },
+      //     data: { quantity },
+      //   });
+      // } else {
+      const result = await prisma.cartItem.create({
+        data: {
           cart_id: cart.id,
           catalogue_id: catalogue_id,
+          stitching: JSON.stringify(stitching),
+          size: JSON.stringify(size),
+          quantity: quantity,
           isCatalogue: true,
         },
       });
-      if (existingCatalogueItem) {
-        await prisma.cartItem.update({
-          where: { id: existingCatalogueItem.id },
-          data: { quantity },
-        });
-      } else {
-        await prisma.cartItem.create({
-          data: {
-            cart_id: cart.id,
-            catalogue_id: catalogue_id,
-            stitching: JSON.stringify(stitching),
-            size: JSON.stringify(size),
-            quantity: quantity,
-            isCatalogue: true,
-          },
-        });
-      }
+      // }
       return res.status(200).json({
         isSuccess: true,
         message: "Catalogue items added to cart successfully.",

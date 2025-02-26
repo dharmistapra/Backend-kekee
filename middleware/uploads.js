@@ -114,7 +114,8 @@ const dynamicStorage = (entityType) => {
     },
     filename: async (req, file, cb) => {
       let filename = await uniqueFilename(file);
-      if (entityType === "product") filename = file.originalname;
+      if (entityType === "product" || entityType === "catalogue")
+        filename = file.originalname;
       cb(null, filename);
     },
   });

@@ -501,7 +501,7 @@ const reduceProductQuantity = async (orderId) => {
                     await prisma.product.updateMany({
                         where: {
                             catalogue_id: result.id,
-                            quantity: { lte: 1 },
+                            quantity: { equals: 0 },
                         },
                         data: {
                             outofStock: true,

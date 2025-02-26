@@ -224,6 +224,7 @@ const OrderPlace = async (req, res, next) => {
             shippingdata?.country
         );
         let ordertotal = subtotal + tax + shippingconst.shippingCost;
+        console.log("convertAmount",shippingconst.shippingCost)
 
         const order = await prisma.order.create({
             data: {
@@ -337,6 +338,7 @@ const OrderPlace = async (req, res, next) => {
         };
 
         const convertAmount = ordertotal / currency?.rate;
+        
 
         if (paymentMethod === "razorpay") {
             const razorpayOrder = await rozarpay.orders.create({
@@ -536,6 +538,7 @@ const reduceProductQuantity = async (orderId) => {
                     await prisma.product.updateMany({
                         where: {
                             catalogue_id: result.id,
+                            quantity: { gt: 0 },
                         },
                         data: { quantity: { decrement: item.quantity } },
                     });

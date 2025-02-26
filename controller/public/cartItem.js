@@ -235,41 +235,41 @@ const postCartItem = async (req, res, next) => {
           .status(404)
           .json({ isSuccess: false, message: "Product not found." });
 
-      const existingSingleItem = await prisma.cartItem.findFirst({
-        where: {
-          cart_id: cart.id,
-          product_id: product_id,
-          isCatalogue: false,
-        },
-      });
+      // const existingSingleItem = await prisma.cartItem.findFirst({
+      //   where: {
+      //     cart_id: cart.id,
+      //     product_id: product_id,
+      //     isCatalogue: false,
+      //   },
+      // });
 
       let result;
       let message;
-      if (existingSingleItem) {
-        result = await prisma.cartItem.update({
-          where: { id: existingSingleItem.id },
-          data: {
-            product_id: product_id,
-            stitching: JSON.stringify(stitching),
-            size: JSON.stringify(size),
-            quantity: quantity,
-          },
-        });
+      // if (existingSingleItem) {
+      //   result = await prisma.cartItem.update({
+      //     where: { id: existingSingleItem.id },
+      //     data: {
+      //       product_id: product_id,
+      //       stitching: JSON.stringify(stitching),
+      //       size: JSON.stringify(size),
+      //       quantity: quantity,
+      //     },
+      //   });
 
-        message = "item update successfully";
-      } else {
-        result = await prisma.cartItem.create({
-          data: {
-            cart_id: cart.id,
-            product_id: product_id,
-            stitching: JSON.stringify(stitching),
-            size: JSON.stringify(size),
-            quantity: quantity,
-            isCatalogue: false,
-          },
-        });
-        message = "item add in cart successfully";
-      }
+      //   message = "item update successfully";
+      // } else {
+      result = await prisma.cartItem.create({
+        data: {
+          cart_id: cart.id,
+          product_id: product_id,
+          stitching: JSON.stringify(stitching),
+          size: JSON.stringify(size),
+          quantity: quantity,
+          isCatalogue: false,
+        },
+      });
+      message = "item add in cart successfully";
+      // }
 
       return res.status(200).json({
         isSuccess: true,

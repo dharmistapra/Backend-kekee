@@ -237,22 +237,64 @@ const OrderPlace = async (req, res, next) => {
             },
         });
 
+        // await prisma.orderItem.createMany({
+        //     data: cartItems.map((item) => ({
+        //         orderId: order.id,
+        //         productId: item.product_id,
+        //         catlogueId: item.catalogue_id,
+        //         quantity: item.quantity,
+        //         customersnotes: billingform.customersnotes,
+        //         productsnapshots: JSON.stringify({
+        //             name: item.isCatalogue ? item.catalogue.name : item.product.name,
+        //             url: item.isCatalogue ? item.catalogue.url : item.product.url,
+        //             price: item.isCatalogue
+        //                 ? item.catalogue.offer_price
+        //                 : item.product.offer_price,
+        //             cartQuantity: item.quantity,
+        //         }),
+        //     })),
+        // });
+
         await prisma.orderItem.createMany({
-            data: cartItems.map((item) => ({
-                orderId: order.id,
-                productId: item.product_id,
-                catlogueId: item.catalogue_id,
-                quantity: item.quantity,
-                customersnotes: billingform.customersnotes,
-                productsnapshots: JSON.stringify({
-                    name: item.isCatalogue ? item.catalogue.name : item.product.name,
-                    url: item.isCatalogue ? item.catalogue.url : item.product.url,
-                    price: item.isCatalogue
-                        ? item.catalogue.offer_price
-                        : item.product.offer_price,
-                    cartQuantity: item.quantity,
-                }),
-            })),
+            data: cartItems.map((item) => {
+                let snapshot = {};
+                if (item.isCatalogue) {
+                    const availableProducts = item.catalogue.Product.filter((prod) => prod.quantity >= item.quantity
+                    ).map((prod) => ({
+                        id: prod.id,
+                        name: prod.name,
+                        sku: prod.sku,
+                        url: prod.url,
+                        offer_price: prod.offer_price,
+                    }));
+
+                    snapshot = {
+                        type: "catalogue",
+                        name: item.catalogue.name,
+                        url: item.catalogue.url,
+                        price: item.catalogue.offer_price,
+                        cartQuantity: item.quantity,
+                        products: availableProducts,
+                    };
+                } else {
+                    snapshot = {
+                        type: "product",
+                        name: item.product.name,
+                        url: item.product.url,
+                        price: item.product.offer_price,
+                        cartQuantity: item.quantity,
+                    };
+                }
+
+                return {
+                    orderId: order.id,
+                    productId: item.product_id,
+                    catlogueId: item.catalogue_id,
+                    quantity: item.quantity,
+                    customersnotes: billingform.customersnotes,
+                    productsnapshots: JSON.stringify(snapshot),
+                };
+            }),
         });
 
         const billingData = await prisma.billing.create({

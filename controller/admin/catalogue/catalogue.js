@@ -1488,7 +1488,7 @@ const addCatalogue = async (req, res, next) => {
     // Validate and process product updates
     const productId = product.map((value) => value.id);
     let products = product.filter((value) => value.outofStock === false);
-    if (no_of_product !== products.length) {
+    if (no_of_product !== 0 && no_of_product !== products.length) {
       if (req.file) await deleteFile(filepath);
       return res
         .status(404)
@@ -1545,7 +1545,10 @@ const addCatalogue = async (req, res, next) => {
     const ceilingPrice = Math.ceil(totalPrice);
     const tolerance = 1;
 
-    if (Math.abs(ceilingPrice - finalOfferPrice) > tolerance) {
+    if (
+      no_of_product !== 0 &&
+      Math.abs(ceilingPrice - finalOfferPrice) > tolerance
+    ) {
       if (req.file) await deleteFile(filepath);
 
       return res.status(400).json({

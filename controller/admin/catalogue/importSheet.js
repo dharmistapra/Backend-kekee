@@ -1061,19 +1061,30 @@ const zipImages = async (req, res, next) => {
 
     if (req.file) await deleteFile(req.file.path);
 
-    // await filedir(`uploads/product/`);
     const files = fs.readdir(outPutDir, async (err, files) => {
       if (err) return res.status(400).json({ isSuccess: false, message: err });
+
       files.forEach(async (file) => {
         let origionalImage = `uploads/product/zip/${file}`;
-        let productImage = `uploads/product/${file}`;
 
-        fs.rename(origionalImage, productImage, (err) => {
-          if (err) {
-            return res.status(400).json({ isSuccess: false, message: err });
-          }
-          console.log("successfully move file!");
-        });
+        let coverImages = file.toLowerCase().includes("cover");
+        if (coverImages) {
+          let coverImage = `uploads/catalogue/${file}`;
+          fs.rename(origionalImage, coverImage, (err) => {
+            if (err) {
+              return res.status(400).json({ isSuccess: false, message: err });
+            }
+            console.log("successfully move file!");
+          });
+        } else {
+          let productImage = `uploads/product/${file}`;
+          fs.rename(origionalImage, productImage, (err) => {
+            if (err) {
+              return res.status(400).json({ isSuccess: false, message: err });
+            }
+            console.log("successfully move file!");
+          });
+        }
       });
     });
 
@@ -1375,37 +1386,37 @@ const exportCatalogue = async (req, res, next) => {
     // products.push(...productData.map((product) => formatData(product)));
     cataloguesProductFields.push(...allAttributes);
     let csvHeaders = cataloguesProductFields;
-    const __dirname = path.resolve();
-    const csvFilePath = path.join(
-      `${__dirname}/uploads/csv`,
-      "cataloguedata.csv"
-    );
-    console.log(csvFilePath);
-    const ws = fs.createWriteStream(csvFilePath);
+    // const __dirname = path.resolve();
+    // const csvFilePath = path.join(
+    //   `${__dirname}/uploads/csv`,
+    //   "cataloguedata.csv"
+    // );
+    // console.log(csvFilePath);
+    // const ws = fs.createWriteStream(csvFilePath);
 
-    fastCsv
-      .write(products, { headers: csvHeaders })
-      .pipe(ws)
-      .on("finish", () => {
-        res.download(csvFilePath, "cataloguedata.csv", (err) => {
-          if (err) {
-            console.log(err);
-            return res
-              .status(500)
-              .json({ isSuccess: false, message: "Error exporting CSV" });
-          } else {
-            console.log("File downloaded successfully.");
-          }
-        });
-      });
+    // fastCsv
+    //   .write(products, { headers: csvHeaders })
+    //   .pipe(ws)
+    //   .on("finish", () => {
+    //     res.download(csvFilePath, "cataloguedata.csv", (err) => {
+    //       if (err) {
+    //         console.log(err);
+    //         return res
+    //           .status(500)
+    //           .json({ isSuccess: false, message: "Error exporting CSV" });
+    //       } else {
+    //         console.log("File downloaded successfully.");
+    //       }
+    //     });
+    //   });
 
     return res.status(200).json({
       isSuccess: true,
       message: "catalogue data get successfully.",
-      data: products,
+      data: { products, csvHeaders },
     });
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     const error = new Error("Something went wrong, please try again!");
     next(error);
   }

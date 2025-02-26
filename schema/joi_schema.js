@@ -483,6 +483,7 @@ const catalogueSchema = async (req, res, next) => {
             .default([]),
         }),
         showInSingle: Joi.boolean().required(),
+        outOfStock: Joi.boolean().required(),
       })
       .required(),
   });

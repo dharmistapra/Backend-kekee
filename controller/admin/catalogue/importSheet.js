@@ -1218,6 +1218,7 @@ const exportCatalogue = async (req, res, next) => {
           !isAttribute && allAttributes.add(value.attribute.name);
         }
       });
+      let catImage = path.basename(catalogue.coverImage);
       let data = {
         category: category.join(","),
         catCode: catalogue.cat_code,
@@ -1236,7 +1237,7 @@ const exportCatalogue = async (req, res, next) => {
         metaDescription: catalogue.meta_description,
         weight: catalogue.weight,
         tag: catalogue.tag.join(","),
-        cat_image: catalogue.coverImage,
+        cat_image: catImage,
         image: "",
         isStitching: catalogue.stitching === true ? "Y" : "N",
         isSize: catalogue.size === true ? "Y" : "N",
@@ -1278,6 +1279,7 @@ const exportCatalogue = async (req, res, next) => {
               !isAttribute && allAttributes.add(value.attribute.name);
             }
           });
+          const productImage = product.image.map((val) => path.basename(val));
           let data = {
             category: category.join(","),
             catCode: catalogue.cat_code,
@@ -1297,7 +1299,7 @@ const exportCatalogue = async (req, res, next) => {
             weight: product.weight,
             tag: product.tag.join(","),
             cat_image: "",
-            image: product.image,
+            image: productImage.join(","),
             isStitching: product.stitching === true ? "Y" : "N",
             isSize: product.size === true ? "Y" : "N",
             isActive: product.isActive === true ? "Y" : "N",
@@ -1342,6 +1344,7 @@ const exportCatalogue = async (req, res, next) => {
             !isAttribute && allAttributes.add(value.attribute.name);
           }
         });
+        const productImage = product.image.map((val) => path.basename(val));
         let data = {
           category: category.join(","),
           catCode: "",
@@ -1361,7 +1364,7 @@ const exportCatalogue = async (req, res, next) => {
           weight: product.weight,
           tag: product.tag.join(","),
           cat_image: "",
-          image: product.image.join(","),
+          image: productImage.join(","),
           isStitching: product.stitching === true ? "Y" : "N",
           isSize: product.size === true ? "Y" : "N",
           isActive: product.isActive === true ? "Y" : "N",
@@ -1386,29 +1389,29 @@ const exportCatalogue = async (req, res, next) => {
     // products.push(...productData.map((product) => formatData(product)));
     cataloguesProductFields.push(...allAttributes);
     let csvHeaders = cataloguesProductFields;
-    // const __dirname = path.resolve();
-    // const csvFilePath = path.join(
-    //   `${__dirname}/uploads/csv`,
-    //   "cataloguedata.csv"
-    // );
-    // console.log(csvFilePath);
-    // const ws = fs.createWriteStream(csvFilePath);
+    const __dirname = path.resolve();
+    const csvFilePath = path.join(
+      `${__dirname}/uploads/csv`,
+      "cataloguedata.csv"
+    );
+    console.log(csvFilePath);
+    const ws = fs.createWriteStream(csvFilePath);
 
-    // fastCsv
-    //   .write(products, { headers: csvHeaders })
-    //   .pipe(ws)
-    //   .on("finish", () => {
-    //     res.download(csvFilePath, "cataloguedata.csv", (err) => {
-    //       if (err) {
-    //         console.log(err);
-    //         return res
-    //           .status(500)
-    //           .json({ isSuccess: false, message: "Error exporting CSV" });
-    //       } else {
-    //         console.log("File downloaded successfully.");
-    //       }
-    //     });
-    //   });
+    fastCsv
+      .write(products, { headers: csvHeaders })
+      .pipe(ws)
+      .on("finish", () => {
+        res.download(csvFilePath, "cataloguedata.csv", (err) => {
+          if (err) {
+            console.log(err);
+            return res
+              .status(500)
+              .json({ isSuccess: false, message: "Error exporting CSV" });
+          } else {
+            console.log("File downloaded successfully.");
+          }
+        });
+      });
 
     return res.status(200).json({
       isSuccess: true,
@@ -1416,7 +1419,7 @@ const exportCatalogue = async (req, res, next) => {
       data: { products, csvHeaders },
     });
   } catch (err) {
-    // console.log(err);
+    console.log(err);
     const error = new Error("Something went wrong, please try again!");
     next(error);
   }

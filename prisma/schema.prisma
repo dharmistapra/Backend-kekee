@@ -749,6 +749,9 @@ model OrderItem {
   catlogueId       String?    @db.ObjectId
   quantity         Int
   customersnotes   String?
+  productname       String?
+  type              String?
+  
   productsnapshots Json?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
@@ -800,23 +803,25 @@ model payment {
   orderId       String        @unique @db.ObjectId
   paymentMethod PaymentMethod
   transactionId String?
-  bankAccountId String?
+  bankAccountId String?         @db.ObjectId
   status        PaymentStatus
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  bankaccount   BankAccount?  @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
 }
 
 model BankAccount {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String   @db.ObjectId
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String    @db.ObjectId
   bankName          String
   accountNumber     String
   ifscCode          String
   accountHolderName String
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              users?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  user              users?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payment           payment[]
 }
 
 enum ShippingStatus {

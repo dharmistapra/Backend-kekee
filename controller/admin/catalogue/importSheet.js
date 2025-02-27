@@ -18,6 +18,7 @@ import AdmZip from "adm-zip";
 import fs from "fs";
 import path from "path";
 import fastCsv from "fast-csv";
+import { Parser } from "json2csv";
 
 // const importCatalogue = async (req, res, next) => {
 //   try {
@@ -797,9 +798,9 @@ const importCatalogues = async (req, res, next) => {
         }
         let finalOfferPrice =
           parseFloat(catalogueItemMarketPrice) > 0 &&
-          parseFloat(catalogueItemDiscount) > 0
+            parseFloat(catalogueItemDiscount) > 0
             ? parseFloat(catalogueItemMarketPrice) *
-              (1 - parseFloat(catalogueItemDiscount) / 100)
+            (1 - parseFloat(catalogueItemDiscount) / 100)
             : parseFloat(catalogueItemMarketPrice);
 
         let cat_url = `${slug(productName)}-${catCode}`;
@@ -934,110 +935,232 @@ const importCatalogues = async (req, res, next) => {
       }
     }
 
-    await prisma.$transaction(async (tx) => {
-      if (catalogues.length > 0) {
-        for (let catalogue of catalogues) {
-          let category = catalogue.category;
-          const products = catalogue.product;
-          const attributeValueConnection = catalogue?.attributes;
-          delete catalogue.product;
-          delete catalogue.category;
-          delete catalogue.attributes;
-          catalogue["deletedAt"] = null;
-          category.length > 0 &&
-            (catalogue.CatalogueCategory = {
-              create: category.map((catId) => ({
-                category: { connect: { id: catId } },
-              })),
+    await prisma.$transaction(
+      async (tx) => {
+        if (catalogues.length > 0) {
+          for (let catalogue of catalogues) {
+            let category = catalogue.category;
+            const products = catalogue.product;
+            const attributeValueConnection = catalogue?.attributes;
+
+            delete catalogue.product;
+            delete catalogue.category;
+            delete catalogue.attributes;
+            catalogue["deletedAt"] = null;
+
+            if (category.length > 0) {
+              catalogue.CatalogueCategory = {
+                create: category.map((catId) => ({
+                  category: { connect: { id: catId } },
+                })),
+              };
+            }
+
+            if (attributeValueConnection?.length > 0) {
+              catalogue["attributeValues"] = {
+                create: attributeValueConnection,
+              };
+            }
+
+            const existingCatalogue = await tx.catalogue.findFirst({
+              where: { cat_code: catalogue.cat_code },
+              select: { id: true },
             });
 
-          attributeValueConnection?.length > 0 &&
-            (catalogue["attributeValues"] = {
-              create: attributeValueConnection,
+            if (existingCatalogue) {
+              await tx.CatalogueCategory.deleteMany({
+                where: { catalogue: { id: existingCatalogue.id } },
+              });
+
+              await tx.catalogueAttributeValue.deleteMany({
+                where: { catalogue: { id: existingCatalogue.id } },
+              });
+            }
+
+            let savedCatalogue = await tx.catalogue.upsert({
+              where: existingCatalogue?.id
+                ? { id: existingCatalogue?.id }
+                : { url: catalogue.url },
+              update: { ...catalogue },
+              create: { ...catalogue },
             });
 
-          const existingCatalogue = await tx.catalogue.findFirst({
-            where: { cat_code: catalogue.cat_code },
-            select: { id: true },
-          });
+            const productUpserts = products.map(async (product) => {
+              const attributeValueConnection = product.attributes;
+              delete product.attributes;
+              delete product.category;
 
-          if (existingCatalogue) {
-            await tx.CatalogueCategory.deleteMany({
-              where: { catalogue: { id: existingCatalogue.id } },
+              product["attributeValues"] = {
+                create: attributeValueConnection,
+              };
+
+              const existingProduct = await tx.product.findFirst({
+                where: { sku: product.sku },
+                select: { id: true },
+              });
+
+              if (existingProduct) {
+                await tx.productCategory.deleteMany({
+                  where: { product: { id: existingProduct.id } },
+                });
+
+                await tx.productAttributeValue.deleteMany({
+                  where: { product: { id: existingProduct.id } },
+                });
+              }
+
+              return tx.product.upsert({
+                where: { sku: product.sku },
+                update: { ...product, catalogue_id: savedCatalogue.id },
+                create: { ...product, catalogue_id: savedCatalogue.id },
+              });
             });
 
-            await tx.catalogueAttributeValue.deleteMany({
-              where: { catalogue: { id: existingCatalogue.id } },
-            });
+            await Promise.all(productUpserts);
           }
+        }
 
-          let savedCatalogue = await tx.catalogue.upsert({
-            where: existingCatalogue?.id
-              ? { id: existingCatalogue?.id }
-              : { url: catalogue.url },
-
-            update: { ...catalogue },
-            create: { ...catalogue },
-          });
-
-          for (let product of products) {
-            const attributeValueConnection = product.attributes;
-            delete product.attributes;
+        if (productArray.length > 0) {
+          const productUpserts = productArray.map(async (product) => {
+            const attributeValueConnection = product?.attributes;
+            delete product?.attributes;
             delete product.category;
 
             product["attributeValues"] = {
               create: attributeValueConnection,
             };
-            const existingProduct = await tx.product.findFirst({
-              where: { sku: product.sku },
-              select: { id: true },
+
+            await tx.productCategory.deleteMany({
+              where: { product: { sku: product.sku } },
             });
 
-            if (existingProduct) {
-              await tx.productCategory.deleteMany({
-                where: { product: { id: existingProduct.id } },
-              });
-
-              await tx.productAttributeValue.deleteMany({
-                where: { product: { id: existingProduct.id } },
-              });
-            }
-
-            let products = await tx.product.upsert({
-              where: { sku: product.sku },
-              update: { ...product, catalogue_id: savedCatalogue.id },
-              create: { ...product, catalogue_id: savedCatalogue.id },
+            await tx.productAttributeValue.deleteMany({
+              where: { product: { sku: product.sku } },
             });
-          }
+
+            return tx.product.upsert({
+              where: { sku: product.sku },
+              update: { ...product, catalogue_id: null },
+              create: { ...product, catalogue_id: null },
+            });
+          });
+
+          await Promise.all(productUpserts);
         }
-      }
+      },
+      { timeout: 20000 } // Increase transaction timeout to 20s
+    );
 
-      if (productArray.length > 0) {
-        for (let product of productArray) {
-          const attributeValueConnection = product.attributes;
-          delete product.attributes;
-          delete product.category;
+    // await prisma.$transaction(async (tx) => {
+    //   if (catalogues.length > 0) {
+    //     for (let catalogue of catalogues) {
+    //       let category = catalogue.category;
+    //       const products = catalogue.product;
+    //       const attributeValueConnection = catalogue?.attributes;
+    //       delete catalogue.product;
+    //       delete catalogue.category;
+    //       delete catalogue.attributes;
+    //       catalogue["deletedAt"] = null;
+    //       category.length > 0 &&
+    //         (catalogue.CatalogueCategory = {
+    //           create: category.map((catId) => ({
+    //             category: { connect: { id: catId } },
+    //           })),
+    //         });
 
-          product["attributeValues"] = {
-            create: attributeValueConnection,
-          };
+    //       attributeValueConnection?.length > 0 &&
+    //         (catalogue["attributeValues"] = {
+    //           create: attributeValueConnection,
+    //         });
 
-          await tx.productCategory.deleteMany({
-            where: { product: { sku: product.sku } },
-          });
+    //       const existingCatalogue = await tx.catalogue.findFirst({
+    //         where: { cat_code: catalogue.cat_code },
+    //         select: { id: true },
+    //       });
 
-          await tx.productAttributeValue.deleteMany({
-            where: { product: { sku: product.sku } },
-          });
+    //       if (existingCatalogue) {
+    //         await tx.CatalogueCategory.deleteMany({
+    //           where: { catalogue: { id: existingCatalogue.id } },
+    //         });
 
-          const products = await tx.product.upsert({
-            where: { sku: product.sku },
-            update: { ...product, catalogue_id: null },
-            create: { ...product, catalogue_id: null },
-          });
-        }
-      }
-    });
+    //         await tx.catalogueAttributeValue.deleteMany({
+    //           where: { catalogue: { id: existingCatalogue.id } },
+    //         });
+    //       }
+
+    //       let savedCatalogue = await tx.catalogue.upsert({
+    //         where: existingCatalogue?.id
+    //           ? { id: existingCatalogue?.id }
+    //           : { url: catalogue.url },
+
+    //         update: { ...catalogue },
+    //         create: { ...catalogue },
+    //       });
+
+    //       for (let product of products) {
+    //         const attributeValueConnection = product.attributes;
+    //         delete product.attributes;
+    //         delete product.category;
+
+    //         product["attributeValues"] = {
+    //           create: attributeValueConnection,
+    //         };
+    //         const existingProduct = await tx.product.findFirst({
+    //           where: { sku: product.sku },
+    //           select: { id: true },
+    //         });
+
+    //         if (existingProduct) {
+    //           await tx.productCategory.deleteMany({
+    //             where: { product: { id: existingProduct.id } },
+    //           });
+
+    //           await tx.productAttributeValue.deleteMany({
+    //             where: { product: { id: existingProduct.id } },
+    //           });
+    //         }
+
+    //         await Promise.all(products.map(product => tx.product.upsert({
+    //           where: { sku: product.sku },
+    //           update: { ...product, catalogue_id: savedCatalogue.id },
+    //           create: { ...product, catalogue_id: savedCatalogue.id },
+    //         })));
+
+    //         // let products = await tx.product.upsert({
+    //         //   where: { sku: product.sku },
+    //         //   update: { ...product, catalogue_id: savedCatalogue.id },
+    //         //   create: { ...product, catalogue_id: savedCatalogue.id },
+    //         // });
+    //       }
+    //     }
+    //   }
+
+    //   if (productArray.length > 0) {
+    //     for (let product of productArray) {
+    //       const attributeValueConnection = product?.attributes;
+    //       delete product?.attributes;
+    //       delete product.category;
+
+    //       product["attributeValues"] = {
+    //         create: attributeValueConnection,
+    //       };
+
+    //       await tx.productCategory.deleteMany({
+    //         where: { product: { sku: product.sku } },
+    //       });
+
+    //       await tx.productAttributeValue.deleteMany({
+    //         where: { product: { sku: product.sku } },
+    //       });
+
+    //       const products = await tx.product.upsert({
+    //         where: { sku: product.sku },
+    //         update: { ...product, catalogue_id: null },
+    //         create: { ...product, catalogue_id: null },
+    //       });
+    //     }
+    //   }
+    // });
     return res
       .status(200)
       .json({ isSuccess: true, message: "File imported successfully." });
@@ -1100,7 +1223,28 @@ const zipImages = async (req, res, next) => {
 
 const exportCatalogue = async (req, res, next) => {
   try {
+    const { category_id } = req.body;
+
+    const count = await prisma.catalogue.count({
+      where: {
+        CatalogueCategory: { some: { id: category_id } },
+        isActive: true,
+        deletedAt: null,
+      },
+    });
+    console.log("count", count, category_id);
+
     const catalogueData = await prisma.catalogue.findMany({
+
+
+      where: {
+        CatalogueCategory: {
+          some: {
+            category: { id: category_id },
+          },
+        },
+
+      },
       include: {
         Product: {
           include: {
@@ -1152,8 +1296,16 @@ const exportCatalogue = async (req, res, next) => {
         },
       },
     });
+    console.log("Catalogue Data Length:", catalogueData.length);
 
     const productData = await prisma.product.findMany({
+      where: {
+        CatalogueCategory: {
+          some: {
+            category: { id: category_id }, // Correct relation filtering
+          },
+        },
+      },
       where: { catalogue_id: null },
       include: {
         attributeValues: {
@@ -1186,6 +1338,7 @@ const exportCatalogue = async (req, res, next) => {
         },
       },
     });
+    console.log("Catalogue Data Length:", productData.length);
     let products = [];
     let allAttributes = new Set();
     for (let catalogue of catalogueData) {
@@ -1397,21 +1550,21 @@ const exportCatalogue = async (req, res, next) => {
     console.log(csvFilePath);
     const ws = fs.createWriteStream(csvFilePath);
 
-    fastCsv
-      .write(products, { headers: csvHeaders })
-      .pipe(ws)
-      .on("finish", () => {
-        res.download(csvFilePath, "cataloguedata.csv", (err) => {
-          if (err) {
-            console.log(err);
-            return res
-              .status(500)
-              .json({ isSuccess: false, message: "Error exporting CSV" });
-          } else {
-            console.log("File downloaded successfully.");
-          }
-        });
-      });
+    // fastCsv
+    //   .write(products, { headers: csvHeaders })
+    //   .pipe(ws)
+    //   .on("finish", () => {
+    //     res.download(csvFilePath, "cataloguedata.csv", (err) => {
+    //       if (err) {
+    //         console.log(err);
+    //         return res
+    //           .status(500)
+    //           .json({ isSuccess: false, message: "Error exporting CSV" });
+    //       } else {
+    //         console.log("File downloaded successfully.");
+    //       }
+    //     });
+    //   });
 
     return res.status(200).json({
       isSuccess: true,
@@ -1448,23 +1601,23 @@ const formatData = (item, isCatalogue = false) => {
     productName: item.name,
     ...(isCatalogue
       ? {
-          catCode: item.cat_code,
-          noOfProduct: item.no_of_product,
-          catalogueItemMarketPrice: item.price,
-          catalogueItemDiscount: item.catalogue_discount,
-          GST: item.GST,
-          cat_image: item.coverImage,
-        }
+        catCode: item.cat_code,
+        noOfProduct: item.no_of_product,
+        catalogueItemMarketPrice: item.price,
+        catalogueItemDiscount: item.catalogue_discount,
+        GST: item.GST,
+        cat_image: item.coverImage,
+      }
       : {
-          productCode: item.productCode || item.sku,
-          catalogueItemMarketPrice: item.average_price || 0,
-          catalogueItemDiscount: item.catalogue_discount || 0,
-          retailPrice: item.retail_price,
-          retailDiscount: item.retail_discount,
-          GST: item.retail_GST,
-          image: item.image.join(","),
-          showInSingle: item.showInSingle ? "Y" : "N",
-        }),
+        productCode: item.productCode || item.sku,
+        catalogueItemMarketPrice: item.average_price || 0,
+        catalogueItemDiscount: item.catalogue_discount || 0,
+        retailPrice: item.retail_price,
+        retailDiscount: item.retail_discount,
+        GST: item.retail_GST,
+        image: item.image.join(","),
+        showInSingle: item.showInSingle ? "Y" : "N",
+      }),
     description: item.description,
     quantity: item.quantity,
     metaTitle: item.meta_title,

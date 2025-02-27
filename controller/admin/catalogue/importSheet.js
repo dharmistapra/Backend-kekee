@@ -1566,11 +1566,11 @@ const exportCatalogue = async (req, res, next) => {
     //     });
     //   });
 
-    return res.status(200).json({
-      isSuccess: true,
-      message: "catalogue data get successfully.",
-      data: { products, csvHeaders },
-    });
+    // return res.status(200).json({
+    //   isSuccess: true,
+    //   message: "catalogue data get successfully.",
+    //   data: { products, csvHeaders },
+    // });
   } catch (err) {
     console.log(err);
     const error = new Error("Something went wrong, please try again!");

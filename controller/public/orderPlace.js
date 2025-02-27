@@ -224,7 +224,7 @@ const OrderPlace = async (req, res, next) => {
             shippingdata?.country
         );
         let ordertotal = subtotal + tax + shippingconst.shippingCost;
-        console.log("convertAmount",shippingconst.shippingCost)
+
 
         const order = await prisma.order.create({
             data: {
@@ -237,6 +237,8 @@ const OrderPlace = async (req, res, next) => {
                 status: "PROCESSING",
             },
         });
+
+
 
         // await prisma.orderItem.createMany({
         //     data: cartItems.map((item) => ({
@@ -259,15 +261,19 @@ const OrderPlace = async (req, res, next) => {
         await prisma.orderItem.createMany({
             data: cartItems.map((item) => {
                 let snapshot = {};
+                let itemSubtotal = 0;
+
                 if (item.isCatalogue) {
-                    const availableProducts = item.catalogue.Product.filter((prod) => prod.quantity >= item.quantity
-                    ).map((prod) => ({
-                        id: prod.id,
-                        name: prod.name,
-                        sku: prod.sku,
-                        url: prod.url,
-                        offer_price: prod.offer_price,
-                    }));
+                    const availableProducts = item.catalogue.Product.filter((prod) => prod.quantity >= item.quantity)
+                        .map((prod) => ({
+                            id: prod.id,
+                            name: prod.name,
+                            sku: prod.sku,
+                            url: prod.url,
+                            offer_price: prod.offer_price,
+                        }));
+
+                    itemSubtotal = item.catalogue.offer_price * item.quantity;
 
                     snapshot = {
                         type: "catalogue",
@@ -276,14 +282,26 @@ const OrderPlace = async (req, res, next) => {
                         price: item.catalogue.offer_price,
                         cartQuantity: item.quantity,
                         products: availableProducts,
+                        discount: item.catalogue_discount,
+                        tax: item.isCatalogue?.GST,
+                        subtotal: subtotal,
+                        stitchingcharges: subtotal - item.catalogue.offer_price,
+                        stitching: stitchingDataMap,
                     };
                 } else {
+                    itemSubtotal = item.product.offer_price * item.quantity;
+
                     snapshot = {
                         type: "product",
                         name: item.product.name,
                         url: item.product.url,
                         price: item.product.offer_price,
                         cartQuantity: item.quantity,
+                        discount: item.retail_discount,
+                        tax: item.isCatalogue?.retail_GST,
+                        subtotal: subtotal,
+                        stitchingcharges: subtotal - item.product.offer_price,
+                        stitching: stitchingDataMap,
                     };
                 }
 
@@ -293,10 +311,13 @@ const OrderPlace = async (req, res, next) => {
                     catlogueId: item.catalogue_id,
                     quantity: item.quantity,
                     customersnotes: billingform.customersnotes,
+                    productname: item.isCatalogue ? item.catalogue.name : item.product.name,
+                    type: item.isCatalogue ? "catalogue" : "single",
                     productsnapshots: JSON.stringify(snapshot),
                 };
             }),
         });
+
 
         const billingData = await prisma.billing.create({
             data: {
@@ -338,7 +359,7 @@ const OrderPlace = async (req, res, next) => {
         };
 
         const convertAmount = ordertotal / currency?.rate;
-        
+
 
         if (paymentMethod === "razorpay") {
             const razorpayOrder = await rozarpay.orders.create({

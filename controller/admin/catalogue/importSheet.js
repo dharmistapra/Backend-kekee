@@ -1223,23 +1223,12 @@ const zipImages = async (req, res, next) => {
 
 const exportCatalogue = async (req, res, next) => {
   try {
-    const { category_id } = req.body;
-
-    const count = await prisma.catalogue.count({
-      where: {
-        CatalogueCategory: { some: { category_id: category_id } },
-        isActive: true,
-        deletedAt: null,
-      },
-    });
-    console.log("count", count, category_id);
+    const { category_id } = req.query;
 
     const catalogueData = await prisma.catalogue.findMany({
       where: {
         CatalogueCategory: {
-          some: {
-            category: { id: category_id },
-          },
+          some: { category: { id: category_id } },
         },
       },
       include: {
@@ -1293,7 +1282,6 @@ const exportCatalogue = async (req, res, next) => {
         },
       },
     });
-    console.log("Catalogue Data Length:", catalogueData.length);
 
     const productData = await prisma.product.findMany({
       where: {
@@ -1335,7 +1323,6 @@ const exportCatalogue = async (req, res, next) => {
         },
       },
     });
-    console.log("Catalogue Data Length:", productData.length);
     let products = [];
     let allAttributes = new Set();
     for (let catalogue of catalogueData) {

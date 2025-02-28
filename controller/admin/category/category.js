@@ -16,6 +16,7 @@ const postCategory = async (req, res, next) => {
     let {
       name,
       title,
+      url,
       parent_id,
       meta_title,
       meta_keyword,
@@ -87,7 +88,7 @@ const postCategory = async (req, res, next) => {
       data: {
         name,
         title,
-        url: slug(name),
+        url: url ? url : slug(name),
         // parent_id: parent_id || null,
         position: count + 1,
         parent: parent_id ? { connect: { id: parent_id } } : undefined,
@@ -276,6 +277,7 @@ const updateCategory = async (req, res, next) => {
     let {
       name,
       title,
+      url,
       parent_id,
       meta_title,
       meta_keyword,
@@ -374,7 +376,7 @@ const updateCategory = async (req, res, next) => {
       data: {
         name,
         title,
-        url: slug(name),
+        url: url ? url : slug(name),
         ...(categoryData.parent_id !== parent_id && { position: count + 1 }),
         parent: parent_id
           ? { connect: { id: parent_id } }
@@ -599,7 +601,7 @@ const getSubCategory = async (req, res, next) => {
         .json({ isSuccess: false, message: "Invalid ID format." });
     }
     const data = await prisma.categoryMaster.findMany({
-      where: { id: parent_id },
+      where: { OR: [{ id: parent_id }, { mixed: true }] },
       orderBy: { position: "asc" },
       select: {
         id: true,

@@ -20,6 +20,7 @@ import {
 } from "../controller/public/wishList.js";
 import { changePasswordusers, updateUserbasicInfo } from "../controller/public/user/register.js";
 import OrderPlace, { orderFailed, verifyOrder } from "../controller/public/orderPlace.js";
+import { getOrderdetails, getOrderHistory } from "../controller/public/orderHistory.js";
 
 // publicProtected.post("/cart-item", cartSchema, postCartItem);
 publicProtected.post("/cart-item", cartSchema, postCartItem);
@@ -36,4 +37,6 @@ publicProtected.post("/user-update", [updateUserbasicInfoSchema], updateUserbasi
 publicProtected.post("/oreder/place", OrderPlace);
 publicProtected.post("/verify/order", verifyOrder);
 publicProtected.post("/cancel/payment", orderFailed);
+publicProtected.post("/order/details", getOrderdetails);
+publicProtected.post("/order/history", getOrderHistory);
 export default publicProtected;

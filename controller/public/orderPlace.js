@@ -237,22 +237,85 @@ const OrderPlace = async (req, res, next) => {
       },
     });
 
+    // await prisma.orderItem.createMany({
+    //     data: cartItems.map((item) => ({
+    //         orderId: order.id,
+    //         productId: item.product_id,
+    //         catlogueId: item.catalogue_id,
+    //         quantity: item.quantity,
+    //         customersnotes: billingform.customersnotes,
+    //         productsnapshots: JSON.stringify({
+    //             name: item.isCatalogue ? item.catalogue.name : item.product.name,
+    //             url: item.isCatalogue ? item.catalogue.url : item.product.url,
+    //             price: item.isCatalogue
+    //                 ? item.catalogue.offer_price
+    //                 : item.product.offer_price,
+    //             cartQuantity: item.quantity,
+    //         }),
+    //     })),
+    // });
+
     await prisma.orderItem.createMany({
-      data: cartItems.map((item) => ({
-        orderId: order.id,
-        productId: item.product_id,
-        catlogueId: item.catalogue_id,
-        quantity: item.quantity,
-        customersnotes: billingform.customersnotes,
-        productsnapshots: JSON.stringify({
-          name: item.isCatalogue ? item.catalogue.name : item.product.name,
-          url: item.isCatalogue ? item.catalogue.url : item.product.url,
-          price: item.isCatalogue
-            ? item.catalogue.offer_price
-            : item.product.offer_price,
-          cartQuantity: item.quantity,
-        }),
-      })),
+      data: cartItems.map((item) => {
+        let snapshot = {};
+        let itemSubtotal = 0;
+
+        if (item.isCatalogue) {
+          const availableProducts = item.catalogue.Product.filter(
+            (prod) => prod.quantity >= item.quantity
+          ).map((prod) => ({
+            id: prod.id,
+            name: prod.name,
+            sku: prod.sku,
+            url: prod.url,
+            offer_price: prod.offer_price,
+          }));
+
+          itemSubtotal = item.catalogue.offer_price * item.quantity;
+
+          snapshot = {
+            type: "catalogue",
+            name: item.catalogue.name,
+            url: item.catalogue.url,
+            price: item.catalogue.offer_price,
+            cartQuantity: item.quantity,
+            products: availableProducts,
+            discount: item.catalogue_discount,
+            tax: item.isCatalogue?.GST,
+            subtotal: subtotal,
+            stitchingcharges: subtotal - item.catalogue.offer_price,
+            stitching: stitchingDataMap,
+          };
+        } else {
+          itemSubtotal = item.product.offer_price * item.quantity;
+
+          snapshot = {
+            type: "product",
+            name: item.product.name,
+            url: item.product.url,
+            price: item.product.offer_price,
+            cartQuantity: item.quantity,
+            discount: item.retail_discount,
+            tax: item.isCatalogue?.retail_GST,
+            subtotal: subtotal,
+            stitchingcharges: subtotal - item.product.offer_price,
+            stitching: stitchingDataMap,
+          };
+        }
+
+        return {
+          orderId: order.id,
+          productId: item.product_id,
+          catlogueId: item.catalogue_id,
+          quantity: item.quantity,
+          customersnotes: billingform.customersnotes,
+          productname: item.isCatalogue
+            ? item.catalogue.name
+            : item.product.name,
+          type: item.isCatalogue ? "catalogue" : "single",
+          productsnapshots: JSON.stringify(snapshot),
+        };
+      }),
     });
 
     const billingData = await prisma.billing.create({
@@ -494,6 +557,7 @@ const reduceProductQuantity = async (orderId) => {
           await prisma.product.updateMany({
             where: {
               catalogue_id: result.id,
+              quantity: { gt: 0 },
             },
             data: { quantity: { decrement: item.quantity } },
           });

@@ -285,6 +285,8 @@ import {
   getNewsLetter,
 } from "../controller/public/newsLetter.js";
 import {
+  getOrderdetailsUsers,
+  getOrderHistoryusers,
   paginationusers,
   updateUsersStatus,
 } from "../controller/admin/users.js";
@@ -324,6 +326,7 @@ import {
   postPaymentMethod,
   updatePaymentMethod,
 } from "../controller/admin/paymentMethod.js";
+import { getOrderHistory } from "../controller/public/orderHistory.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -759,4 +762,8 @@ adminRouter.delete("/paymentmethod/:id", deletePaymentMethod);
 adminRouter.get("/paymentmethod-status/:id", paymentMethodStatus);
 adminRouter.post("/paymentmethod-position", paymentMethodPosition);
 adminRouter.get("/paymentmethod-image/:id", deletePaymentMethodImage);
+adminRouter.post("/customer/order/history", getOrderHistoryusers);
+adminRouter.post("/customer/order/details", getOrderdetailsUsers);
+
+
 export default adminRouter;

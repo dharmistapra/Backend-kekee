@@ -7,6 +7,7 @@ const categorySchema = async (req, res, next) => {
   const schema = Joi.object({
     name: Joi.string().required(),
     title: Joi.string().optional().default("").allow(""),
+    url: Joi.string().optional(),
     parent_id: Joi.string().optional().allow("").default(null),
     meta_title: Joi.string().optional().allow("").default(""),
     meta_keyword: Joi.string().optional().allow("").default(""),

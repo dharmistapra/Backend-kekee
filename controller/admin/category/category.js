@@ -140,6 +140,8 @@ const getAllParentCategory = async (req, res, next) => {
           select: {
             id: true,
             name: true,
+            title: true,
+            url: true,
           },
         },
         CategoryAttribute: {

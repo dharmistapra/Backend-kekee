@@ -52,6 +52,7 @@ import {
   getPaymentMethod,
   getPaymentMethodpublic,
 } from "../controller/admin/paymentMethod.js";
+import { getCategory } from "../controller/public/category.js";
 const router = express.Router();
 
 // MENU API
@@ -160,6 +161,8 @@ router.get("/currency", getAllCurrency);
 router.get("/cms", getAllCms);
 router.get("/cms/:url", getCms);
 router.get("/category", getCategories);
+router.get("/categorymenu", getCategory);
+
 router.get("/contactdetails", getContactDetails);
 router.get("/menu-pagewisebanner/:url", getMenuPageWiseBanner);
 

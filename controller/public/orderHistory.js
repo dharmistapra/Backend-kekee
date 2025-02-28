@@ -3,9 +3,7 @@ import prisma from "../../db/config.js";
 const getOrderdetails = async (req, res, next) => {
     try {
         const { orderId } = req.body;
-        console.log("orderId", orderId);
-
-        const orderDetails = await prisma.order.findUnique({
+                const orderDetails = await prisma.order.findUnique({
             where: { id: orderId },
             select: {
                 id: true,
@@ -132,7 +130,6 @@ const getOrderHistory = async (req, res, next) => {
         })
 
         const formattedResult = result.map(order => {
-            console.log("order", order)
             const product = order.orderItems[0];
             const parsedata = JSON.parse(product.productsnapshots)
             return {

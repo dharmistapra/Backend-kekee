@@ -21,6 +21,7 @@ const postCategory = async (req, res, next) => {
       meta_keyword,
       meta_description,
       attributes,
+      mixed,
     } = req.body;
 
     attributes = attributes && attributes?.split(",");
@@ -97,10 +98,11 @@ const postCategory = async (req, res, next) => {
         image: filepath,
         ...(attributes &&
           attributes.length > 0 && {
-          CategoryAttribute: {
-            create: attributeConnection, // connect attributes to the category
-          },
-        }),
+            CategoryAttribute: {
+              create: attributeConnection, // connect attributes to the category
+            },
+          }),
+        mixed,
       },
     });
     return res.status(200).json({
@@ -279,6 +281,7 @@ const updateCategory = async (req, res, next) => {
       meta_keyword,
       meta_description,
       attributes,
+      mixed,
     } = req.body;
     attributes = attributes && attributes?.split(",");
 
@@ -382,16 +385,17 @@ const updateCategory = async (req, res, next) => {
         meta_description,
         ...(attributes !== ""
           ? attributes.length > 0 && {
-            CategoryAttribute: {
-              deleteMany: {},
-              create: attributeConnections,
-            },
-          }
+              CategoryAttribute: {
+                deleteMany: {},
+                create: attributeConnections,
+              },
+            }
           : {
-            CategoryAttribute: {
-              deleteMany: {},
-            },
-          }),
+              CategoryAttribute: {
+                deleteMany: {},
+              },
+            }),
+        mixed,
       },
     });
 
@@ -595,7 +599,7 @@ const getSubCategory = async (req, res, next) => {
         .json({ isSuccess: false, message: "Invalid ID format." });
     }
     const data = await prisma.categoryMaster.findMany({
-      where: { id: parent_id },
+      where: { OR: [{ id: parent_id }, { mixed: true }] },
       orderBy: { position: "asc" },
       select: {
         id: true,

@@ -88,6 +88,7 @@ model CategoryMaster {
   // attribute_ids     String[]           @db.Array(ObjectId) 
   // attributes        AttributeMaster[]  @relation("CategoryToAttribute", references: [id])
   isActive          Boolean             @default(true)
+  mixed             Boolean?            @default(false)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   Menu              Menu[]              @relation("categoryMaster")
@@ -743,15 +744,15 @@ model Order {
 }
 
 model OrderItem {
-  id               String     @id @default(auto()) @map("_id") @db.ObjectId
-  orderId          String?    @db.ObjectId
-  productId        String?    @db.ObjectId
-  catlogueId       String?    @db.ObjectId
-  quantity         Int
-  customersnotes   String?
-  productname       String?
-  type              String?
-  
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  orderId        String? @db.ObjectId
+  productId      String? @db.ObjectId
+  catlogueId     String? @db.ObjectId
+  quantity       Int
+  customersnotes String?
+  productname    String?
+  type           String?
+
   productsnapshots Json?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
@@ -803,7 +804,7 @@ model payment {
   orderId       String        @unique @db.ObjectId
   paymentMethod PaymentMethod
   transactionId String?
-  bankAccountId String?         @db.ObjectId
+  bankAccountId String?       @db.ObjectId
   status        PaymentStatus
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt

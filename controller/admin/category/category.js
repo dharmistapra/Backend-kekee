@@ -599,7 +599,7 @@ const getSubCategory = async (req, res, next) => {
         .json({ isSuccess: false, message: "Invalid ID format." });
     }
     const data = await prisma.categoryMaster.findMany({
-      where: { id: parent_id },
+      where: { OR: [{ id: parent_id }, { mixed: true }] },
       orderBy: { position: "asc" },
       select: {
         id: true,

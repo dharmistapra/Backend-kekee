@@ -14,6 +14,7 @@ const categorySchema = async (req, res, next) => {
     meta_description: Joi.string().optional().allow("").default(""),
     attributes: Joi.string().optional().allow("").default(""),
     mixed: Joi.boolean().optional().default(false),
+    isFilter: Joi.boolean().optional().default(false),
   });
   await JoiSchemaValidation(schema, req, next);
 };

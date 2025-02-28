@@ -23,6 +23,7 @@ const postCategory = async (req, res, next) => {
       meta_description,
       attributes,
       mixed,
+      isFilter,
     } = req.body;
 
     attributes = attributes && attributes?.split(",");
@@ -104,6 +105,7 @@ const postCategory = async (req, res, next) => {
             },
           }),
         mixed,
+        isFilter,
       },
     });
     return res.status(200).json({
@@ -134,14 +136,14 @@ const getAllParentCategory = async (req, res, next) => {
         meta_keyword: true,
         meta_description: true,
         isActive: true,
-        createdAt: true,
-        updatedAt: true,
+        isFilter: true,
         children: {
           select: {
             id: true,
             name: true,
             title: true,
             url: true,
+            isFilter: true,
           },
         },
         CategoryAttribute: {
@@ -218,6 +220,8 @@ const categoryPagination = async (req, res, next) => {
         meta_description: true,
         isActive: true,
         image: true,
+        mixed: true,
+        isFilter: true,
         CategoryAttribute: {
           select: {
             id: true,
@@ -286,6 +290,7 @@ const updateCategory = async (req, res, next) => {
       meta_description,
       attributes,
       mixed,
+      isFilter,
     } = req.body;
     attributes = attributes && attributes?.split(",");
 
@@ -400,6 +405,7 @@ const updateCategory = async (req, res, next) => {
               },
             }),
         mixed,
+        isFilter,
       },
     });
 
@@ -570,14 +576,16 @@ const getCategories = async (req, res, next) => {
         title: true,
         url: true,
         image: true,
-        Menu: {
-          select: {
-            id: true,
-            parent_id: true,
-            name: true,
-            url: true,
-          },
-        },
+        mixed: true,
+        isFilter: true,
+        // Menu: {
+        //   select: {
+        //     id: true,
+        //     parent_id: true,
+        //     name: true,
+        //     url: true,
+        //   },
+        // },
       },
     });
 
@@ -603,12 +611,13 @@ const getSubCategory = async (req, res, next) => {
         .json({ isSuccess: false, message: "Invalid ID format." });
     }
     const data = await prisma.categoryMaster.findMany({
-      where: { OR: [{ id: parent_id }, { mixed: true }] },
+      where: { OR: [{ id: parent_id }, { mixed: true }], isFilter: false },
       orderBy: { position: "asc" },
       select: {
         id: true,
         name: true,
         children: {
+          where: { isFilter: false },
           select: {
             id: true,
             name: true,

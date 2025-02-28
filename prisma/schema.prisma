@@ -89,6 +89,7 @@ model CategoryMaster {
   // attributes        AttributeMaster[]  @relation("CategoryToAttribute", references: [id])
   isActive          Boolean             @default(true)
   mixed             Boolean?            @default(false)
+  isFilter          Boolean?            @default(false)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   Menu              Menu[]              @relation("categoryMaster")

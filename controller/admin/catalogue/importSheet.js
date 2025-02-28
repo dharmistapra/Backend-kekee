@@ -798,9 +798,9 @@ const importCatalogues = async (req, res, next) => {
         }
         let finalOfferPrice =
           parseFloat(catalogueItemMarketPrice) > 0 &&
-            parseFloat(catalogueItemDiscount) > 0
+          parseFloat(catalogueItemDiscount) > 0
             ? parseFloat(catalogueItemMarketPrice) *
-            (1 - parseFloat(catalogueItemDiscount) / 100)
+              (1 - parseFloat(catalogueItemDiscount) / 100)
             : parseFloat(catalogueItemMarketPrice);
 
         let cat_url = `${slug(productName)}-${catCode}`;
@@ -1227,7 +1227,7 @@ const exportCatalogue = async (req, res, next) => {
 
     const count = await prisma.catalogue.count({
       where: {
-        CatalogueCategory: { some: { id: category_id } },
+        CatalogueCategory: { some: { category_id: category_id } },
         isActive: true,
         deletedAt: null,
       },
@@ -1235,15 +1235,12 @@ const exportCatalogue = async (req, res, next) => {
     console.log("count", count, category_id);
 
     const catalogueData = await prisma.catalogue.findMany({
-
-
       where: {
         CatalogueCategory: {
           some: {
             category: { id: category_id },
           },
         },
-
       },
       include: {
         Product: {
@@ -1566,11 +1563,11 @@ const exportCatalogue = async (req, res, next) => {
     //     });
     //   });
 
-    // return res.status(200).json({
-    //   isSuccess: true,
-    //   message: "catalogue data get successfully.",
-    //   data: { products, csvHeaders },
-    // });
+    return res.status(200).json({
+      isSuccess: true,
+      message: "catalogue data get successfully.",
+      data: { products, csvHeaders },
+    });
   } catch (err) {
     console.log(err);
     const error = new Error("Something went wrong, please try again!");
@@ -1601,23 +1598,23 @@ const formatData = (item, isCatalogue = false) => {
     productName: item.name,
     ...(isCatalogue
       ? {
-        catCode: item.cat_code,
-        noOfProduct: item.no_of_product,
-        catalogueItemMarketPrice: item.price,
-        catalogueItemDiscount: item.catalogue_discount,
-        GST: item.GST,
-        cat_image: item.coverImage,
-      }
+          catCode: item.cat_code,
+          noOfProduct: item.no_of_product,
+          catalogueItemMarketPrice: item.price,
+          catalogueItemDiscount: item.catalogue_discount,
+          GST: item.GST,
+          cat_image: item.coverImage,
+        }
       : {
-        productCode: item.productCode || item.sku,
-        catalogueItemMarketPrice: item.average_price || 0,
-        catalogueItemDiscount: item.catalogue_discount || 0,
-        retailPrice: item.retail_price,
-        retailDiscount: item.retail_discount,
-        GST: item.retail_GST,
-        image: item.image.join(","),
-        showInSingle: item.showInSingle ? "Y" : "N",
-      }),
+          productCode: item.productCode || item.sku,
+          catalogueItemMarketPrice: item.average_price || 0,
+          catalogueItemDiscount: item.catalogue_discount || 0,
+          retailPrice: item.retail_price,
+          retailDiscount: item.retail_discount,
+          GST: item.retail_GST,
+          image: item.image.join(","),
+          showInSingle: item.showInSingle ? "Y" : "N",
+        }),
     description: item.description,
     quantity: item.quantity,
     metaTitle: item.meta_title,

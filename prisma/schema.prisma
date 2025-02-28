@@ -98,6 +98,7 @@ model CategoryMaster {
   products          ProductCategory[]
   CatalogueCategory CatalogueCategory[]
   StitchingGroup    StitchingGroup[]
+  PageWiseBanner    PageWiseBanner[]
 }
 
 model CategoryAttribute {
@@ -172,18 +173,20 @@ model Testimonial {
 }
 
 model PageWiseBanner {
-  id           String     @id @default(auto()) @map("_id") @db.ObjectId
-  menu_id      String     @db.ObjectId
-  bannerType   BannerType @default(Image)
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  // menu_id      String     @db.ObjectId
+  category_id  String         @db.ObjectId
+  bannerType   BannerType     @default(Image)
   title        String
-  url          String?    @default("")
-  description  String?    @default("")
+  url          String?        @default("")
+  description  String?        @default("")
   desktopImage String
-  mobileImage  String?    @default("")
-  isActive     Boolean    @default(true)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  menu         Menu       @relation(fields: [menu_id], references: [id], onDelete: Cascade)
+  mobileImage  String?        @default("")
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  // menu         Menu       @relation(fields: [menu_id], references: [id], onDelete: Cascade)
+  category     CategoryMaster @relation(fields: [category_id], references: [id], onDelete: Cascade)
 }
 
 model SocialMedia {
@@ -234,7 +237,7 @@ model Menu {
   SubMenuCollection SubMenuCollection[]
   CmsPage           CmsPage?            @relation(fields: [cmsPageId], references: [id])
   cmsPageId         String?             @db.ObjectId
-  PageWiseBanner    PageWiseBanner[]
+  // PageWiseBanner    PageWiseBanner[]
 }
 
 enum MenuType {

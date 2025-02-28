@@ -10,7 +10,8 @@ import {
 
 const postPageWiseBanner = async (req, res, next) => {
   try {
-    const { menu_id, title, bannerType, description, url, isActive } = req.body;
+    const { category_id, title, bannerType, description, url, isActive } =
+      req.body;
 
     const fileError = await fileValidationError(req.files, bannerType);
     if (fileError.status === false)
@@ -18,15 +19,18 @@ const postPageWiseBanner = async (req, res, next) => {
         .status(400)
         .json({ isSuccess: false, message: fileError.message });
 
-    const [uniqueCode, existingMenu, uniqueMenu] = await prisma.$transaction([
-      prisma.pageWiseBanner.findFirst({
-        where: { title: title },
-      }),
-      prisma.menu.findUnique({
-        where: { id: menu_id },
-      }),
-      prisma.pageWiseBanner.findFirst({ where: { menu_id: menu_id } }),
-    ]);
+    const [uniqueCode, existingCategory, uniqueCategory] =
+      await prisma.$transaction([
+        prisma.pageWiseBanner.findFirst({
+          where: { title: title },
+        }),
+        prisma.categoryMaster.findUnique({
+          where: { id: category_id },
+        }),
+        prisma.pageWiseBanner.findFirst({
+          where: { category_id: category_id },
+        }),
+      ]);
     if (uniqueCode) {
       //   await deleteFile(filepath); // THIS FUNCTION USED FOR DELETE FILE IN UPLOAD FOLDER
       if (req.files) await fileValidation(req.files, true);
@@ -36,17 +40,17 @@ const postPageWiseBanner = async (req, res, next) => {
       });
     }
 
-    if (uniqueMenu) {
+    if (uniqueCategory) {
       if (req.files) await fileValidation(req.files, true);
       return res
         .status(400)
-        .json({ isSuccess: false, message: "Menu already exists!" });
+        .json({ isSuccess: false, message: "Category already exists!" });
     }
-    if (!existingMenu) {
+    if (!existingCategory) {
       if (req.files) await fileValidation(req.files, true);
       return res
         .status(404)
-        .json({ isSuccess: false, message: "Menu not found!" });
+        .json({ isSuccess: false, message: "Category not found!" });
     }
 
     const desktopImagePath = await convertFilePathSlashes(
@@ -58,7 +62,7 @@ const postPageWiseBanner = async (req, res, next) => {
 
     const result = await prisma.pageWiseBanner.create({
       data: {
-        menu_id,
+        category_id,
         title,
         bannerType,
         description,
@@ -135,7 +139,8 @@ const paginationPageWiseBanner = async (req, res, next) => {
 const updatePageWiseBanner = async (req, res, next) => {
   const desktopImage = req.files?.desktopImage;
   const mobileImage = req.files?.mobileImage;
-  const { menu_id, title, bannerType, description, url, isActive } = req.body;
+  const { category_id, title, bannerType, description, url, isActive } =
+    req.body;
   let desktopImagePath = null;
   let mobileImagePath = null;
 
@@ -148,15 +153,15 @@ const updatePageWiseBanner = async (req, res, next) => {
         .json({ isSuccess: false, message: "Invalid ID format!" });
     }
 
-    const [existingHomeBanner, uniqueCode, existingMenu, uniqueMenu] =
+    const [existingHomeBanner, uniqueCode, existingCategory, uniqueCategory] =
       await prisma.$transaction([
         prisma.pageWiseBanner.findUnique({ where: { id: id } }),
         prisma.pageWiseBanner.findFirst({
           where: { id: { not: id }, title: title },
         }),
-        prisma.menu.findUnique({ where: { id: menu_id } }),
+        prisma.categoryMaster.findUnique({ where: { id: category_id } }),
         prisma.pageWiseBanner.findMany({
-          where: { id: { not: id }, menu_id: menu_id },
+          where: { id: { not: id }, category_id: category_id },
         }),
       ]);
 
@@ -174,18 +179,18 @@ const updatePageWiseBanner = async (req, res, next) => {
         .json({ isSuccess: false, message: "Banner title already exists!" });
     }
 
-    if (!existingMenu) {
+    if (!existingCategory) {
       if (desktopImage || desktopImage) await fileValidation(req.files, true);
       return res
         .status(400)
-        .json({ isSuccess: false, message: "Menu not found!" });
+        .json({ isSuccess: false, message: "Category not found!" });
     }
 
-    if (!uniqueMenu) {
+    if (!uniqueCategory) {
       if (desktopImage || desktopImage) await fileValidation(req.files, true);
       return res
         .status(400)
-        .json({ isSuccess: false, message: "Menu already exists!" });
+        .json({ isSuccess: false, message: "Category already exists!" });
     }
 
     if (
@@ -219,7 +224,7 @@ const updatePageWiseBanner = async (req, res, next) => {
     const result = await prisma.pageWiseBanner.update({
       where: { id },
       data: {
-        menu_id,
+        category_id,
         title,
         bannerType,
         description,

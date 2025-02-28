@@ -584,6 +584,7 @@ const deleteMenu = async (req, res, next) => {
       .status(200)
       .json({ isSuccess: true, message: "Menu deleted successfully." });
   } catch (err) {
+    console.log(err);
     let error = new Error("Something went wrong, please try again!");
     next(error);
   }

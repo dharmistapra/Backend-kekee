@@ -2,7 +2,7 @@ import prisma from "../../db/config.js";
 
 const getCatalogue = async (req, res, next) => {
   try {
-    const { perPage, pageNo, url, user_id } = req.body;
+    const { perPage, pageNo, url, user_id, price, name } = req.body;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
@@ -32,28 +32,36 @@ const getCatalogue = async (req, res, next) => {
       }
     }
 
-    const fetchCategory = await prisma.menu.findFirst({
+    const fetchCategory = await prisma.categoryMaster.findFirst({
       where: { url: url },
-      select: { category_id: true },
+      select: { id: true },
     });
     if (!fetchCategory)
       return res
         .status(404)
-        .json({ isSuccess: false, message: "menu not found!" });
+        .json({ isSuccess: false, message: "Category not found!" });
     const { category_id } = fetchCategory;
+    let filter = {
+      CatalogueCategory: { some: { category_id: category_id } },
+      isActive: true,
+      deletedAt: null,
+    };
+    let orderBy = { updatedAt: "desc" };
+    if (price) {
+      price === "high"
+        ? (orderBy["offer_price"] = "asc")
+        : (orderBy["offer_price"] = "desc");
+      delete orderBy["updatedAt"];
+    }
+    if (!price && name) {
+      name === "AtoZ" ? (orderBy["name"] = "asc") : (orderBy["name"] = "desc");
+      delete orderBy["updatedAt"];
+    }
     const count = await prisma.catalogue.count({
-      where: {
-        CatalogueCategory: { some: { category_id: category_id } },
-        isActive: true,
-        deletedAt: null,
-      },
+      where: filter,
     });
     const catalogueData = await prisma.catalogue.findMany({
-      where: {
-        CatalogueCategory: { some: { category_id: category_id } },
-        isActive: true,
-        deletedAt: null,
-      },
+      where: filter,
       select: {
         id: true,
         name: true,
@@ -100,7 +108,7 @@ const getCatalogue = async (req, res, next) => {
       },
       skip,
       take,
-      orderBy: { updatedAt: "desc" },
+      orderBy: orderBy,
     });
 
     const transformedData = catalogueData.map((item) => {

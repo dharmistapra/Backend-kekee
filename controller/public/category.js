@@ -52,4 +52,31 @@ const getCategory = async (req, res, next) => {
   }
 };
 
-export { getCategory };
+const getCategories = async (req, res, next) => {
+  try {
+    const result = await prisma.categoryMaster.findMany({
+      where: { parent_id: null, isActive: true, image: { not: "" } },
+      orderBy: { position: "asc" },
+      select: {
+        id: true,
+        position: true,
+        name: true,
+        title: true,
+        url: true,
+        image: true,
+      },
+    });
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "Categories get successfully.",
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+    const error = new Error("Something went wrong, please try again!");
+    next(error);
+  }
+};
+
+export { getCategory, getCategories };

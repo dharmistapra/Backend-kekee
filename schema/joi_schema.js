@@ -324,7 +324,8 @@ const socialMediaIconSchema = async (req, res, next) => {
 
 const pageWiseBannerSchema = async (req, res, next) => {
   const schema = Joi.object({
-    menu_id: Joi.string().required(),
+    // menu_id: Joi.string().required(),
+    category_id: Joi.string().required(),
     title: Joi.string().required(),
     bannerType: Joi.string().valid("Image", "Video").required(),
     url: Joi.string().optional().allow("").default(""),

@@ -7,7 +7,7 @@ import { getHomeBanner } from "../controller/admin/homeBanner.js";
 import { getSocialMedia } from "../controller/admin/socialMediaIcon.js";
 import { getAllCurrency } from "../controller/admin/currency.js";
 import { getAllCms, getCms } from "../controller/admin/cms.js";
-import { getCategories } from "../controller/admin/category/category.js";
+import { getCategories } from "../controller/public/category.js";
 import { getContactDetails } from "../controller/admin/contactDetails.js";
 import {
   filterAttribute,

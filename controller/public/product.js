@@ -78,7 +78,7 @@ const getProductpublic = async (req, res, next) => {
     //   orderBy: { updatedAt: "asc" },
     // });
 
-    const { perPage, pageNo, url, user_id } = req.body;
+    const { perPage, pageNo, url, user_id, price, name } = req.body;
     const { minPrice, maxPrice, ...dynamicFilters } = req.query;
 
     const page = +pageNo || 1;
@@ -106,9 +106,9 @@ const getProductpublic = async (req, res, next) => {
     }
 
     // Fetch the category based on the URL
-    const fetchCategory = await prisma.menu.findFirst({
+    const fetchCategory = await prisma.categoryMaster.findFirst({
       where: { url: url },
-      select: { category_id: true },
+      select: { id: true },
     });
 
     if (!fetchCategory) {
@@ -120,6 +120,19 @@ const getProductpublic = async (req, res, next) => {
 
     const { category_id } = fetchCategory;
 
+    let orderBy = { updatedAt: "desc" };
+    if (price) {
+      price === "high"
+        ? (orderBy["product"] = { offer_price: "asc" })
+        : (orderBy["product"] = { offer_price: "desc" });
+      delete orderBy["updatedAt"];
+    }
+    if (!price && name) {
+      name === "AtoZ"
+        ? (orderBy["product"] = { name: "asc" })
+        : (orderBy["product"] = { name: "desc" });
+      delete orderBy["updatedAt"];
+    }
     // Build dynamic filter conditions for attributes
     let filterConditions = [];
     for (const [key, value] of Object.entries(dynamicFilters)) {
@@ -204,7 +217,7 @@ const getProductpublic = async (req, res, next) => {
       },
       skip,
       take,
-      orderBy: { updatedAt: "desc" },
+      orderBy: orderBy,
     });
 
     const product = productData.map((value) => {

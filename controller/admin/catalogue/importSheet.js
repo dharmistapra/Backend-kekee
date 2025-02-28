@@ -1223,27 +1223,13 @@ const zipImages = async (req, res, next) => {
 
 const exportCatalogue = async (req, res, next) => {
   try {
-    const { category_id } = req.body;
-
-    const count = await prisma.catalogue.count({
-      where: {
-        CatalogueCategory: { some: { id: category_id } },
-        isActive: true,
-        deletedAt: null,
-      },
-    });
-    console.log("count", count, category_id);
+    const { category_id } = req.query;
 
     const catalogueData = await prisma.catalogue.findMany({
-
-
       where: {
         CatalogueCategory: {
-          some: {
-            category: { id: category_id },
-          },
+          some: { category: { id: category_id } },
         },
-
       },
       include: {
         Product: {
@@ -1296,7 +1282,6 @@ const exportCatalogue = async (req, res, next) => {
         },
       },
     });
-    console.log("Catalogue Data Length:", catalogueData.length);
 
     const productData = await prisma.product.findMany({
       where: {
@@ -1338,7 +1323,6 @@ const exportCatalogue = async (req, res, next) => {
         },
       },
     });
-    console.log("Catalogue Data Length:", productData.length);
     let products = [];
     let allAttributes = new Set();
     for (let catalogue of catalogueData) {
@@ -1566,11 +1550,11 @@ const exportCatalogue = async (req, res, next) => {
     //     });
     //   });
 
-    // return res.status(200).json({
-    //   isSuccess: true,
-    //   message: "catalogue data get successfully.",
-    //   data: { products, csvHeaders },
-    // });
+    return res.status(200).json({
+      isSuccess: true,
+      message: "catalogue data get successfully.",
+      data: { products, csvHeaders },
+    });
   } catch (err) {
     console.log(err);
     const error = new Error("Something went wrong, please try again!");

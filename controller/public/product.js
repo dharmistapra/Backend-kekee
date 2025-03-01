@@ -118,7 +118,7 @@ const getProductpublic = async (req, res, next) => {
       });
     }
 
-    const { category_id } = fetchCategory;
+    const { id } = fetchCategory;
 
     let orderBy = { updatedAt: "desc" };
     if (price) {
@@ -159,7 +159,7 @@ const getProductpublic = async (req, res, next) => {
     // Count total products matching the conditions
     const count = await prisma.productCategory.count({
       where: {
-        category_id: category_id,
+        category_id: id,
         product: {
           isActive: true,
           showInSingle: true,
@@ -172,7 +172,7 @@ const getProductpublic = async (req, res, next) => {
     // Fetch paginated products
     const productData = await prisma.productCategory.findMany({
       where: {
-        category_id: category_id,
+        category_id: id,
         product: {
           isActive: true,
           showInSingle: true,

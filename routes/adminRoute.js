@@ -765,5 +765,4 @@ adminRouter.get("/paymentmethod-image/:id", deletePaymentMethodImage);
 adminRouter.post("/customer/order/history", getOrderHistoryusers);
 adminRouter.post("/customer/order/details", getOrderdetailsUsers);
 
-
 export default adminRouter;

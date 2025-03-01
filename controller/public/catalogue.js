@@ -40,9 +40,9 @@ const getCatalogue = async (req, res, next) => {
       return res
         .status(404)
         .json({ isSuccess: false, message: "Category not found!" });
-    const { category_id } = fetchCategory;
+    const { id } = fetchCategory;
     let filter = {
-      CatalogueCategory: { some: { category_id: category_id } },
+      CatalogueCategory: { some: { category_id: id } },
       isActive: true,
       deletedAt: null,
     };

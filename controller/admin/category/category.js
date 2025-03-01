@@ -45,7 +45,6 @@ const postCategory = async (req, res, next) => {
       }
       filter = { where: { parent_id: parent_id } };
     }
-    console.log(parent_id);
     const [uniqueCategory, count] = await prisma.$transaction([
       prisma.categoryMaster.findUnique({
         where: { name },
@@ -192,7 +191,7 @@ const categoryPagination = async (req, res, next) => {
     const searchFilter = createSearchFilter(search, filter);
 
     const count = await prisma.categoryMaster.count({
-      where: { parent_id: parent_id },
+      where: { parent_id: parent_id || null },
     });
 
     if (count === 0) {
@@ -204,7 +203,7 @@ const categoryPagination = async (req, res, next) => {
     // Fetch categories with necessary fields and batch attribute IDs
     const result = await prisma.categoryMaster.findMany({
       where: {
-        parent_id: parent_id,
+        parent_id: parent_id || null,
         ...searchFilter,
       },
       orderBy: { position: "asc" },
@@ -314,6 +313,7 @@ const updateCategory = async (req, res, next) => {
         .json({ isSuccess: false, message: "Category not found!" });
     }
     let filter = { parent_id: null };
+    if (parent_id == "") parent_id = null;
 
     if (parent_id) {
       const isParentCategoryExists = await prisma.categoryMaster.findUnique({

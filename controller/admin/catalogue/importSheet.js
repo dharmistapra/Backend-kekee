@@ -797,9 +797,9 @@ const importCatalogues = async (req, res, next) => {
         }
         let finalOfferPrice =
           parseFloat(catalogueItemMarketPrice) > 0 &&
-          parseFloat(catalogueItemDiscount) > 0
+            parseFloat(catalogueItemDiscount) > 0
             ? parseFloat(catalogueItemMarketPrice) *
-              (1 - parseFloat(catalogueItemDiscount) / 100)
+            (1 - parseFloat(catalogueItemDiscount) / 100)
             : parseFloat(catalogueItemMarketPrice);
 
         let cat_url = `${slug(productName)}-${catCode}`;
@@ -1585,23 +1585,23 @@ const formatData = (item, isCatalogue = false) => {
     productName: item.name,
     ...(isCatalogue
       ? {
-          catCode: item.cat_code,
-          noOfProduct: item.no_of_product,
-          catalogueItemMarketPrice: item.price,
-          catalogueItemDiscount: item.catalogue_discount,
-          GST: item.GST,
-          cat_image: item.coverImage,
-        }
+        catCode: item.cat_code,
+        noOfProduct: item.no_of_product,
+        catalogueItemMarketPrice: item.price,
+        catalogueItemDiscount: item.catalogue_discount,
+        GST: item.GST,
+        cat_image: item.coverImage,
+      }
       : {
-          productCode: item.productCode || item.sku,
-          catalogueItemMarketPrice: item.average_price || 0,
-          catalogueItemDiscount: item.catalogue_discount || 0,
-          retailPrice: item.retail_price,
-          retailDiscount: item.retail_discount,
-          GST: item.retail_GST,
-          image: item.image.join(","),
-          showInSingle: item.showInSingle ? "Y" : "N",
-        }),
+        productCode: item.productCode || item.sku,
+        catalogueItemMarketPrice: item.average_price || 0,
+        catalogueItemDiscount: item.catalogue_discount || 0,
+        retailPrice: item.retail_price,
+        retailDiscount: item.retail_discount,
+        GST: item.retail_GST,
+        image: item.image.join(","),
+        showInSingle: item.showInSingle ? "Y" : "N",
+      }),
     description: item.description,
     quantity: item.quantity,
     metaTitle: item.meta_title,

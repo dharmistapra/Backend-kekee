@@ -18,7 +18,6 @@ import AdmZip from "adm-zip";
 import fs from "fs";
 import path from "path";
 import fastCsv from "fast-csv";
-import { Parser } from "json2csv";
 
 // const importCatalogue = async (req, res, next) => {
 //   try {

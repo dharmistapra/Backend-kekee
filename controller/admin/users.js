@@ -26,6 +26,7 @@ const paginationusers = async (req, res, next) => {
                 name: true,
                 email: true,
                 mobile_number: true,
+                createdAt: true,
                 _count: {
                     select: {
                         orders: true,
@@ -70,26 +71,21 @@ const updateUsersStatus = async (req, res, next) => {
         next(err);
     }
 };
-
-
-
-
 const getOrderHistoryusers = async (req, res, next) => {
     try {
-
         const { perPage, pageNo, userId } = req.body;
         const page = +pageNo || 1;
         const take = +perPage || 10;
         const skip = (page - 1) * take;
+        const whereCondition = userId ? { userId: userId } : {};
         const result = await prisma.order.findMany({
-            where: {
-                userId: userId
-            },
+            where: whereCondition,
             select: {
                 id: true,
                 createdAt: true,
                 status: true,
                 totalAmount: true,
+
                 orderItems: {
                     select: {
                         productname: true,
@@ -107,12 +103,12 @@ const getOrderHistoryusers = async (req, res, next) => {
             },
             skip,
             take
-        })
+        });
 
         const formattedResult = result.map(order => {
             const product = order.orderItems[0];
-            const parsedata = JSON.parse(product.productsnapshots)
-            const payment = order.payment[0]
+            const parsedata = JSON.parse(product?.productsnapshots ? product?.productsnapshots : []);
+            const payment = order.payment[0];
             return {
                 orderId: order?.id,
                 productName: parsedata?.name || 'N/A',
@@ -126,8 +122,7 @@ const getOrderHistoryusers = async (req, res, next) => {
                 url: parsedata?.url || "",
                 paymentMethod: payment.paymentMethod,
                 paymentstatus: payment.status
-
-            }
+            };
         });
 
         return res.status(200).json({
@@ -136,18 +131,15 @@ const getOrderHistoryusers = async (req, res, next) => {
             data: formattedResult
         });
 
-
     } catch (error) {
-        console.log(error)
         let err = new Error("Something went wrong, Please try again!");
-        next(err)
+        next(err);
     }
-}
-
-
+};
 const getOrderdetailsUsers = async (req, res, next) => {
     try {
         const { orderId } = req.body;
+
         const orderDetails = await prisma.order.findUnique({
             where: { id: orderId },
             select: {
@@ -159,6 +151,13 @@ const getOrderdetailsUsers = async (req, res, next) => {
                 shippingcharge: true,
                 totalAmount: true,
                 status: true,
+                user: {
+                    select: {
+                        name: true,
+                        email: true,
+                        mobile_number: true
+                    }
+                },
                 orderItems: {
                     select: {
                         id: true,
@@ -176,7 +175,7 @@ const getOrderdetailsUsers = async (req, res, next) => {
                         state: true,
                         zipCode: true,
                         mobile: true,
-                    },
+                    }
                 },
                 billing: {
                     select: {
@@ -188,9 +187,6 @@ const getOrderdetailsUsers = async (req, res, next) => {
                         state: true,
                         zipCode: true,
                         mobile: true,
-                        GstNumber: true,
-                        companyname: true,
-                        whatsapp: true,
                     }
                 },
                 payment: {
@@ -198,15 +194,6 @@ const getOrderdetailsUsers = async (req, res, next) => {
                         paymentMethod: true,
                         transactionId: true,
                         status: true,
-                        bankAccountId: true,
-                        bankaccount: {
-                            select: {
-                                bankName: true,
-                                accountHolderName: true,
-                                accountNumber: true,
-                                ifscCode: true,
-                            }
-                        }
                     }
                 }
             }
@@ -219,27 +206,84 @@ const getOrderdetailsUsers = async (req, res, next) => {
             });
         }
 
-        const transformedOrderItems = orderDetails.orderItems.map(item => ({
-            ...item,
-            productsnapshots: JSON.parse(item.productsnapshots)
-        }));
+        let totalStitchingCharges = 0;
+        const transformedOrderItems = orderDetails.orderItems.map(item => {
+            const productSnapshot = JSON.parse(item.productsnapshots);
+            totalStitchingCharges += productSnapshot.stitchingcharges || 0;
 
-        return res.status(200).json({
+            return {
+                id: item.id,
+                quantity: item.quantity,
+                productName: productSnapshot.name,
+                price: productSnapshot.price,
+                subtotal: productSnapshot.subtotal,
+                products: productSnapshot.products,
+                stitching: productSnapshot.stitching.map(stitch => ({
+                    stitchingGroupName: stitch.stitchingGroup?.name || '',
+                    options: stitch.option.map(opt => ({
+                        name: opt.name,
+                        price: opt.price,
+                        dispatchTime: opt.dispatch_time
+                    }))
+                }))
+            };
+        });
+
+        const response = {
             message: "Order retrieved successfully",
             isSuccess: true,
             data: {
-                ...orderDetails,
+                orderId: orderDetails.id,
                 orderDate: new Date(orderDetails.createdAt).toLocaleDateString('en-GB', {
                     day: '2-digit', month: 'long', year: 'numeric'
                 }),
+                subtotal: orderDetails.subtotal,
+                tax: orderDetails.Tax,
+                discount: orderDetails.discount,
+                shippingCharge: orderDetails.shippingcharge,
+                stitchingCharges: totalStitchingCharges,
+                totalAmount: orderDetails.totalAmount,
+                status: orderDetails.status,
+                name: orderDetails?.user?.name,
+                email: orderDetails?.user?.email,
+                phone: orderDetails?.user?.mobile_number,
+
+                shippingDetails: orderDetails.shipping.length > 0 ? orderDetails.shipping[0] : {},
+                billingDetails: orderDetails.billing.length > 0 ? orderDetails.billing[0] : {},
+
+                paymentDetails: orderDetails.payment,
                 orderItems: transformedOrderItems,
             },
-        });
+        };
 
+        return res.status(200).json(response);
     } catch (error) {
-        console.log("Error fetching order details:", error);
-        let err = new Error("Something went wrong, Please try again!");
-        next(err);
+        console.error("Error fetching order details:", error);
+        next(new Error("Something went wrong, Please try again!"));
     }
 };
-export { paginationusers, updateUsersStatus, getOrderHistoryusers, getOrderdetailsUsers }
+const updateOrderStatus = async (req, res, next) => {
+    try {
+        const { orderstatus, orderId } = req.body
+        const findorder = await prisma.order.findUnique({ where: { id: orderId } })
+        if (!findorder) return res.status(400).json({ message: "Order not found", isSuccess: false });
+        const update = await prisma.order.update({
+            where: {
+                id: orderId,
+            },
+            data: {
+                status: orderstatus
+            }
+        })
+
+
+        return res.status(200).json({ message: "Order status update successfully", isSuccess: true, });
+
+    } catch (error) {
+        console.log(error)
+        next(new Error("Something went wrong, Please try again!"));
+    }
+}
+
+
+export { paginationusers, updateUsersStatus, getOrderHistoryusers, getOrderdetailsUsers, updateOrderStatus }

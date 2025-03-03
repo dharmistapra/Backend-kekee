@@ -511,8 +511,12 @@ const importCatalogueSchema = async (req, res, next) => {
     average_price: Joi.number().required(),
     GST: Joi.number().optional(),
     offer_price: Joi.number().optional(),
-    stitching: Joi.boolean().optional().default(false),
-    size: Joi.boolean().optional().default(false),
+    stitching: Joi.boolean()
+      .required()
+      .messages({ "any.required": "isStitching is required!" }),
+    size: Joi.boolean()
+      .required()
+      .messages({ "any.required": "isSize is required!" }),
     weight: Joi.number().required(),
     attributes: Joi.array()
       .items({
@@ -531,11 +535,14 @@ const importCatalogueSchema = async (req, res, next) => {
     meta_title: Joi.string().optional().default(""),
     meta_keyword: Joi.string().optional().default(""),
     meta_description: Joi.string().optional().default(""),
-    coverImage: Joi.any(),
+    coverImage: Joi.string().required().messages({
+      "string.empty": "cat_image can not be empty!",
+      "any.required": "cat_image is required!",
+    }),
     // mobileImage: Joi.any(),
     description: Joi.string().required(),
     tag: Joi.array().items(Joi.string().required()).required(),
-    isActive: Joi.boolean().optional().default(true),
+    isActive: Joi.boolean().required(),
     product: Joi.array().items({
       // id: Joi.string().optional(),
       name: Joi.string().required(),
@@ -598,6 +605,14 @@ const importCatalogueSchema = async (req, res, next) => {
       meta_description: Joi.string().optional().allow("").default(""),
       product: Joi.array().items().optional(),
     }),
+  }).custom((value, helpers) => {
+    // If both stitching and size are true or both are false, return an error
+    if (value.stitching === value.size) {
+      return helpers.message(
+        "Stitching and Size cannot both be true or both be false. Choose only one!"
+      );
+    }
+    return value;
   });
 
   return schema;
@@ -610,19 +625,29 @@ const importProductSchema = async (req, res, next) => {
     collection: Joi.array().items().optional(),
     name: Joi.string().required(),
     // catalogue_id: Joi.optional().allow(null).default(null),
-    // cat_code: Joi.string().optional(),
     sku: Joi.string().required(),
     url: Joi.string().optional(),
-    showInSingle: Joi.boolean().optional().default(false),
+    showInSingle: Joi.boolean().required(),
+    cat_code: Joi.string().when("showInSingle", {
+      is: false,
+      then: Joi.string().required(),
+      otherwise: Joi.string().allow("").optional(),
+    }),
     quantity: Joi.number().required(),
     weight: Joi.number().required(),
     // price: Joi.number().required(),
     average_price: Joi.number().optional().default(0),
-    retail_price: Joi.number().when("showInSingle", {
-      is: true,
-      then: Joi.number().required(),
-      otherwise: Joi.number().optional().default(0),
-    }),
+    retail_price: Joi.number()
+      .required()
+      .messages({ "any.required": "retail Price is required!" })
+      .when("showInSingle", {
+        is: true,
+        then: Joi.number().required().greater(0).messages({
+          "any.greater":
+            "retail_price must be greater than 0 when showInSingle is true!",
+        }),
+        otherwise: Joi.number().optional(),
+      }),
     retail_GST: Joi.number().optional().default(0),
     retail_discount: Joi.optional().default(0),
     offer_price: Joi.when("retail_price", {
@@ -636,7 +661,10 @@ const importProductSchema = async (req, res, next) => {
 
     // readyToShip: Joi.boolean().optional().default(false),
     // images: Joi.optional(),
-    image: Joi.array().items(Joi.string().required()).required(),
+    image: Joi.any().required().empty("").messages({
+      "string.empty": "Image cannot be empty!",
+      "any.required": "Image is required!",
+    }),
     category_id: Joi.array().optional().min(1),
     collection_id: Joi.array().optional().default([]),
     // attributeValue_id: Joi.array().optional().min(1),
@@ -662,9 +690,9 @@ const importProductSchema = async (req, res, next) => {
       })
       .optional()
       .default([]),
-    stitching: Joi.boolean().optional().default(false),
+    stitching: Joi.boolean().required(),
     readyToShip: Joi.boolean().optional().default(false),
-    isActive: Joi.boolean().optional().default(false),
+    isActive: Joi.boolean().required(),
     meta_title: Joi.string().optional().allow("").default(""),
     meta_keyword: Joi.string().optional().allow("").default(""),
     meta_description: Joi.string().optional().allow("").default(""),

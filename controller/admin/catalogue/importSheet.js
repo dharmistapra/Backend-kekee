@@ -8,7 +8,7 @@ import {
   isNameRecordsExist,
 } from "../../../helper/common.js";
 import slug from "slug";
-import _ from "underscore";
+import _, { iteratee } from "underscore";
 import {
   importCatalogue,
   importCatalogueSchema,
@@ -582,6 +582,10 @@ const importCatalogues = async (req, res, next) => {
     const jsonArray = await csvtojson().fromFile(req.file.path);
     let catalogues = [];
     let productArray = [];
+    let errors = [];
+    let catImage = [];
+    let productImage = [];
+    let message;
     for (let [index, row] of jsonArray.entries()) {
       let {
         category,
@@ -611,10 +615,12 @@ const importCatalogues = async (req, res, next) => {
       } = row;
       index = index + 1;
       if (!catCode && !productCode) {
-        return res.status(400).json({
-          isSuccess: false,
-          message: `Row ${index} Please enter catCode or productCode!`,
-        });
+        message = `Row ${index} Please enter catCode or productCode!`;
+        errors.push(message);
+        // return res.status(400).json({
+        //   isSuccess: false,
+        //   message: `Row ${index} Please enter catCode or productCode!`,
+        // });
       }
       let attributes = [];
       let attributeValue = {};
@@ -645,10 +651,12 @@ const importCatalogues = async (req, res, next) => {
 
       if (missingAttributes.length > 0) {
         await deleteFile(filePath);
-        return res.status(404).json({
-          isSuccess: false,
-          message: `Row ${index} ${missingAttributes} attributes not found!`,
-        });
+        message = `Row ${index} ${missingAttributes} attributes not found!`;
+        errors.push(message);
+        // return res.status(404).json({
+        //   isSuccess: false,
+        //   message: `Row ${index} ${missingAttributes} attributes not found!`,
+        // });
       }
       const nonDefaultAttributeNames = isAttributeExists
         .filter((attr) => !attr.isDefault)
@@ -656,10 +664,12 @@ const importCatalogues = async (req, res, next) => {
 
       if (!category) {
         await deleteFile(filePath);
-        return res.status(400).json({
-          isSuccess: false,
-          message: `Row ${index} Please enter Category!`,
-        });
+        message = `Row ${index} Please enter Category!`;
+        errors.push(message);
+        // return res.status(400).json({
+        //   isSuccess: false,
+        //   message: `Row ${index} Please enter Category!`,
+        // });
       }
       let result;
 
@@ -671,21 +681,25 @@ const importCatalogues = async (req, res, next) => {
         if (!result.exists) {
           // if (!isRecordExists)
           await deleteFile(filePath);
-          return res.status(400).json({
-            isSuccess: false,
-            message: `Row ${index} contains ${result.missingNames} invalid Categories!`,
-          });
+          message = `Row ${index} contains ${result.missingNames} invalid Categories!`;
+          errors.push(message);
+          // return res.status(400).json({
+          //   isSuccess: false,
+          //   message: `Row ${index} contains ${result.missingNames} invalid Categories!`,
+          // });
         }
         category = result.existingIds;
 
         // category = await getId(categories, "category");
-        if (category.length === 0) {
-          await deleteFile(filePath);
-          return res.status(400).json({
-            isSuccess: false,
-            message: `Row ${index} contains invalid Categories!`,
-          });
-        }
+        // if (category.length === 0) {
+        //   await deleteFile(filePath);
+        //   message = `Row ${index} contains invalid Categories!`;
+        //   errors.push(message);
+        // return res.status(400).json({
+        //   isSuccess: false,
+        //   message: `Row ${index} contains invalid Categories!`,
+        // });
+        // }
 
         let missingAttributes = [];
         if (nonDefaultAttributeNames.length > 0) {
@@ -723,11 +737,13 @@ const importCatalogues = async (req, res, next) => {
 
               if (missingAttributes.length > 0) {
                 await deleteFile(filePath);
-                return res.status(400).json({
-                  isSuccess: false,
-                  message: "Some attribues are missing for certain categories!",
-                  data: missingAttributes,
-                });
+                message = "Some attribues are missing for certain categories!";
+                errors.push(message);
+                // return res.status(400).json({
+                //   isSuccess: false,
+                //   message: "Some attribues are missing for certain categories!",
+                //   data: missingAttributes,
+                // });
               }
             }
           }
@@ -769,16 +785,19 @@ const importCatalogues = async (req, res, next) => {
 
                 if (!existingValue) {
                   await deleteFile(filePath);
-                  return res.status(404).json({
-                    isSuccess: false,
-                    message: `Row ${index} ${key} attribute have ${value} attributeValue are not exist!`,
-                  });
+
+                  message = `Row ${index} ${key} attribute have ${value} attributeValue are not exist!`;
+                  errors.push(message);
+                  // return res.status(404).json({
+                  //   isSuccess: false,
+                  //   message: `Row ${index} ${key} attribute have ${value} attributeValue are not exist!`,
+                  // });
                 }
 
-                valueIds.push(existingValue.id);
+                valueIds.push(existingValue?.id);
                 attributeData.push({
                   attribute_id,
-                  attributeValue_id: existingValue.id,
+                  attributeValue_id: existingValue?.id,
                 });
               }
             }
@@ -790,16 +809,19 @@ const importCatalogues = async (req, res, next) => {
       let catalogue = catalogues.find((cat) => cat.cat_code === catCode);
       if (catCode && !productCode) {
         if (catalogue) {
-          return res.status(400).json({
-            isSuccess: false,
-            message: `Row ${index} ${catCode} Catcode must be unique! `,
-          });
+          message = `Row ${index} ${catCode} Catcode must be unique!`;
+          errors.push(message);
+          // return res.status(400).json({
+          //   isSuccess: false,
+          //   message: `Row ${index} ${catCode} Catcode must be unique! `,
+          // });
         }
+
         let finalOfferPrice =
           parseFloat(catalogueItemMarketPrice) > 0 &&
-            parseFloat(catalogueItemDiscount) > 0
+          parseFloat(catalogueItemDiscount) > 0
             ? parseFloat(catalogueItemMarketPrice) *
-            (1 - parseFloat(catalogueItemDiscount) / 100)
+              (1 - parseFloat(catalogueItemDiscount) / 100)
             : parseFloat(catalogueItemMarketPrice);
 
         let cat_url = `${slug(productName)}-${catCode}`;
@@ -814,8 +836,8 @@ const importCatalogues = async (req, res, next) => {
           no_of_product: parseInt(noOfProduct),
           price: parseFloat(catalogueItemMarketPrice),
           catalogue_discount: parseFloat(catalogueItemDiscount),
-          average_price: parseFloat(average_price),
-          offer_price: parseFloat(finalOfferPrice),
+          average_price: parseFloat(average_price) || 0,
+          offer_price: parseFloat(finalOfferPrice) || 0,
           weight: parseFloat(weight),
           quantity: parseInt(quantity),
           GST: parseFloat(GST),
@@ -825,20 +847,29 @@ const importCatalogues = async (req, res, next) => {
           description: description,
           ...(attributes.length > 0 && { attributes: attributeData }),
           tag: cat_tag,
-          coverImage: `uploads/catalogue/${cat_image}`,
-          stitching: isStitching != "N" ? true : false,
-          size: isSize != "N" ? true : false,
-          isActive: isActive != "N" ? true : false,
+          coverImage: cat_image,
+          ...(isStitching && { stitching: isStitching != "N" ? true : false }),
+          ...(isSize && { size: isSize != "N" ? true : false }),
+          ...(isActive && { isActive: isActive != "N" ? true : false }),
           product: [],
         };
 
         const catalogueschema = await importCatalogueSchema();
-        const { error } = catalogueschema.validate(catalog);
+        const option = {
+          abortEarly: false,
+          allowUnknown: false,
+        };
+        const { error } = catalogueschema.validate(catalog, option);
         if (error) {
           await deleteFile(filePath);
-          return res
-            .status(400)
-            .json({ isSuccess: false, message: error?.details[0].message });
+          message = `Row ${index} ${error?.details[0].message}`;
+          errors.push(message);
+        }
+        catalog.coverImage = `uploads/catalogue/${cat_image}`;
+
+        if (!fs.existsSync(catalog.coverImage)) {
+          await deleteFile(filePath);
+          catImage.push(index);
         }
         catalogues.push(catalog);
       } else if (productCode) {
@@ -849,10 +880,12 @@ const importCatalogues = async (req, res, next) => {
 
         if (isSkuExists) {
           await deleteFile(filePath);
-          return res.status(400).json({
-            isSuccess: false,
-            message: `${productCode} Product Sku must be unique!`,
-          });
+          message = `${productCode} Product Sku must be unique!`;
+          errors.push(message);
+          // return res.status(400).json({
+          //   isSuccess: false,
+          //   message: `${productCode} Product Sku must be unique!`,
+          // });
         }
 
         let product_image = image
@@ -878,6 +911,7 @@ const importCatalogues = async (req, res, next) => {
           name: productName,
           sku: productCode,
           url: url,
+          cat_code: catCode,
           quantity: parseInt(quantity),
           ...(attributes.length > 0 && { attributes: attributeData }),
           weight: parseFloat(weight),
@@ -885,28 +919,47 @@ const importCatalogues = async (req, res, next) => {
           retail_price: parseFloat(retailPrice),
           retail_GST: parseFloat(GST),
           retail_discount: parseFloat(retailDiscount),
-          offer_price: parseFloat(finalOfferPrice),
+          offer_price: parseFloat(finalOfferPrice) || 0,
           description: description,
           meta_title: metaTitle,
           meta_keyword: metaKeyword,
           meta_description: metaDescription,
           tag: cat_tag,
-          showInSingle: showInSingle !== "N" ? true : false,
-          image: product_image,
-          isActive: isActive !== "N" ? true : false,
-          stitching: isStitching !== "N" ? true : false,
+          ...(showInSingle && {
+            showInSingle: showInSingle !== "N" ? true : false,
+          }),
+          image: image,
+          ...(isActive && { isActive: isActive !== "N" ? true : false }),
+          ...(isStitching && { stitching: isStitching !== "N" ? true : false }),
           ...(category.length > 0 && { category: category }),
         };
 
         let catalog = catalogues.find((cat) => cat.cat_code === catCode);
-
         const productSchema = await importProductSchema();
-        const { error } = productSchema.validate(product);
+        const option = {
+          abortEarly: false,
+          allowUnknown: false,
+        };
+        const { error } = productSchema.validate(product, option);
         if (error) {
           await deleteFile(filePath);
-          return res
-            .status(400)
-            .json({ isSuccess: false, message: error?.details[0].message });
+          message = `Row ${index} ${error?.details.map(
+            (item) => item.message
+          )}`;
+          errors.push(message);
+          // return res
+          //   .status(400)
+          //   .json({ isSuccess: false, message: error?.details[0].message });
+        }
+        product.image = product_image;
+        let images = await product_image.map((value) => {
+          if (!fs.existsSync(value)) {
+            return value;
+          }
+        });
+        if (images.length > 0) {
+          await deleteFile(filePath);
+          productImage.push(index);
         }
 
         category.length > 0 &&
@@ -915,7 +968,7 @@ const importCatalogues = async (req, res, next) => {
               category: { connect: { id: catId } },
             })),
           });
-
+        delete product["cat_code"];
         if (catalog) {
           catalog.product.push(product);
         } else {
@@ -927,11 +980,21 @@ const importCatalogues = async (req, res, next) => {
     for (const cat of catalogues) {
       if (cat.no_of_product != cat.product.length) {
         await deleteFile(filePath);
-        return res.status(400).json({
-          isSuccess: false,
-          message: `${cat.cat_code} Catalogue of No of product not matched!`,
-        });
+        message = `${cat.cat_code} Catalogue of No of product not matched!`;
+        errors.push(message);
+        // return res.status(400).json({
+        //   isSuccess: false,
+        //   message: `${cat.cat_code} Catalogue of No of product not matched!`,
+        // });
       }
+    }
+
+    if (catImage.length > 0)
+      errors.push(`Row ${catImage} cat_image files not exist!`);
+    if (productImage.length > 0)
+      errors.push(`Row ${productImage} product image file not exist!`);
+    if (errors.length > 0) {
+      return res.status(400).json({ isSuccess: false, message: errors });
     }
 
     await prisma.$transaction(
@@ -1160,6 +1223,7 @@ const importCatalogues = async (req, res, next) => {
     //     }
     //   }
     // });
+
     return res
       .status(200)
       .json({ isSuccess: true, message: "File imported successfully." });
@@ -1585,23 +1649,23 @@ const formatData = (item, isCatalogue = false) => {
     productName: item.name,
     ...(isCatalogue
       ? {
-        catCode: item.cat_code,
-        noOfProduct: item.no_of_product,
-        catalogueItemMarketPrice: item.price,
-        catalogueItemDiscount: item.catalogue_discount,
-        GST: item.GST,
-        cat_image: item.coverImage,
-      }
+          catCode: item.cat_code,
+          noOfProduct: item.no_of_product,
+          catalogueItemMarketPrice: item.price,
+          catalogueItemDiscount: item.catalogue_discount,
+          GST: item.GST,
+          cat_image: item.coverImage,
+        }
       : {
-        productCode: item.productCode || item.sku,
-        catalogueItemMarketPrice: item.average_price || 0,
-        catalogueItemDiscount: item.catalogue_discount || 0,
-        retailPrice: item.retail_price,
-        retailDiscount: item.retail_discount,
-        GST: item.retail_GST,
-        image: item.image.join(","),
-        showInSingle: item.showInSingle ? "Y" : "N",
-      }),
+          productCode: item.productCode || item.sku,
+          catalogueItemMarketPrice: item.average_price || 0,
+          catalogueItemDiscount: item.catalogue_discount || 0,
+          retailPrice: item.retail_price,
+          retailDiscount: item.retail_discount,
+          GST: item.retail_GST,
+          image: item.image.join(","),
+          showInSingle: item.showInSingle ? "Y" : "N",
+        }),
     description: item.description,
     quantity: item.quantity,
     metaTitle: item.meta_title,

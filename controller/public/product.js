@@ -532,6 +532,7 @@ const filterAttribute = async (req, res, next) => {
                 id: true,
                 name: true,
                 value: true,
+                colour: true,
                 isActive: true,
                 attribute: {
                   select: {
@@ -590,6 +591,7 @@ const filterAttribute = async (req, res, next) => {
                   id: attributeValue.id,
                   name: attributeValue.name,
                   value: attributeValue.value,
+                  colour: attributeValue.colour,
                 });
               }
             } else {
@@ -601,6 +603,7 @@ const filterAttribute = async (req, res, next) => {
                     id: attributeValue.id,
                     name: attributeValue.name,
                     value: attributeValue.value,
+                    colour: attributeValue.colour,
                   },
                 ],
               });

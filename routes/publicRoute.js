@@ -104,12 +104,14 @@ const countryToCurrency = {
 
 router.get("/location", async (req, res) => {
   try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    console.log("ip", ip)
     let userIp =
       req.clientIp ||
       req.headers["x-forwarded-for"] ||
       req.socket.remoteAddress;
 
-    console.log("Detected IP before processing:", userIp);
+
 
     if (!userIp) {
       return res.status(500).json({ error: "User IP not detected" });
@@ -119,14 +121,14 @@ router.get("/location", async (req, res) => {
       const response = await fetch("https://api64.ipify.org?format=json");
       const data = await response.json();
       userIp = data.ip;
-      console.log("Public IP from API:", userIp);
+
     }
 
     if (userIp.startsWith("::ffff:")) {
       userIp = userIp.replace("::ffff:", "");
     }
 
-    console.log("Final IP:", userIp);
+
 
     const privateIpPattern =
       /^(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)$/;
@@ -138,7 +140,6 @@ router.get("/location", async (req, res) => {
       });
     }
 
-    // ✅ Using ip-api.com instead of node-iplocate
     const response = await fetch(`http://ip-api.com/json/${userIp}`);
     const results = await response.json();
 

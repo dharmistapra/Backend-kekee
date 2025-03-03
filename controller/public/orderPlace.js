@@ -223,6 +223,9 @@ const OrderPlace = async (req, res, next) => {
             totalweight,
             shippingdata?.country
         );
+
+        let findstitchingcharge = subtotal
+
         let ordertotal = subtotal + tax + shippingconst.shippingCost;
 
         const order = await prisma.order.create({
@@ -237,23 +240,6 @@ const OrderPlace = async (req, res, next) => {
             },
         });
 
-        // await prisma.orderItem.createMany({
-        //     data: cartItems.map((item) => ({
-        //         orderId: order.id,
-        //         productId: item.product_id,
-        //         catlogueId: item.catalogue_id,
-        //         quantity: item.quantity,
-        //         customersnotes: billingform.customersnotes,
-        //         productsnapshots: JSON.stringify({
-        //             name: item.isCatalogue ? item.catalogue.name : item.product.name,
-        //             url: item.isCatalogue ? item.catalogue.url : item.product.url,
-        //             price: item.isCatalogue
-        //                 ? item.catalogue.offer_price
-        //                 : item.product.offer_price,
-        //             cartQuantity: item.quantity,
-        //         }),
-        //     })),
-        // });
 
         await prisma.orderItem.createMany({
             data: cartItems.map((item) => {
@@ -283,7 +269,7 @@ const OrderPlace = async (req, res, next) => {
                         discount: item.catalogue_discount,
                         tax: item.isCatalogue?.GST,
                         subtotal: subtotal,
-                        stitchingcharges: subtotal - item.catalogue.offer_price,
+                        stitchingcharges: Math.round(findstitchingcharge - item.catalogue.offer_price),
                         stitching: stitchingDataMap,
                     };
                 } else {
@@ -298,7 +284,7 @@ const OrderPlace = async (req, res, next) => {
                         discount: item.retail_discount,
                         tax: item.isCatalogue?.retail_GST,
                         subtotal: subtotal,
-                        stitchingcharges: subtotal - item.product.offer_price,
+                        stitchingcharges: Math.round(findstitchingcharge - item.product.offer_price),
                         stitching: stitchingDataMap,
                     };
                 }
@@ -385,7 +371,6 @@ const OrderPlace = async (req, res, next) => {
             isSuccess: true,
         });
     } catch (error) {
-        console.log(error);
         let err = new Error("Something went wrong, please try again!");
         next(err);
     }

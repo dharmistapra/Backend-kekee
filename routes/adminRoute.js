@@ -288,6 +288,7 @@ import {
   getOrderdetailsUsers,
   getOrderHistoryusers,
   paginationusers,
+  updateOrderStatus,
   updateUsersStatus,
 } from "../controller/admin/users.js";
 import {
@@ -764,5 +765,6 @@ adminRouter.post("/paymentmethod-position", paymentMethodPosition);
 adminRouter.get("/paymentmethod-image/:id", deletePaymentMethodImage);
 adminRouter.post("/customer/order/history", getOrderHistoryusers);
 adminRouter.post("/customer/order/details", getOrderdetailsUsers);
+adminRouter.post("/order/status", updateOrderStatus);
 
 export default adminRouter;

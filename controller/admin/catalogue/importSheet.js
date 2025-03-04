@@ -615,6 +615,7 @@ const importCatalogues = async (req, res, next) => {
       } = row;
       index = index + 1;
       if (!catCode && !productCode) {
+        await deleteFile(filePath);
         message = `Row ${index} Please enter catCode or productCode!`;
         errors.push(message);
         // return res.status(400).json({
@@ -737,7 +738,7 @@ const importCatalogues = async (req, res, next) => {
 
               if (missingAttributes.length > 0) {
                 await deleteFile(filePath);
-                message = "Some attribues are missing for certain categories!";
+                message = `Row ${index} Some attribues are missing for certain categories!`;
                 errors.push(message);
                 // return res.status(400).json({
                 //   isSuccess: false,

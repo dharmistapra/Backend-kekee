@@ -79,4 +79,40 @@ const getCategories = async (req, res, next) => {
   }
 };
 
-export { getCategory, getCategories };
+const getCategoryCollection = async (req, res, next) => {
+  try {
+    const result = await prisma.categoryMaster.findMany({
+      where: { parent_id: null, isFilter: false, isActive: true },
+      select: {
+        id: true,
+        position: true,
+        name: true,
+        title: true,
+        url: true,
+        meta_title: true,
+        meta_keyword: true,
+        meta_description: true,
+        CatalogueCategory: {
+          where: { catalogue: { isActive: true, deletedAt: null } },
+          // include: {
+          //   catalogue: {
+          //     where: { isActive: true, deletedAt: null },
+          //   },
+          // },
+        },
+      },
+      orderBy: { position: "asc" },
+    });
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "categories get successfully.",
+      data: result,
+    });
+  } catch (err) {
+    const error = new Error("Something went wrong, please try again!");
+    next(error);
+  }
+};
+
+export { getCategory, getCategories, getCategoryCollection };

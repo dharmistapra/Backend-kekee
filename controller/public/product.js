@@ -489,16 +489,16 @@ const filterAttribute = async (req, res, next) => {
         .status(400)
         .json({ isSuccess: false, message: "Please url provide!" });
 
-    const fetchCategory = await prisma.menu.findFirst({
+    const fetchCategory = await prisma.categoryMaster.findFirst({
       where: { url: url },
-      select: { category_id: true },
+      select: { id: true },
     });
 
     if (!fetchCategory)
       return res
         .status(404)
-        .json({ isSuccess: false, message: "menu not found!" });
-    const { category_id } = fetchCategory;
+        .json({ isSuccess: false, message: "category not found!" });
+    const { id } = fetchCategory;
     // const attributes = await prisma.attributeMaster.findMany({
     //   where: { isActive: true, showInFilter: true },
     //   select: {
@@ -515,7 +515,7 @@ const filterAttribute = async (req, res, next) => {
     const productData = await prisma.product.findMany({
       where: {
         categories: {
-          some: { category_id: category_id },
+          some: { category_id: id },
         },
         isActive: true,
         showInSingle: true,

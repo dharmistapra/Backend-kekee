@@ -7,7 +7,10 @@ import { getHomeBanner } from "../controller/admin/homeBanner.js";
 import { getSocialMedia } from "../controller/admin/socialMediaIcon.js";
 import { getAllCurrency } from "../controller/admin/currency.js";
 import { getAllCms, getCms } from "../controller/admin/cms.js";
-import { getCategories } from "../controller/public/category.js";
+import {
+  getCategories,
+  getCategoryCollection,
+} from "../controller/public/category.js";
 import { getContactDetails } from "../controller/admin/contactDetails.js";
 import {
   filterAttribute,
@@ -104,14 +107,12 @@ const countryToCurrency = {
 
 router.get("/location", async (req, res) => {
   try {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    console.log("ip", ip)
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    console.log("ip", ip);
     let userIp =
       req.clientIp ||
       req.headers["x-forwarded-for"] ||
       req.socket.remoteAddress;
-
-
 
     if (!userIp) {
       return res.status(500).json({ error: "User IP not detected" });
@@ -121,14 +122,11 @@ router.get("/location", async (req, res) => {
       const response = await fetch("https://api64.ipify.org?format=json");
       const data = await response.json();
       userIp = data.ip;
-
     }
 
     if (userIp.startsWith("::ffff:")) {
       userIp = userIp.replace("::ffff:", "");
     }
-
-
 
     const privateIpPattern =
       /^(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)$/;
@@ -235,5 +233,7 @@ router.get("/shipping-list", countrylistGroup);
 router.post("/shipping-charge", findShippingPrice);
 
 router.get("/payment/method", getPaymentMethodpublic);
+
+router.get("/categorycollection", getCategoryCollection);
 
 export default router;

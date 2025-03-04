@@ -1502,6 +1502,7 @@ const addCatalogue = async (req, res, next) => {
         retail_discount: true,
         offer_price: true,
         outofStock: true,
+        showInSingle: true,
       },
     });
 
@@ -1725,6 +1726,9 @@ const addCatalogue = async (req, res, next) => {
               data: {
                 name: value.name,
                 url,
+                ...(value.showInSingle === true && {
+                  quantity: result.quantity,
+                }),
                 categories: {
                   deleteMany: {},
                   create: category_id.map((catId) => ({

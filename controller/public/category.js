@@ -79,4 +79,120 @@ const getCategories = async (req, res, next) => {
   }
 };
 
-export { getCategory, getCategories };
+const getCategoryCollection = async (req, res, next) => {
+  try {
+    const result = await prisma.categoryMaster.findMany({
+      where: { parent_id: null, mixed: true, isActive: true },
+      select: {
+        id: true,
+        position: true,
+        name: true,
+        title: true,
+        CatalogueCategory: {
+          where: { catalogue: { isActive: true, deletedAt: null } },
+          select: {
+            id: true,
+            catalogue_id: true,
+            category_id: true,
+          },
+          // include: {
+          //   catalogue: {
+          //     where: { isActive: true, deletedAt: null },
+          //   },
+          // },
+        },
+      },
+      orderBy: { position: "asc" },
+    });
+
+    const transformedData = await Promise.all(
+      result.map(async (item) => {
+        const catalogueCollection = await Promise.all(
+          item.CatalogueCategory.map(async (val) => {
+            const latestCatalogues = await prisma.catalogue.findMany({
+              where: {
+                id: val.catalogue_id,
+                isActive: true,
+                deletedAt: null,
+              },
+              select: {
+                id: true,
+                name: true,
+                cat_code: true,
+                no_of_product: true,
+                url: true,
+                // price: true,
+                // catalogue_discount: true,
+                average_price: true,
+                // GST: true,
+                offer_price: true,
+                // weight: true,
+                // meta_title: true,
+                // meta_keyword: true,
+                // meta_description: true,
+                coverImage: true,
+                // tag: true,
+                // deletedAt: true,
+                attributeValues: {
+                  where: { attribute: { type: "Label" } },
+                  select: {
+                    attributeValue: {
+                      select: {
+                        name: true,
+                      },
+                    },
+                  },
+                },
+                Product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    sku: true,
+                    showInSingle: true,
+                  },
+                },
+              },
+              take: 5,
+              orderBy: { updatedAt: "desc" },
+            });
+
+            return latestCatalogues.map((catalogue) => {
+              let labels = [];
+              catalogue.attributeValues.map((attribute) =>
+                labels.push(attribute.attributeValue.value)
+              );
+              catalogue.labels = labels;
+              delete catalogue.attributeValues;
+              const hasSingle = catalogue.Product.some(
+                (product) => product.showInSingle
+              );
+              delete catalogue.Product;
+              return {
+                ...catalogue,
+                type: hasSingle ? "Full Set + Single" : "Full Set",
+              };
+            });
+          })
+        );
+
+        const catalogueData = catalogueCollection
+          .flat()
+          .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+        delete item.CatalogueCategory;
+        return { ...item, catalogueCollection: catalogueData };
+      })
+    );
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "categories get successfully.",
+      data: transformedData,
+    });
+  } catch (err) {
+    const error = new Error("Something went wrong, please try again!");
+    next(error);
+  }
+};
+
+export { getCategory, getCategories, getCategoryCollection };

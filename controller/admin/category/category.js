@@ -24,6 +24,7 @@ const postCategory = async (req, res, next) => {
       attributes,
       mixed,
       isFilter,
+      showInHome,
     } = req.body;
 
     attributes = attributes && attributes?.split(",");
@@ -105,6 +106,7 @@ const postCategory = async (req, res, next) => {
           }),
         mixed,
         isFilter,
+        showInHome,
       },
     });
     return res.status(200).json({
@@ -136,6 +138,7 @@ const getAllParentCategory = async (req, res, next) => {
         meta_description: true,
         isActive: true,
         isFilter: true,
+        showInHome: true,
         children: {
           select: {
             id: true,
@@ -143,6 +146,7 @@ const getAllParentCategory = async (req, res, next) => {
             title: true,
             url: true,
             isFilter: true,
+            showInHome: true,
           },
         },
         CategoryAttribute: {
@@ -221,6 +225,7 @@ const categoryPagination = async (req, res, next) => {
         image: true,
         mixed: true,
         isFilter: true,
+        showInHome: true,
         CategoryAttribute: {
           select: {
             id: true,
@@ -290,6 +295,7 @@ const updateCategory = async (req, res, next) => {
       attributes,
       mixed,
       isFilter,
+      showInHome,
     } = req.body;
     attributes = attributes && attributes?.split(",");
 
@@ -406,6 +412,7 @@ const updateCategory = async (req, res, next) => {
             }),
         mixed,
         isFilter,
+        showInHome,
       },
     });
 
@@ -578,6 +585,7 @@ const getCategories = async (req, res, next) => {
         image: true,
         mixed: true,
         isFilter: true,
+        showInHome: true,
         // Menu: {
         //   select: {
         //     id: true,

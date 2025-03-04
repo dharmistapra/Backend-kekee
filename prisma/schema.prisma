@@ -90,6 +90,7 @@ model CategoryMaster {
   isActive          Boolean             @default(true)
   mixed             Boolean?            @default(false)
   isFilter          Boolean?            @default(false)
+  showInHome        Boolean?            @default(false)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   Menu              Menu[]              @relation("categoryMaster")

@@ -31,7 +31,6 @@ const getCollection = async (req, res, next) => {
       },
     });
 
-
     const transformedData = await Promise.all(
       collection.map(async (item) => {
         const catalogueCollection = await Promise.all(
@@ -123,26 +122,13 @@ const getCollection = async (req, res, next) => {
   }
 };
 
-
-
-
-
-
-
-
-
-
-
 const getCollectionHome = async (req, res, next) => {
   try {
-    const position = parseInt(req.params.id) || 1
+    const position = parseInt(req.params.id) || 1;
     // let position = parseInt(req.query.position, 10) || 1;
     const collections = await prisma.collectionAll.findMany({
       where: {
-        AND: [
-          { showInHome: true },
-          { isActive: true },
-        ]
+        AND: [{ showInHome: true }, { isActive: true }],
       },
       select: {
         id: true,
@@ -173,9 +159,9 @@ const getCollectionHome = async (req, res, next) => {
                       select: {
                         id: true,
                         name: true,
-                      }
-                    }
-                  }
+                      },
+                    },
+                  },
                 },
                 _count: {
                   select: {
@@ -191,8 +177,7 @@ const getCollectionHome = async (req, res, next) => {
       },
     });
 
-
-    console.log("collections", collections)
+    console.log("collections", collections);
     const processedCatalogues = collections.map((collection) => {
       return {
         ...collection,
@@ -210,9 +195,8 @@ const getCollectionHome = async (req, res, next) => {
       };
     });
 
-    const { groupedByTitle, manualCollections } = separateCollections(
-      processedCatalogues
-    );
+    const { groupedByTitle, manualCollections } =
+      separateCollections(processedCatalogues);
 
     return res.json({
       isSuccess: true,
@@ -243,17 +227,11 @@ const groupCollectionsByPosition = (collections) => {
 
 const separateCollections = (collections) => {
   const groupedByTitle = groupCollectionsByPosition(collections);
-  const manualCollections = collections.filter((collection) => collection.Manual);
-
-
+  const manualCollections = collections.filter(
+    (collection) => collection.Manual
+  );
 
   return { groupedByTitle, manualCollections };
 };
-
-
-
-
-
-
 
 export { getCollection, getCollectionHome };

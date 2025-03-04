@@ -662,14 +662,15 @@ const getMenuPageWiseBanner = async (req, res, next) => {
         .status(400)
         .json({ isSuccess: false, message: "Please provide Url!" });
 
-    const result = await prisma.menu.findFirst({
+    const result = await prisma.categoryMaster.findFirst({
       where: { url: url },
       select: {
         position: true,
         name: true,
+        title: true,
         url: true,
-        menuType: true,
-        displayType: true,
+        // menuType: true,
+        // displayType: true,
         meta_title: true,
         meta_keyword: true,
         meta_description: true,

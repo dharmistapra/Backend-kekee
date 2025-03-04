@@ -142,7 +142,7 @@ const getProductpublic = async (req, res, next) => {
           attributeValues: {
             some: {
               attributeValue: {
-                attribute: { name: key }, // Match the attribute name dynamically
+                attribute: { key: key }, // Match the attribute name dynamically
                 value: val,
               },
             },

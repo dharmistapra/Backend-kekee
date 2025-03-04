@@ -1173,6 +1173,120 @@ const paymentMethodsSchema = async (req, res, next) => {
   await JoiSchemaValidation(schema, req, next);
 };
 
+
+
+const orderPlaceSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    user_id: Joi.string().required().messages({
+      'any.required': 'User ID is required',
+      'string.empty': 'User ID cannot be empty',
+    }),
+    shippingPrice: Joi.number().required().messages({
+      'any.required': 'shippingPrice is required',
+      'string.empty': 'shippingPrice cannot be empty',
+    }),
+    paymentMethod: Joi.string().required().messages({
+      'any.required': 'Payment Method is required',
+      'string.empty': 'Payment Method cannot be empty',
+      'string.base': 'Payment Method must be a string',
+    }),
+    bankdata: Joi.object()
+      .when('paymentMethod', {
+        is: 'bank',
+        then: Joi.object({
+          bankName: Joi.string().required().messages({
+            'any.required': 'Bank Name is required',
+            'string.empty': 'Bank Name cannot be empty',
+          }),
+          accountHolderName: Joi.string().required().messages({
+            'any.required': 'Account Holder Name is required',
+            'string.empty': 'Account Holder Name cannot be empty',
+          }),
+          accountNumber: Joi.string().required().messages({
+            'any.required': 'Account Number is required',
+            'string.empty': 'Account Number cannot be empty',
+          }),
+          ifscCode: Joi.string().required().messages({
+            'any.required': 'IFSC Code is required',
+            'string.empty': 'IFSC Code cannot be empty',
+          }),
+        }),
+        otherwise: Joi.object({
+          bankName: Joi.string().optional(),
+          accountHolderName: Joi.string().optional(),
+          accountNumber: Joi.string().optional(),
+          ifscCode: Joi.string().optional(),
+        }),
+      }),
+
+    billingform: Joi.object({
+      GstNumber: Joi.string().optional().allow(""),
+      address1: Joi.string().optional().allow(""),
+      address2: Joi.string().optional().allow(""),
+      companyname: Joi.string().optional().allow(""),
+      city: Joi.string().optional().allow(""),
+      country: Joi.string().optional().allow(""),
+      customersnotes: Joi.string().optional().allow(""),
+      email: Joi.string().email().required().messages({
+        'any.required': 'Email is required',
+        'string.email': 'Invalid email address',
+      }),
+      fullName: Joi.string().required().messages({
+        'any.required': 'Full Name is required',
+        'string.empty': 'Full Name cannot be empty',
+      }),
+      mobile: Joi.string().required().messages({
+        'any.required': 'Mobile number is required',
+        'string.empty': 'Mobile number cannot be empty',
+      }),
+      state: Joi.string().optional(),
+      whatsapp: Joi.string().optional().allow(''),
+      zipCode: Joi.string().optional(),
+    }),
+
+    shippingdata: Joi.object({
+      address1: Joi.string().optional().allow(""),
+      address2: Joi.string().optional().allow(""),
+      city: Joi.string().required(),
+      country: Joi.string().required().messages({
+        'any.required': 'Country is required',
+        'string.empty': 'Country cannot be empty',
+      }),
+      fullName: Joi.string().required().messages({
+        'any.required': 'Full Name is required',
+        'string.empty': 'Full Name cannot be empty',
+      }),
+      mobile: Joi.string().required().messages({
+        'any.required': 'Mobile number is required',
+      }),
+      state: Joi.string().required().messages({
+        'any.required': 'state is required',
+        'string.empty': 'state cannot be empty',
+      }),
+      zipCode: Joi.string().required().messages({
+        'any.required': 'Zip Code is required',
+        'string.empty': 'Zip Code cannot be empty',
+      }),
+    }),
+
+    currency: Joi.object({
+      code: Joi.string().required().messages({
+        'any.required': 'currency  code is required',
+        'string.empty': 'currency code cannot be empty',
+      }),
+      flag: Joi.string().optional(),
+      rate: Joi.number().required().messages({
+        'any.required': 'Rate is required',
+        'number.base': 'Rate must be a number',
+      }),
+    })
+
+
+
+  })
+  await JoiSchemaValidation(schema, req, next);
+}
+
 export {
   categorySchema,
   subCategorySchema,
@@ -1222,4 +1336,5 @@ export {
   importCatalogue,
   shippingchargesSchema,
   paymentMethodsSchema,
+  orderPlaceSchema
 };

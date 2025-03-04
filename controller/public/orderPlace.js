@@ -11,20 +11,13 @@ import crypto from "crypto";
 import "dotenv/config";
 const OrderPlace = async (req, res, next) => {
     try {
-        const {
-            user_id,
-            items,
-            billingform,
-            shippingdata,
-            paymentMethod,
-            shippingPrice,
-            orderTotal,
-            currency,
-        } = req.body;
+        const { user_id, billingform, shippingdata, paymentMethod, currency, bankdata } = req.body;
 
         const finduser = await prisma.cart.findUnique({
             where: { user_id: user_id },
         });
+
+
         if (!finduser)
             return res
                 .status(400)
@@ -337,14 +330,11 @@ const OrderPlace = async (req, res, next) => {
             },
         });
 
-        let paymentData = {
-            orderId: order.id,
-            paymentMethod,
-            status: "PROCESSING",
-        };
+
 
         const convertAmount = ordertotal / currency?.rate;
-
+        let bankAccountId = null;
+        let paymentData;
         if (paymentMethod === "razorpay") {
             const razorpayOrder = await rozarpay.orders.create({
                 amount: Math.round(convertAmount * 100),
@@ -353,9 +343,31 @@ const OrderPlace = async (req, res, next) => {
                 payment_capture: 1,
             });
 
-            paymentData.transactionId = razorpayOrder.id;
+            paymentData = {
+                orderId: order.id,
+                paymentMethod,
+                status: "PROCESSING",
+                bankAccountId: bankAccountId,
+                transactionId: razorpayOrder.id
+            };
         }
 
+        if (paymentMethod === "bank") {
+            const bankrecordCreate = await prisma.bankAccount.create({
+                data: bankdata,
+                select: {
+                    id: true
+                }
+            })
+
+            bankAccountId = bankrecordCreate?.id
+            paymentData = {
+                orderId: order.id,
+                paymentMethod,
+                status: "PROCESSING",
+                bankAccountId: bankAccountId
+            };
+        }
         const payment = await prisma.payment.create({ data: paymentData });
 
         const response = {
@@ -365,8 +377,8 @@ const OrderPlace = async (req, res, next) => {
             amount: Math.round(convertAmount * 100),
         };
 
-        return res.status(201).json({
-            message: "Order Id generated successfully",
+        return res.status(200).json({
+            message: "Order generated successfully",
             data: response,
             isSuccess: true,
         });
@@ -375,6 +387,7 @@ const OrderPlace = async (req, res, next) => {
         next(err);
     }
 };
+
 
 const verifyOrder = async (req, res, next) => {
     try {

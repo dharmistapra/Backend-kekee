@@ -775,7 +775,7 @@ model Shipping {
   country       String
   state         String
   zipCode       String
-  mobile        Int
+  mobile        String
   shippingPrice Float?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -794,8 +794,8 @@ model Billing {
   state       String
   zipCode     String
   email       String?
-  mobile      Int
-  whatsapp    Int?
+  mobile      String
+  whatsapp    String?
   companyname String?
   GstNumber   String?
   createdAt   DateTime @default(now())
@@ -847,7 +847,7 @@ enum OrderStatus {
 enum PaymentMethod {
   razorpay
   stripe
-  BANK_TRANSFER
+  bank
   COD
 }
 

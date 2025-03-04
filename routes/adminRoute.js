@@ -11,6 +11,7 @@ import {
   deleteCategoryImage,
   getAllParentCategory,
   getAllCategories,
+  updateCategoryShowInHomeStatus,
 } from "../controller/admin/category/category.js";
 import {
   attributeMasterSchema,
@@ -358,6 +359,7 @@ adminRouter.post("/category-pagination", categoryPagination);
 adminRouter.post("/category-position", [positionSchema], categoryPosition);
 adminRouter.get("/category/:id", getSubCategory);
 adminRouter.post("/category-image/:id", deleteCategoryImage);
+adminRouter.get("/category-home-status/:id", updateCategoryShowInHomeStatus);
 
 // SUBCATEGORY API HANDLE
 adminRouter.post("/sub-category", [subCategorySchema], postSubCategory);

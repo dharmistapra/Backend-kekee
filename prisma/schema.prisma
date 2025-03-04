@@ -88,8 +88,6 @@ model CategoryMaster {
   // attribute_ids     String[]           @db.Array(ObjectId) 
   // attributes        AttributeMaster[]  @relation("CategoryToAttribute", references: [id])
   isActive          Boolean             @default(true)
-  mixed             Boolean?            @default(false)
-  isFilter          Boolean?            @default(false)
   showInHome        Boolean?            @default(false)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt

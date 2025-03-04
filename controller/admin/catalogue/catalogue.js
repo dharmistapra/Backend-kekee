@@ -1726,7 +1726,7 @@ const addCatalogue = async (req, res, next) => {
               data: {
                 name: value.name,
                 url,
-                ...(value.showInSingle === true && {
+                ...(value.showInSingle !== true && {
                   quantity: result.quantity,
                 }),
                 categories: {

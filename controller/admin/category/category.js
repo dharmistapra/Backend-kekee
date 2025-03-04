@@ -22,9 +22,6 @@ const postCategory = async (req, res, next) => {
       meta_keyword,
       meta_description,
       attributes,
-      mixed,
-      isFilter,
-      showInHome,
     } = req.body;
 
     attributes = attributes && attributes?.split(",");
@@ -104,9 +101,6 @@ const postCategory = async (req, res, next) => {
               create: attributeConnection, // connect attributes to the category
             },
           }),
-        mixed,
-        isFilter,
-        showInHome,
       },
     });
     return res.status(200).json({
@@ -137,7 +131,6 @@ const getAllParentCategory = async (req, res, next) => {
         meta_keyword: true,
         meta_description: true,
         isActive: true,
-        isFilter: true,
         showInHome: true,
         children: {
           select: {
@@ -145,7 +138,6 @@ const getAllParentCategory = async (req, res, next) => {
             name: true,
             title: true,
             url: true,
-            isFilter: true,
             showInHome: true,
           },
         },
@@ -223,8 +215,6 @@ const categoryPagination = async (req, res, next) => {
         meta_description: true,
         isActive: true,
         image: true,
-        mixed: true,
-        isFilter: true,
         showInHome: true,
         CategoryAttribute: {
           select: {
@@ -293,9 +283,6 @@ const updateCategory = async (req, res, next) => {
       meta_keyword,
       meta_description,
       attributes,
-      mixed,
-      isFilter,
-      showInHome,
     } = req.body;
     attributes = attributes && attributes?.split(",");
 
@@ -410,9 +397,6 @@ const updateCategory = async (req, res, next) => {
                 deleteMany: {},
               },
             }),
-        mixed,
-        isFilter,
-        showInHome,
       },
     });
 
@@ -550,6 +534,38 @@ const updateCategoryStatus = async (req, res, next) => {
   }
 };
 
+const updateCategoryShowInHomeStatus = async (req, res, next) => {
+  try {
+    let id = req.params.id.trim();
+    if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+      return res
+        .status(400)
+        .json({ isSuccess: false, message: "Invalid ID format!" });
+    }
+
+    const findData = await prisma.categoryMaster.findUnique({
+      where: { id: id },
+    });
+    if (!findData)
+      return res
+        .status(400)
+        .json({ isSuccess: false, message: "category not found!" });
+
+    const newStatus = !findData.showInHome;
+    const result = await prisma.categoryMaster.update({
+      where: { id: id },
+      data: { showInHome: newStatus },
+    });
+    return res.status(200).json({
+      status: true,
+      message: `Category status updated successfully.`,
+    });
+  } catch (error) {
+    let err = new Error("Something went wrong, please try again!");
+    next(err);
+  }
+};
+
 const categoryPosition = async (req, res, next) => {
   try {
     const { data } = req.body;
@@ -583,8 +599,6 @@ const getCategories = async (req, res, next) => {
         title: true,
         url: true,
         image: true,
-        mixed: true,
-        isFilter: true,
         showInHome: true,
         // Menu: {
         //   select: {
@@ -619,13 +633,12 @@ const getSubCategory = async (req, res, next) => {
         .json({ isSuccess: false, message: "Invalid ID format." });
     }
     const data = await prisma.categoryMaster.findMany({
-      where: { OR: [{ id: parent_id }, { mixed: true }], isFilter: false },
+      where: { id: parent_id },
       orderBy: { position: "asc" },
       select: {
         id: true,
         name: true,
         children: {
-          where: { isFilter: false },
           select: {
             id: true,
             name: true,
@@ -689,6 +702,7 @@ export {
   updateCategory,
   deleteCategory,
   updateCategoryStatus,
+  updateCategoryShowInHomeStatus,
   categoryPosition,
   getCategories,
   getSubCategory,

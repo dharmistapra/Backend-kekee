@@ -241,6 +241,29 @@ const getCatalogueProduct = async (req, res, next) => {
             isActive: true,
             showInSingle: true,
             readyToShip: true,
+            attributeValues: {
+              select: {
+                id: true,
+                attribute: {
+                  select: {
+                    id: true,
+                    name: true,
+                    key: true,
+                    type: true,
+                    isActive: true,
+                  },
+                },
+                attributeValue: {
+                  select: {
+                    id: true,
+                    name: true,
+                    value: true,
+                    colour: true,
+                    isActive: true,
+                  },
+                },
+              },
+            },
             // labels: {
             //   select: {
             //     id: true,

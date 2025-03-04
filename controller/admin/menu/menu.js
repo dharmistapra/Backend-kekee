@@ -669,8 +669,6 @@ const getMenuPageWiseBanner = async (req, res, next) => {
         name: true,
         title: true,
         url: true,
-        // menuType: true,
-        // displayType: true,
         meta_title: true,
         meta_keyword: true,
         meta_description: true,

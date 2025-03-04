@@ -108,7 +108,7 @@ const getOrderHistoryusers = async (req, res, next) => {
         const formattedResult = result.map(order => {
             const product = order.orderItems[0];
             const parsedata = JSON.parse(product?.productsnapshots ? product?.productsnapshots : []);
-            const payment = order.payment[0];
+            const payment = order.payment?.[0];
             return {
                 orderId: order?.id,
                 productName: parsedata?.name || 'N/A',
@@ -120,8 +120,8 @@ const getOrderHistoryusers = async (req, res, next) => {
                 quantity: parsedata?.cartQuantity || '',
                 type: parsedata?.type || "",
                 url: parsedata?.url || "",
-                paymentMethod: payment.paymentMethod,
-                paymentstatus: payment.status
+                paymentMethod: payment?.paymentMethod,
+                paymentstatus: payment?.status
             };
         });
 
@@ -132,6 +132,7 @@ const getOrderHistoryusers = async (req, res, next) => {
         });
 
     } catch (error) {
+        console.log(error)
         let err = new Error("Something went wrong, Please try again!");
         next(err);
     }

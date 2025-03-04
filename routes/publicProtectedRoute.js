@@ -9,6 +9,7 @@ import {
 import {
   cartSchema,
   editCartSchema,
+  orderPlaceSchema,
   updateUserbasicInfoSchema,
   userchangePasswordSchema,
   wishListSchema,
@@ -34,7 +35,7 @@ publicProtected.get("/wish-list", getWishLists);
 publicProtected.post("/change-password", [userchangePasswordSchema], changePasswordusers);
 publicProtected.post("/user-update", [updateUserbasicInfoSchema], updateUserbasicInfo);
 
-publicProtected.post("/oreder/place", OrderPlace);
+publicProtected.post("/oreder/place", [orderPlaceSchema], OrderPlace);
 publicProtected.post("/verify/order", verifyOrder);
 publicProtected.post("/cancel/payment", orderFailed);
 publicProtected.post("/order/details", getOrderdetails);

@@ -731,6 +731,7 @@ enum ShippingChargestype {
 model Order {
   id             String      @id @default(auto()) @map("_id") @db.ObjectId
   userId         String      @db.ObjectId
+  orderId        String      @unique 
   subtotal       Float
   Tax            Float
   discount       Float?

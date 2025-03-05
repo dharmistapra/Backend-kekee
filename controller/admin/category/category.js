@@ -195,8 +195,6 @@ const categoryPagination = async (req, res, next) => {
         .status(200)
         .json({ isSuccess: false, message: "Category not found!", data: [] });
     }
-
-    // Fetch categories with necessary fields and batch attribute IDs
     const result = await prisma.categoryMaster.findMany({
       where: {
         parent_id: parent_id || null,
@@ -236,8 +234,6 @@ const categoryPagination = async (req, res, next) => {
               where: {
                 product: {
                   AND: [{ showInSingle: true }, { catalogue_id: null }],
-
-                  // showInSingle: true,
                 },
               },
             },

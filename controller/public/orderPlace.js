@@ -12,16 +12,10 @@ import "dotenv/config";
 const OrderPlace = async (req, res, next) => {
     try {
         const { user_id, billingform, shippingdata, paymentMethod, currency, bankdata } = req.body;
-
-        const finduser = await prisma.cart.findUnique({
-            where: { user_id: user_id },
-        });
-
+        const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
 
         if (!finduser)
-            return res
-                .status(400)
-                .json({ isSuccess: false, message: "User not found", data: null });
+            return res.status(400).json({ isSuccess: false, message: "User not found", data: null });
         const cartItems = await prisma.cartItem.findMany({
             where: { cart_id: finduser?.id },
             select: {
@@ -220,10 +214,15 @@ const OrderPlace = async (req, res, next) => {
         let findstitchingcharge = subtotal
 
         let ordertotal = subtotal + tax + shippingconst.shippingCost;
+        const now = new Date();
+        const date = now.toISOString().slice(0, 10).replace(/-/g, ''); // Format YYYYMMDD
+        const time = now.toTimeString().slice(0, 8).replace(/:/g, '');
+        const orderId = `ORD-${date}-${time}`;
 
         const order = await prisma.order.create({
             data: {
                 userId: user_id,
+                orderId: orderId,
                 subtotal: subtotal,
                 Tax: tax,
                 discount: discount,
@@ -339,7 +338,7 @@ const OrderPlace = async (req, res, next) => {
             const razorpayOrder = await rozarpay.orders.create({
                 amount: Math.round(convertAmount * 100),
                 currency: currency?.code,
-                receipt: `order_${order.id}`,
+                receipt: `order_${order.orderId}`,
                 payment_capture: 1,
             });
 
@@ -371,7 +370,7 @@ const OrderPlace = async (req, res, next) => {
         const payment = await prisma.payment.create({ data: paymentData });
 
         const response = {
-            orderId: order.id,
+            orderId: order.orderId,
             razorpayOrderId: paymentData.transactionId,
             currency: currency,
             amount: Math.round(convertAmount * 100),
@@ -383,6 +382,7 @@ const OrderPlace = async (req, res, next) => {
             isSuccess: true,
         });
     } catch (error) {
+        console.log(error)
         let err = new Error("Something went wrong, please try again!");
         next(err);
     }
@@ -401,7 +401,7 @@ const verifyOrder = async (req, res, next) => {
             signature,
         } = req.body;
 
-        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        const order = await prisma.order.findUnique({ where: { orderId: orderId }, select: { id: true } });
         if (!order)
             return res
                 .status(404)
@@ -420,46 +420,54 @@ const verifyOrder = async (req, res, next) => {
             }
         }
 
-        const stockCheck = await checkStock(orderId);
-        if (!stockCheck.isSuccess) {
-            return res
-                .status(400)
-                .json({ isSuccess: false, message: stockCheck.message });
-        }
+
 
         if (status === "SUCCESS") {
             await prisma.order.update({
-                where: { id: orderId },
+                where: { id: order.id },
                 data: { status: "PROCESSING" },
             });
 
             await prisma.payment.update({
-                where: { orderId: orderId },
+                where: { orderId: order.id },
                 data: { transactionId, status: "SUCCESS" },
             });
-
-            await reduceProductQuantity(orderId);
 
             return res
                 .status(200)
                 .json({ isSuccess: true, message: "Order placed successfully" });
         } else {
-            await prisma.order.update({
-                where: { id: orderId },
-                data: { status: "FAILED" },
-            });
             return res
                 .status(400)
                 .json({ isSuccess: false, message: "Payment failed" });
+
         }
+
+        //     await reduceProductQuantity(orderId);
+
+        //     return res
+        //         .status(200)
+        //         .json({ isSuccess: true, message: "Order placed successfully" });
+        // } else {
+        //     await prisma.order.update({
+        //         where: { orderId: orderId },
+        //         data: { status: "FAILED" },
+        //     });
+        //     return res
+        //         .status(400)
+        //         .json({ isSuccess: false, message: "Payment failed" });
+        // }
     } catch (error) {
+        console.log(error)
         next(new Error("Something went wrong!"));
     }
 };
 
-const checkStock = async (orderId) => {
+export const checkStock = async (orderId) => {
     try {
-        const orderItems = await prisma.orderItem.findMany({ where: { orderId } });
+
+        const findorderId = await prisma.order.findUnique({ where: { orderId: orderId }, select: { id: true } })
+        const orderItems = await prisma.orderItem.findMany({ where: { orderId: findorderId?.id } });
         for (let item of orderItems) {
             if (item.productId) {
                 const product = await prisma.product.findUnique({
@@ -486,13 +494,15 @@ const checkStock = async (orderId) => {
         }
         return { isSuccess: true };
     } catch (error) {
+        console.log("errrr", error)
         return { isSuccess: false, message: "Stock check failed" };
     }
 };
 
-const reduceProductQuantity = async (orderId) => {
+export const reduceProductQuantity = async (orderId) => {
     try {
-        const orderItems = await prisma.orderItem.findMany({ where: { orderId } });
+        const findorderId = await prisma.order.findUnique({ where: { orderId: orderId }, select: { id: true } })
+        const orderItems = await prisma.orderItem.findMany({ where: { orderId: findorderId?.id } });
         for (let item of orderItems) {
             if (item.productId) {
                 const result = await prisma.product.update({
@@ -604,7 +614,7 @@ const orderFailed = async (req, res) => {
 
     try {
         await prisma.order.update({
-            where: { id: orderId },
+            where: { orderId: orderId },
             data: { status: status },
         });
 

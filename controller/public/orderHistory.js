@@ -3,10 +3,10 @@ import prisma from "../../db/config.js";
 const getOrderdetails = async (req, res, next) => {
     try {
         const { orderId } = req.body;
-                const orderDetails = await prisma.order.findUnique({
+        const orderDetails = await prisma.order.findUnique({
             where: { id: orderId },
             select: {
-                id: true,
+                orderId: true,
                 createdAt: true,
                 subtotal: true,
                 Tax: true,

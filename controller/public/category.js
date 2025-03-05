@@ -88,6 +88,7 @@ const getCategoryCollection = async (req, res, next) => {
         position: true,
         name: true,
         title: true,
+        url: true,
         CatalogueCategory: {
           where: { catalogue: { isActive: true, deletedAt: null } },
           select: {

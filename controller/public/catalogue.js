@@ -342,7 +342,7 @@ const getCatalogueProduct = async (req, res, next) => {
           });
         }
       }
-      product["attributeValue"] = attributes;
+      product["attributeValues"] = attributes;
     }
 
     delete product?.CatalogueCategory;

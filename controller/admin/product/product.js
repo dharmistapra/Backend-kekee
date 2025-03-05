@@ -641,43 +641,43 @@ const getAllReatialProduct = async (req, res, next) => {
       newProduct.attributeValues = product.attributeValues.map((av) =>
         av.attributeValue
           ? {
-            id: av.attributeValue.id,
-            name: av.attributeValue.name,
-            value: av.attributeValue.value,
-            isActive: av.attributeValue.isActive,
-            createdAt: av.attributeValue.createdAt,
-            updatedAt: av.attributeValue.updatedAt,
-          }
+              id: av.attributeValue.id,
+              name: av.attributeValue.name,
+              value: av.attributeValue.value,
+              isActive: av.attributeValue.isActive,
+              createdAt: av.attributeValue.createdAt,
+              updatedAt: av.attributeValue.updatedAt,
+            }
           : null
       );
 
       newProduct.categories = product.categories.map((cat) =>
         cat.category
           ? {
-            id: cat.category.id,
-            name: cat.category.name,
-            meta_title: cat.category.meta_title,
-            meta_keyword: cat.category.meta_keyword,
-            meta_description: cat.category.meta_description,
-            isActive: cat.category.isActive,
-            createdAt: cat.category.createdAt,
-            updatedAt: cat.category.updatedAt,
-          }
+              id: cat.category.id,
+              name: cat.category.name,
+              meta_title: cat.category.meta_title,
+              meta_keyword: cat.category.meta_keyword,
+              meta_description: cat.category.meta_description,
+              isActive: cat.category.isActive,
+              createdAt: cat.category.createdAt,
+              updatedAt: cat.category.updatedAt,
+            }
           : null
       );
 
       newProduct.collection = product.collection.map((cat) =>
         cat.collection
           ? {
-            id: cat.collection.id,
-            name: cat.collection.name,
-            meta_title: cat.collection.meta_title,
-            meta_keyword: cat.collection.meta_keyword,
-            meta_description: cat.collection.meta_description,
-            isActive: cat.collection.isActive,
-            createdAt: cat.collection.createdAt,
-            updatedAt: cat.collection.updatedAt,
-          }
+              id: cat.collection.id,
+              name: cat.collection.name,
+              meta_title: cat.collection.meta_title,
+              meta_keyword: cat.collection.meta_keyword,
+              meta_description: cat.collection.meta_description,
+              isActive: cat.collection.isActive,
+              createdAt: cat.collection.createdAt,
+              updatedAt: cat.collection.updatedAt,
+            }
           : null
       );
 
@@ -742,12 +742,12 @@ const paginationReatilProduct = async (req, res, next) => {
           },
         },
 
-        collection:{
-          include:{
-            collection:true
-          }
+        collection: {
+          include: {
+            collection: true,
+          },
         },
-        
+
         // collection: {
         //   include: {
         //     collection: true,
@@ -850,21 +850,21 @@ const paginationReatilProduct = async (req, res, next) => {
       newProduct.categories = product.categories.map((cat) =>
         cat.category
           ? {
-            id: cat.category.id,
-            parentId: cat.category.parent_id ? cat.category.parent_id : null,
-            name: cat.category.name,
-            isActive: cat.category.isActive,
-          }
+              id: cat.category.id,
+              parentId: cat.category.parent_id ? cat.category.parent_id : null,
+              name: cat.category.name,
+              isActive: cat.category.isActive,
+            }
           : null
       );
 
       newProduct.collection = product?.collection?.map((cat) =>
         cat.collection
           ? {
-            id: cat.collection.id,
-            name: cat.collection.name,
-            isActive: cat.collection.isActive,
-          }
+              id: cat.collection.id,
+              name: cat.collection.name,
+              isActive: cat.collection.isActive,
+            }
           : null
       );
 

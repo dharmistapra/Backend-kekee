@@ -82,12 +82,13 @@ const getCategories = async (req, res, next) => {
 const getCategoryCollection = async (req, res, next) => {
   try {
     const result = await prisma.categoryMaster.findMany({
-      where: { parent_id: null, mixed: true, isActive: true },
+      where: { parent_id: null, isActive: true, showInHome: true },
       select: {
         id: true,
         position: true,
         name: true,
         title: true,
+        url: true,
         CatalogueCategory: {
           where: { catalogue: { isActive: true, deletedAt: null } },
           select: {
@@ -95,11 +96,6 @@ const getCategoryCollection = async (req, res, next) => {
             catalogue_id: true,
             category_id: true,
           },
-          // include: {
-          //   catalogue: {
-          //     where: { isActive: true, deletedAt: null },
-          //   },
-          // },
         },
       },
       orderBy: { position: "asc" },
@@ -121,18 +117,9 @@ const getCategoryCollection = async (req, res, next) => {
                 cat_code: true,
                 no_of_product: true,
                 url: true,
-                // price: true,
-                // catalogue_discount: true,
                 average_price: true,
-                // GST: true,
                 offer_price: true,
-                // weight: true,
-                // meta_title: true,
-                // meta_keyword: true,
-                // meta_description: true,
                 coverImage: true,
-                // tag: true,
-                // deletedAt: true,
                 attributeValues: {
                   where: { attribute: { type: "Label" } },
                   select: {
@@ -152,7 +139,7 @@ const getCategoryCollection = async (req, res, next) => {
                   },
                 },
               },
-              take: 5,
+              take: 8,
               orderBy: { updatedAt: "desc" },
             });
 

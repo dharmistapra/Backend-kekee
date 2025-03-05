@@ -326,7 +326,6 @@ const pageWiseBannerSchema = async (req, res, next) => {
     category_id: Joi.string().required(),
     title: Joi.string().required(),
     bannerType: Joi.string().valid("Image", "Video").required(),
-    url: Joi.string().optional().allow("").default(""),
     description: Joi.string().optional().allow("").default(""),
     desktopImage: Joi.any(),
     mobileImage: Joi.any().optional().allow("").default(""),

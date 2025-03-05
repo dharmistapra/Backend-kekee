@@ -10,8 +10,7 @@ import {
 
 const postPageWiseBanner = async (req, res, next) => {
   try {
-    const { category_id, title, bannerType, description, url, isActive } =
-      req.body;
+    const { category_id, title, bannerType, description, isActive } = req.body;
 
     const fileError = await fileValidationError(req.files, bannerType);
     if (fileError.status === false)
@@ -66,7 +65,6 @@ const postPageWiseBanner = async (req, res, next) => {
         title,
         bannerType,
         description,
-        url,
         desktopImage: desktopImagePath,
         mobileImage: mobileImagePath,
         isActive,
@@ -139,8 +137,7 @@ const paginationPageWiseBanner = async (req, res, next) => {
 const updatePageWiseBanner = async (req, res, next) => {
   const desktopImage = req.files?.desktopImage;
   const mobileImage = req.files?.mobileImage;
-  const { category_id, title, bannerType, description, url, isActive } =
-    req.body;
+  const { category_id, title, bannerType, description, isActive } = req.body;
   let desktopImagePath = null;
   let mobileImagePath = null;
 
@@ -228,7 +225,6 @@ const updatePageWiseBanner = async (req, res, next) => {
         title,
         bannerType,
         description,
-        url,
         isActive,
         ...(desktopImage && { desktopImage: desktopImagePath }),
         ...(mobileImage && { mobileImage: mobileImagePath }),

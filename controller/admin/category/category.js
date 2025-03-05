@@ -558,7 +558,7 @@ const updateCategoryShowInHomeStatus = async (req, res, next) => {
     });
     return res.status(200).json({
       status: true,
-      message: `Category status updated successfully.`,
+      message: "Category status updated successfully.",
     });
   } catch (error) {
     let err = new Error("Something went wrong, please try again!");

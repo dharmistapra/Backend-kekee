@@ -177,7 +177,6 @@ model PageWiseBanner {
   category_id  String         @db.ObjectId
   bannerType   BannerType     @default(Image)
   title        String
-  url          String?        @default("")
   description  String?        @default("")
   desktopImage String
   mobileImage  String?        @default("")

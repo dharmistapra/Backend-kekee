@@ -227,6 +227,30 @@ const getCatalogueProduct = async (req, res, next) => {
             },
           },
         },
+        attributeValues: {
+          where: { attribute: { type: { not: "Label" } } },
+          select: {
+            id: true,
+            attribute: {
+              select: {
+                id: true,
+                name: true,
+                key: true,
+                type: true,
+                isActive: true,
+              },
+            },
+            attributeValue: {
+              select: {
+                id: true,
+                name: true,
+                value: true,
+                colour: true,
+                isActive: true,
+              },
+            },
+          },
+        },
         Product: {
           select: {
             id: true,
@@ -241,29 +265,30 @@ const getCatalogueProduct = async (req, res, next) => {
             isActive: true,
             showInSingle: true,
             readyToShip: true,
-            attributeValues: {
-              select: {
-                id: true,
-                attribute: {
-                  select: {
-                    id: true,
-                    name: true,
-                    key: true,
-                    type: true,
-                    isActive: true,
-                  },
-                },
-                attributeValue: {
-                  select: {
-                    id: true,
-                    name: true,
-                    value: true,
-                    colour: true,
-                    isActive: true,
-                  },
-                },
-              },
-            },
+            // attributeValues: {
+            //   where: { attribute: { type: "Label" } },
+            //   select: {
+            //     id: true,
+            //     attribute: {
+            //       select: {
+            //         id: true,
+            //         name: true,
+            //         key: true,
+            //         type: true,
+            //         isActive: true,
+            //       },
+            //     },
+            //     attributeValue: {
+            //       select: {
+            //         id: true,
+            //         name: true,
+            //         value: true,
+            //         colour: true,
+            //         isActive: true,
+            //       },
+            //     },
+            //   },
+            // },
             // labels: {
             //   select: {
             //     id: true,
@@ -300,6 +325,26 @@ const getCatalogueProduct = async (req, res, next) => {
         return [];
       }).flat();
     }
+
+    if (product && product.attributeValues?.length > 0) {
+      let attributes = [];
+      for (const value of product.attributeValues) {
+        let isAttributeExists = attributes?.find(
+          (val) => val.name === value.attribute.name
+        );
+        if (isAttributeExists) {
+          isAttributeExists.value.push(value.attributeValue.name);
+        } else {
+          attributes.push({
+            name: value.attribute.name,
+            key: value.attribute.key,
+            value: [value.attributeValue.name],
+          });
+        }
+      }
+      product["attributeValue"] = attributes;
+    }
+
     delete product?.CatalogueCategory;
 
     return res.status(200).json({

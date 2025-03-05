@@ -78,7 +78,7 @@ const getProductpublic = async (req, res, next) => {
     //   orderBy: { updatedAt: "asc" },
     // });
 
-    const { perPage, pageNo, url, user_id, price, name } = req.body;
+    const { perPage, pageNo, url, user_id, filter } = req.body;
     const { minPrice, maxPrice, ...dynamicFilters } = req.query;
 
     const page = +pageNo || 1;
@@ -121,19 +121,32 @@ const getProductpublic = async (req, res, next) => {
     const { id } = fetchCategory;
 
     let orderBy = { updatedAt: "desc" };
-    if (price) {
-      price === "price-ascending"
-        ? (orderBy["product"] = { offer_price: "asc" })
-        : (orderBy["product"] = { offer_price: "desc" });
+    // if (price) {
+    //   price === "high"
+    //     ? (orderBy["product"] = { offer_price: "asc" })
+    //     : (orderBy["product"] = { offer_price: "desc" });
+    //   delete orderBy["updatedAt"];
+    // }
+    // if (!price && name) {
+    //   name === "AtoZ"
+    //     ? (orderBy["product"] = { name: "asc" })
+    //     : (orderBy["product"] = { name: "desc" });
+    //   delete orderBy["updatedAt"];
+    // }
+
+    // let orderBy = { updatedAt: "desc" };
+    if (filter) {
+      if (filter === "price-ascending") {
+        orderBy["product"] = { offer_price: "asc" };
+      } else if (filter === "price-descending") {
+        orderBy["product"] = { offer_price: "desc" };
+      } else if (filter === "name-ascending") {
+        orderBy["product"] = { name: "asc" };
+      } else if (filter === "name-descending") {
+        orderBy["product"] = { name: "desc" };
+      }
       delete orderBy["updatedAt"];
     }
-    if (!price && name) {
-      name === "name-ascending"
-        ? (orderBy["product"] = { name: "asc" })
-        : (orderBy["product"] = { name: "desc" });
-      delete orderBy["updatedAt"];
-    }
-    console.log(orderBy);
     // Build dynamic filter conditions for attributes
     let filterConditions = [];
     for (const [key, value] of Object.entries(dynamicFilters)) {

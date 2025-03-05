@@ -122,17 +122,18 @@ const getProductpublic = async (req, res, next) => {
 
     let orderBy = { updatedAt: "desc" };
     if (price) {
-      price === "high"
+      price === "price-ascending"
         ? (orderBy["product"] = { offer_price: "asc" })
         : (orderBy["product"] = { offer_price: "desc" });
       delete orderBy["updatedAt"];
     }
     if (!price && name) {
-      name === "AtoZ"
+      name === "name-ascending"
         ? (orderBy["product"] = { name: "asc" })
         : (orderBy["product"] = { name: "desc" });
       delete orderBy["updatedAt"];
     }
+    console.log(orderBy);
     // Build dynamic filter conditions for attributes
     let filterConditions = [];
     for (const [key, value] of Object.entries(dynamicFilters)) {

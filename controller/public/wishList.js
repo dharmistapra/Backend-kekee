@@ -12,7 +12,6 @@ const postWishList = async (req, res, next) => {
         .status(404)
         .json({ isSuccess: false, message: "User not found!" });
 
-
     if (product_id) {
       const isProductExists = await prisma.product.findUnique({
         where: { id: product_id },
@@ -22,7 +21,6 @@ const postWishList = async (req, res, next) => {
           .status(404)
           .json({ isSuccess: false, message: "Product not found!" });
     }
-
 
     if (catalogue_id) {
       const isCatalogueExists = await prisma.catalogue.findUnique({
@@ -58,7 +56,7 @@ const postWishList = async (req, res, next) => {
         isSuccess: true,
         isDeleted: true,
         message: `wishlist record deleted successfully.`,
-        data: result
+        data: result,
       });
     } else {
       const result = await prisma.wishList.create({
@@ -85,8 +83,6 @@ const postWishList = async (req, res, next) => {
     next(error);
   }
 };
-
-
 
 const deleteWishListItem = async (req, res, next) => {
   try {
@@ -172,12 +168,14 @@ const getWishLists = async (req, res, next) => {
             offer_price: true,
             image: true,
             categories: {
+              where: { category: { isActive: true } },
               select: {
                 id: true,
                 category: {
                   select: {
                     id: true,
-                    Menu: { select: { id: true, name: true, url: true } },
+                    url: true,
+                    // Menu: { select: { id: true, name: true, url: true } },
                   },
                 },
               },
@@ -209,18 +207,20 @@ const getWishLists = async (req, res, next) => {
             tag: true,
             isActive: true,
             CatalogueCategory: {
+              where: { category: { isActive: true } },
               select: {
                 category: {
                   select: {
                     id: true,
                     name: true,
-                    Menu: {
-                      select: {
-                        id: true,
-                        name: true,
-                        url: true,
-                      },
-                    },
+                    url: true,
+                    // Menu: {
+                    //   select: {
+                    //     id: true,
+                    //     name: true,
+                    //     url: true,
+                    //   },
+                    // },
                   },
                 },
               },
@@ -257,7 +257,7 @@ const getWishLists = async (req, res, next) => {
           (attr) => attr.attributeValue.value
         );
         value.product.labels = labels;
-        value.product.menu = value.product.categories[0]?.category.Menu[0]?.url;
+        value.product.categoryUrl = value.product.categories[0]?.category.url;
         delete value.product.attributeValues;
         delete value.product.categories;
         value.product.wishList_id = value.id;
@@ -267,8 +267,8 @@ const getWishLists = async (req, res, next) => {
           (attr) => attr.attributeValue.name
         );
         value.catalogue.labels = labels;
-        value.catalogue.menu =
-          value.catalogue.CatalogueCategory[0]?.category.Menu[0]?.url;
+        value.catalogue.categoryUrl =
+          value.catalogue.CatalogueCategory[0]?.category.url;
         delete value.catalogue.attributeValues;
         value.catalogue.wishList_id = value.id;
         catalogue.push(value.catalogue);

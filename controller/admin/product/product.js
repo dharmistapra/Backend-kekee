@@ -128,7 +128,7 @@ const postRetailProduct = async (req, res, next) => {
       quantity,
       weight,
       // price: parseFloat(price),
-      average_price: parseFloat(average_price),
+      average_price: parseFloat(average_price) || 0,
       retail_price: parseFloat(retail_price),
       retail_GST: parseFloat(retail_GST),
       retail_discount: parseFloat(retail_discount),
@@ -139,7 +139,7 @@ const postRetailProduct = async (req, res, next) => {
       showInSingle,
       readyToShip,
       image: imagePaths,
-      stitching: stitching ? true : false,
+      stitching: stitching === true ? true : false,
     };
     let categoryIds = [];
     let categoryConnection = [];

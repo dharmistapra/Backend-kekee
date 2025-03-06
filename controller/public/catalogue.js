@@ -378,6 +378,7 @@ const searchCatalogueAndProduct = async (req, res, next) => {
     let count;
     let transformedData;
     if (isSingleSearch === "false") {
+      console.log(isSingleSearch);
       let condition = {
         isActive: true,
         deletedAt: null,

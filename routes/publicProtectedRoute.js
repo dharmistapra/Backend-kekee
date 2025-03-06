@@ -19,9 +19,18 @@ import {
   getWishLists,
   postWishList,
 } from "../controller/public/wishList.js";
-import { changePasswordusers, updateUserbasicInfo } from "../controller/public/user/register.js";
-import OrderPlace, { orderFailed, verifyOrder } from "../controller/public/orderPlace.js";
-import { getOrderdetails, getOrderHistory } from "../controller/public/orderHistory.js";
+import {
+  changePasswordusers,
+  updateUserbasicInfo,
+} from "../controller/public/user/register.js";
+import OrderPlace, {
+  orderFailed,
+  verifyOrder,
+} from "../controller/public/orderPlace.js";
+import {
+  getOrderdetails,
+  getOrderHistory,
+} from "../controller/public/orderHistory.js";
 
 // publicProtected.post("/cart-item", cartSchema, postCartItem);
 publicProtected.post("/cart-item", cartSchema, postCartItem);
@@ -32,8 +41,16 @@ publicProtected.delete("/deletecart-item/:id", deleteCartItem);
 publicProtected.post("/wish-list", wishListSchema, postWishList);
 publicProtected.delete("/wish-list/:id", deleteWishListItem);
 publicProtected.get("/wish-list", getWishLists);
-publicProtected.post("/change-password", [userchangePasswordSchema], changePasswordusers);
-publicProtected.post("/user-update", [updateUserbasicInfoSchema], updateUserbasicInfo);
+publicProtected.post(
+  "/change-password",
+  [userchangePasswordSchema],
+  changePasswordusers
+);
+publicProtected.post(
+  "/user-update",
+  [updateUserbasicInfoSchema],
+  updateUserbasicInfo
+);
 
 publicProtected.post("/oreder/place", [orderPlaceSchema], OrderPlace);
 publicProtected.post("/verify/order", verifyOrder);

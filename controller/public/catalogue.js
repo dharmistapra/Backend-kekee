@@ -378,7 +378,6 @@ const searchCatalogueAndProduct = async (req, res, next) => {
     let count;
     let transformedData;
     if (isSingleSearch === "false") {
-      console.log(isSingleSearch);
       let condition = {
         isActive: true,
         deletedAt: null,
@@ -570,12 +569,12 @@ const searchCatalogueAndProduct = async (req, res, next) => {
         skip,
         take,
       });
-    }
 
-    transformedData = result.map((item) => {
-      item.outOfStock = item.quantity === 0;
-      return item;
-    });
+      transformedData = result.map((item) => {
+        item.outOfStock = item.quantity === 0;
+        return item;
+      });
+    }
 
     return res.status(200).json({
       isSuccess: true,

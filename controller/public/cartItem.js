@@ -641,14 +641,14 @@ const getAllcartitem = async (req, res, next) => {
           let menu;
           if (item?.catalogue?.CatalogueCategory) {
             const category = item?.catalogue?.CatalogueCategory.map(
-              (value) => value.category.Menu[0].url
+              (value) => value.category.Menu[0]?.url
             );
             menu = category[0];
             delete item?.catalogue?.CatalogueCategory;
           }
           if (item?.product?.categories) {
             const category = item?.product?.categories.map(
-              (value) => value.category.Menu[0].url
+              (value) => value.category.Menu[0]?.url
             );
             menu = category[0];
             delete item?.product?.categories;

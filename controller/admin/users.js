@@ -1,6 +1,7 @@
 import prisma from "../../db/config.js";
 import { updateStatus } from "../../helper/common.js";
 import createSearchFilter from "../../helper/searchFilter.js";
+import { checkStock, reduceProductQuantity } from "../public/orderPlace.js";
 const paginationusers = async (req, res, next) => {
     try {
         const { perPage, pageNo, search } = req.body;
@@ -81,7 +82,7 @@ const getOrderHistoryusers = async (req, res, next) => {
         const result = await prisma.order.findMany({
             where: whereCondition,
             select: {
-                id: true,
+                orderId: true,
                 createdAt: true,
                 status: true,
                 totalAmount: true,
@@ -92,6 +93,18 @@ const getOrderHistoryusers = async (req, res, next) => {
                         type: true,
                         quantity: true,
                         productsnapshots: true,
+                        product: {
+                            select: {
+                                sku: true,
+                                image: true,
+                            }
+                        },
+                        catalogue: {
+                            select: {
+                                cat_code: true,
+                                coverImage: true
+                            }
+                        }
                     }
                 },
                 payment: {
@@ -99,6 +112,7 @@ const getOrderHistoryusers = async (req, res, next) => {
                         paymentMethod: true,
                         status: true,
                     }
+
                 }
             },
             skip,
@@ -110,7 +124,7 @@ const getOrderHistoryusers = async (req, res, next) => {
             const parsedata = JSON.parse(product?.productsnapshots ? product?.productsnapshots : []);
             const payment = order.payment?.[0];
             return {
-                orderId: order?.id,
+                orderId: order?.orderId,
                 productName: parsedata?.name || 'N/A',
                 orderDate: new Date(order.createdAt).toLocaleDateString('en-GB', {
                     day: '2-digit', month: 'long', year: 'numeric'
@@ -121,7 +135,9 @@ const getOrderHistoryusers = async (req, res, next) => {
                 type: parsedata?.type || "",
                 url: parsedata?.url || "",
                 paymentMethod: payment?.paymentMethod,
-                paymentstatus: payment?.status
+                paymentstatus: payment?.status,
+                image: product?.product?.image || product.catalogue.coverImage,
+                sku: product?.product?.sku || product.catalogue.cat_code,
             };
         });
 
@@ -142,7 +158,7 @@ const getOrderdetailsUsers = async (req, res, next) => {
         const { orderId } = req.body;
 
         const orderDetails = await prisma.order.findUnique({
-            where: { id: orderId },
+            where: { orderId: orderId },
             select: {
                 id: true,
                 createdAt: true,
@@ -164,6 +180,7 @@ const getOrderdetailsUsers = async (req, res, next) => {
                         id: true,
                         quantity: true,
                         productsnapshots: true,
+                        type: true,
                     }
                 },
                 shipping: {
@@ -195,6 +212,14 @@ const getOrderdetailsUsers = async (req, res, next) => {
                         paymentMethod: true,
                         transactionId: true,
                         status: true,
+                        bankaccount:{
+                            select:{
+                                bankName:true,
+                                accountHolderName:true,
+                                ifscCode:true,
+                                accountNumber:true
+                            }
+                        }
                     }
                 }
             }
@@ -219,6 +244,7 @@ const getOrderdetailsUsers = async (req, res, next) => {
                 price: productSnapshot.price,
                 subtotal: productSnapshot.subtotal,
                 products: productSnapshot.products,
+                type: item.type,
                 stitching: productSnapshot.stitching.map(stitch => ({
                     stitchingGroupName: stitch.stitchingGroup?.name || '',
                     options: stitch.option.map(opt => ({
@@ -263,28 +289,111 @@ const getOrderdetailsUsers = async (req, res, next) => {
         next(new Error("Something went wrong, Please try again!"));
     }
 };
+
+// const updateOrderStatus = async (req, res, next) => {
+//     try {
+//         const { orderstatus, orderId } = req.body;
+//         const order = await prisma.order.findUnique({ where: { orderId: orderId }, select: { id: true } });
+//         if (!order) {
+//             return res.status(400).json({ message: "Order not found", isSuccess: false });
+//         }
+
+//         const initialStatus = order.status;
+
+
+//         if (orderstatus === "CONFIRMED") {
+//             const stockCheck = await checkStock(orderId);
+//             if (!stockCheck.isSuccess) {
+//                 return res.status(400).json({ isSuccess: false, message: stockCheck.message });
+//             }
+//             await reduceProductQuantity(orderId);
+//         } else if (initialStatus === "CONFIRMED" && orderstatus !== "CONFIRMED") {
+//             await revertProductQuantity(orderId.id);
+//         }
+
+//         await prisma.order.update({
+//             where: { orderId },
+//             data: { status: orderstatus },
+//         });
+
+//         return res.status(200).json({ isSuccess: true, message: "Order status updated successfully" });
+
+//     } catch (error) {
+//         console.log(error)
+//         next(new Error("Something went wrong, Please try again!"));
+//     }
+// }
+
+
+
+
+
 const updateOrderStatus = async (req, res, next) => {
     try {
-        const { orderstatus, orderId } = req.body
-        const findorder = await prisma.order.findUnique({ where: { id: orderId } })
-        if (!findorder) return res.status(400).json({ message: "Order not found", isSuccess: false });
-        const update = await prisma.order.update({
-            where: {
-                id: orderId,
-            },
-            data: {
-                status: orderstatus
+        const { orderstatus, orderId } = req.body;
+
+        // Fetch the current order status
+        const order = await prisma.order.findUnique({
+            where: { orderId },
+            select: { id: true, status: true }, // Select current status
+        });
+
+        if (!order) {
+            return res.status(400).json({ message: "Order not found", isSuccess: false });
+        }
+
+        const initialStatus = order.status;
+        if (orderstatus === "CONFIRMED" && initialStatus !== "CONFIRMED") {
+            const stockCheck = await checkStock(orderId);
+            if (!stockCheck.isSuccess) {
+                return res.status(400).json({ isSuccess: false, message: stockCheck.message });
             }
-        })
+            await reduceProductQuantity(orderId);
+        }
+        else if (initialStatus === "CONFIRMED" && orderstatus !== "CONFIRMED") {
+            await revertProductQuantity(order.id);
+        }
 
+        await prisma.order.update({
+            where: { orderId },
+            data: { status: orderstatus },
+        });
 
-        return res.status(200).json({ message: "Order status update successfully", isSuccess: true, });
+        return res.status(200).json({ isSuccess: true, message: "Order status updated successfully" });
 
     } catch (error) {
-        console.log(error)
+        console.log(error);
         next(new Error("Something went wrong, Please try again!"));
     }
-}
+};
+
+
+const revertProductQuantity = async (orderId) => {
+    const orderDetails = await prisma.orderItem.findMany({
+        where: { orderId },
+    });
+
+    for (const item of orderDetails) {
+        if (item.catlogueId) {
+            await prisma.catalogue.update({
+                where: { id: item.catlogueId },
+                data: { quantity: { increment: item.quantity } },
+            });
+
+            await prisma.product.updateMany({
+                where: {
+                    catalogue_id: item.catlogueId
+                },
+                data: { quantity: { increment: item.quantity } },
+            })
+        } else {
+            await prisma.product.update({
+                where: { id: item.productId },
+                data: { quantity: { increment: item.quantity } },
+            });
+        }
+    }
+};
 
 
 export { paginationusers, updateUsersStatus, getOrderHistoryusers, getOrderdetailsUsers, updateOrderStatus }

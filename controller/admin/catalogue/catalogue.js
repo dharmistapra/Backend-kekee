@@ -752,6 +752,15 @@ const updateCatalogueProduct = async (req, res, next) => {
 
     let productSizeConnection = [];
     if (size) {
+      let sizes = size.map((value) => value.quantity);
+      let totalSize = sizes.reduce((acc, currentValue) => acc + currentValue);
+      if (totalSize !== quantity) {
+        if (req.files && req.files.length > 0)
+          await removeProductImage(imagePaths);
+        return res
+          .status(400)
+          .json({ isSuccess: false, message: "Product quantity not matched!" });
+      }
       const { status, message } = await handleLabelConnection(
         size,
         "size",

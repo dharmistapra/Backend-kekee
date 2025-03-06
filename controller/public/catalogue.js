@@ -381,6 +381,7 @@ const searchCatalogueAndProduct = async (req, res, next) => {
       let condition = {
         isActive: true,
         deletedAt: null,
+        CatalogueCategory: { some: { category: { isActive: true } } },
       };
       if (search) {
         const search_condition = {
@@ -443,11 +444,13 @@ const searchCatalogueAndProduct = async (req, res, next) => {
           coverImage: true,
           description: true,
           CatalogueCategory: {
+            where: { category: { isActive: true } },
             select: {
               category: {
                 select: {
                   id: true,
                   name: true,
+                  url: true,
                 },
               },
             },
@@ -487,6 +490,7 @@ const searchCatalogueAndProduct = async (req, res, next) => {
         );
         const hasSingle = item.Product.some((product) => product.showInSingle);
         item.outOfStock = item.quantity === 0;
+        item.categoryUrl = item?.CatalogueCategory[0]?.category.url;
         delete item.Product;
         delete item.CatalogueCategory;
         return {
@@ -500,6 +504,7 @@ const searchCatalogueAndProduct = async (req, res, next) => {
         isActive: true,
         showInSingle: true,
         catalogue: { deletedAt: null },
+        categories: { some: { category: { isActive: true } } },
       };
       if (search) {
         const search_condition = {
@@ -564,6 +569,18 @@ const searchCatalogueAndProduct = async (req, res, next) => {
               attributeValue: { select: { id: true, name: true, value: true } },
             },
           },
+          categories: {
+            where: { category: { isActive: true } },
+            select: {
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                  url: true,
+                },
+              },
+            },
+          },
         },
         orderBy: { updatedAt: "desc" },
         skip,
@@ -572,6 +589,8 @@ const searchCatalogueAndProduct = async (req, res, next) => {
 
       transformedData = result.map((item) => {
         item.outOfStock = item.quantity === 0;
+        item.categoryUrl = item?.categories[0]?.category?.url;
+        delete item.categories;
         return item;
       });
     }

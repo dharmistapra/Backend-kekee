@@ -451,11 +451,15 @@ const catalogueSchema = async (req, res, next) => {
     // }),
     sizes: Joi.when("size", {
       is: true,
-      then: Joi.array().items({
-        id: Joi.string().required(),
-        price: Joi.number().required().default(0),
-        quantity: Joi.number().required().default(0),
-      }),
+      then: Joi.array()
+        .items({
+          id: Joi.string().required(),
+          price: Joi.number().required().default(0),
+          quantity: Joi.number().required().default(0),
+        })
+        .min(1)
+        .required(),
+      otherwise: Joi.forbidden(),
     }),
     meta_title: Joi.string().optional().default(""),
     meta_keyword: Joi.string().optional().default(""),
@@ -465,31 +469,25 @@ const catalogueSchema = async (req, res, next) => {
     description: Joi.string().required(),
     tag: Joi.array().items(Joi.string().required()).required(),
     isActive: Joi.boolean().optional().default(true),
+    isApply: Joi.boolean().optional().default(false),
     product: Joi.array()
       .items({
         id: Joi.string().required(),
         name: Joi.string().required(),
         average_price: Joi.number().required(),
         retail_price: Joi.number().required(),
-        sizes: Joi.when("size", {
-          is: true,
-          then: Joi.array()
-            .items({
-              id: Joi.string().required(),
-              price: Joi.number().required().default(0),
-              quantity: Joi.number().required().default(0),
-            })
-            .min(1)
-            .required(),
-          otherwise: Joi.array()
-            .items({
-              id: Joi.string().required(),
-              price: Joi.number().required().default(0),
-              quantity: Joi.number().required().default(0),
-            })
-            .optional()
-            .default([]),
-        }),
+        // sizes: Joi.when("size", {
+        //   is: true,
+        //   then: Joi.array()
+        //     .items({
+        //       id: Joi.string().required(),
+        //       price: Joi.number().required().default(0),
+        //       quantity: Joi.number().required().default(0),
+        //     })
+        //     .min(1)
+        //     .required(),
+        //   otherwise: Joi.forbidden(),
+        // }),
         showInSingle: Joi.boolean().required(),
         outofStock: Joi.boolean().required(),
       })

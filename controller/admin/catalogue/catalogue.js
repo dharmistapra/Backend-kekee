@@ -1333,6 +1333,7 @@ const addCatalogue = async (req, res, next) => {
       description,
       tag,
       isActive,
+      isApply,
       product,
       delete_product_ids, // IDs of products to delete
     } = req.body;
@@ -1343,6 +1344,7 @@ const addCatalogue = async (req, res, next) => {
     catalogue_discount = parseInt(catalogue_discount);
     average_price = parseInt(average_price);
     weight = parseInt(weight);
+    quantity = parseInt(quantity);
     GST = parseFloat(GST);
 
     if (!id && !req.file)
@@ -1351,6 +1353,9 @@ const addCatalogue = async (req, res, next) => {
         .json({ isSuccess: false, message: "Please upload cover image!" });
 
     attributes = attributes?.map((jsonString) => JSON.parse(jsonString));
+
+    sizes = sizes?.map((jsonString) => JSON.parse(jsonString));
+    req.body.sizes = sizes;
     req.body.attributes = attributes;
     product = product?.map((jsonString) => JSON.parse(jsonString));
     req.body.product = product;
@@ -1379,15 +1384,15 @@ const addCatalogue = async (req, res, next) => {
       }
     }
 
-    if (
-      size === true &&
-      product.map((value) => !value.sizes || value.sizes.length === 0)
-    ) {
-      if (req.file) await deleteFile(filepath);
-      return res
-        .status(400)
-        .json({ isSuccess: false, message: "Please select size in product!" });
-    }
+    // if (
+    //   size === true &&
+    //   product.map((value) => !value.sizes || value.sizes.length === 0)
+    // ) {
+    //   if (req.file) await deleteFile(filepath);
+    //   return res
+    //     .status(400)
+    //     .json({ isSuccess: false, message: "Please select size in product!" });
+    // }
 
     // Validate category IDs
     const [uniqueCode, isCategoryExists] = await prisma.$transaction([
@@ -1483,8 +1488,8 @@ const addCatalogue = async (req, res, next) => {
     }
 
     let catalogueSizeConnection = [];
-    if (sizes) {
-      const { status, message } = await handleCatalogueConnection(
+    if (sizes && sizes.length > 0) {
+      const { status, message } = await handleLabelConnection(
         sizes,
         "size",
         filepath
@@ -1514,6 +1519,16 @@ const addCatalogue = async (req, res, next) => {
       return res
         .status(404)
         .json({ isSuccess: false, message: "No of product not matched!" });
+    }
+    if (size === "true") {
+      let size = sizes.map((value) => value.quantity);
+      let totalSize = size.reduce((acc, currentValue) => acc + currentValue);
+      if (totalSize !== quantity) {
+        if (req.file) await deleteFile(filepath);
+        return res
+          .status(400)
+          .json({ isSuccess: false, message: "Size quantity not matched!" });
+      }
     }
     const isProductExists = await prisma.product.findMany({
       where: { id: { in: productId } },
@@ -1603,7 +1618,7 @@ const addCatalogue = async (req, res, next) => {
             name,
             cat_code,
             url,
-            quantity: parseInt(quantity),
+            quantity: quantity,
             no_of_product,
             price,
             catalogue_discount,
@@ -1627,7 +1642,8 @@ const addCatalogue = async (req, res, next) => {
               attributes.length > 0 && {
                 attributeValues: { create: attributeValueConnection },
               }),
-            ...(sizes &&
+            ...(size === "true" &&
+              sizes &&
               sizes.length > 0 && {
                 CatalogueSize: { create: catalogueSizeConnection },
               }),
@@ -1653,7 +1669,7 @@ const addCatalogue = async (req, res, next) => {
             name,
             cat_code,
             url,
-            quantity: parseInt(quantity),
+            quantity: quantity,
             no_of_product,
             price,
             catalogue_discount,
@@ -1682,7 +1698,7 @@ const addCatalogue = async (req, res, next) => {
                   },
                 }
               : { attributeValues: { deleteMany: {} } }),
-            ...(sizes && sizes.length > 0
+            ...(size === "true" && sizes && sizes.length > 0
               ? {
                   CatalogueSize: {
                     deleteMany: {},
@@ -1730,7 +1746,24 @@ const addCatalogue = async (req, res, next) => {
               : retailPrice;
           const url = `${slug(name)}-${existingProduct.sku}`;
           let productSizeConnection;
-          if (value.sizes) {
+          let productQuantity = existingProduct.quantity;
+          if (result.size === false && value.showInSingle === false) {
+            productQuantity = result.quantity;
+          }
+
+          if (result.size === true && isApply === true) {
+            let size = sizes.map((value) => value.quantity);
+            let totalSize = size.reduce(
+              (acc, currentValue) => acc + currentValue
+            );
+            productQuantity = totalSize;
+            // if (totalSize !== quantity) {
+            //   if (req.file) await deleteFile(filepath);
+            //   return res.status(400).json({
+            //     isSuccess: false,
+            //     message: "Product quantity not matched!",
+            //   });
+            // }
             productSizeConnection = value.sizes.map((size) => ({
               size: { connect: { id: size.id } },
               price: parseInt(size.price),
@@ -1747,8 +1780,8 @@ const addCatalogue = async (req, res, next) => {
               data: {
                 name: value.name,
                 url,
-                ...(value.showInSingle !== true && {
-                  quantity: result.quantity,
+                ...(productQuantity && {
+                  quantity: productQuantity,
                 }),
                 categories: {
                   deleteMany: {},
@@ -1756,8 +1789,13 @@ const addCatalogue = async (req, res, next) => {
                     category: { connect: { id: catId } },
                   })),
                 },
-                ...(result.size === true && value.sizes.length > 0
-                  ? { sizes: { deleteMany: {}, create: productSizeConnection } }
+                ...(result.size === true && sizes.length > 0
+                  ? {
+                      sizes: {
+                        deleteMany: {},
+                        create: catalogueSizeConnection,
+                      },
+                    }
                   : { sizes: { deleteMany: {} } }),
                 catalogue_id: result.id,
                 average_price: parseFloat(value.average_price),

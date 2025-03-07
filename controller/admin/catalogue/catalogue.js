@@ -1354,7 +1354,7 @@ const addCatalogue = async (req, res, next) => {
 
     attributes = attributes?.map((jsonString) => JSON.parse(jsonString));
 
-    sizes = sizes?.map((jsonString) => JSON.parse(jsonString));
+    sizes = sizes?.map((jsonString) => JSON?.parse(jsonString));
     req.body.sizes = sizes;
     req.body.attributes = attributes;
     product = product?.map((jsonString) => JSON.parse(jsonString));
@@ -1523,6 +1523,8 @@ const addCatalogue = async (req, res, next) => {
     if (size === "true") {
       let size = sizes.map((value) => value.quantity);
       let totalSize = size.reduce((acc, currentValue) => acc + currentValue);
+      console.log("totalSize",totalSize)
+      console.log("quantity",quantity)
       if (totalSize !== quantity) {
         if (req.file) await deleteFile(filepath);
         return res
@@ -2070,16 +2072,17 @@ const getCatalogueProduct = async (req, res, next) => {
           : null
       );
 
-      datas.CatalogueSize = product.CatalogueSize.map((cat) =>
-        cat.size
+      datas.CatalogueSize = product.CatalogueSize.map((cat) => {
+        return cat.size
           ? {
               id: cat.size.id,
               value: cat.size.value,
+              quantity: cat.quantity,
               isActive: cat.size.isActive,
             }
-          : null
-      );
-
+          : null;
+      });
+      
       // datas.CatalogueCollection = product.CatalogueCollection.map((cat) =>
       //   cat.collection
       //     ? {

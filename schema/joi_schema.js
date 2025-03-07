@@ -449,7 +449,14 @@ const catalogueSchema = async (req, res, next) => {
     //   then: Joi.array().items(Joi.string().required()).required(),
     //   otherwise: Joi.forbidden(),
     // }),
-    sizes: Joi.array().optional(),
+    sizes: Joi.when("size", {
+      is: true,
+      then: Joi.array().items({
+        id: Joi.string().required(),
+        price: Joi.number().required().default(0),
+        quantity: Joi.number().required().default(0),
+      }),
+    }),
     meta_title: Joi.string().optional().default(""),
     meta_keyword: Joi.string().optional().default(""),
     meta_description: Joi.string().optional().default(""),

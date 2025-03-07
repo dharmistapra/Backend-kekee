@@ -681,6 +681,8 @@ model CatalogueSize {
   id           String    @id @default(auto()) @map("_id") @db.ObjectId
   catalogue_id String    @db.ObjectId
   size_id      String    @db.ObjectId
+  price        Int?      @default(0)
+  quantity     Int
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   catalogue    Catalogue @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
@@ -730,7 +732,7 @@ enum ShippingChargestype {
 model Order {
   id             String      @id @default(auto()) @map("_id") @db.ObjectId
   userId         String      @db.ObjectId
-  orderId        String      @unique 
+  orderId        String      @unique
   subtotal       Float
   Tax            Float
   discount       Float?

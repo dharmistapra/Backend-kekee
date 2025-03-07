@@ -233,6 +233,14 @@ const postCatlogProduct = async (req, res, next) => {
     }
     let productSizeConnection = [];
     if (size) {
+      let sizes = size.map((value) => value.quantity);
+      let totalSize = sizes.reduce((acc, currentValue) => acc + currentValue);
+      if (totalSize !== quantity) {
+        await removeProductImage(imagePaths);
+        return res
+          .status(400)
+          .json({ isSuccess: false, message: "Product quantity not matched!" });
+      }
       const { status, message } = await handleLabelConnection(
         size,
         "size",
@@ -1364,7 +1372,7 @@ const addCatalogue = async (req, res, next) => {
     if (id) {
       catalogue = await prisma.catalogue.findUnique({ where: { id } });
       if (!catalogue) {
-        if (req.file) deleteFile(filepath);
+        if (req.file) await deleteFile(filepath);
         return res
           .status(404)
           .json({ isSuccess: false, message: "Catalogue not found!" });
@@ -1374,10 +1382,12 @@ const addCatalogue = async (req, res, next) => {
     if (
       size === true &&
       product.map((value) => !value.sizes || value.sizes.length === 0)
-    )
+    ) {
+      if (req.file) await deleteFile(filepath);
       return res
         .status(400)
         .json({ isSuccess: false, message: "Please select size in product!" });
+    }
 
     // Validate category IDs
     const [uniqueCode, isCategoryExists] = await prisma.$transaction([
@@ -1485,8 +1495,10 @@ const addCatalogue = async (req, res, next) => {
           message: message,
         });
 
-      catalogueSizeConnection = sizes.map((id) => ({
-        size: { connect: { id: id } },
+      catalogueSizeConnection = sizes.map((size) => ({
+        size: { connect: { id: size.id } },
+        price: size.price,
+        quantity: size.quantity,
       }));
 
       // productData["sizes"] = {
@@ -1744,7 +1756,7 @@ const addCatalogue = async (req, res, next) => {
                     category: { connect: { id: catId } },
                   })),
                 },
-                ...(value.sizes && value.sizes.length > 0
+                ...(result.size === true && value.sizes.length > 0
                   ? { sizes: { deleteMany: {}, create: productSizeConnection } }
                   : { sizes: { deleteMany: {} } }),
                 catalogue_id: result.id,

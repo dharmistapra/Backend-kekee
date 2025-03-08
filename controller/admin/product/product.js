@@ -716,7 +716,7 @@ const paginationReatilProduct = async (req, res, next) => {
         },
       },
       showInSingle: true,
-      catalogue_id: null,
+      catalogue: { deletedAt: null },
     };
     const count = await prisma.product.count({ where: filter });
     if (count === 0)
@@ -779,7 +779,6 @@ const paginationReatilProduct = async (req, res, next) => {
           },
         },
       },
-
       skip,
       take,
       orderBy: { updatedAt: "desc" },

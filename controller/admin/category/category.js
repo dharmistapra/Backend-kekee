@@ -233,7 +233,10 @@ const categoryPagination = async (req, res, next) => {
             products: {
               where: {
                 product: {
-                  AND: [{ showInSingle: true }, { catalogue_id: null }],
+                  AND: [
+                    { showInSingle: true },
+                    { catalogue: { deletedAt: null } },
+                  ],
                 },
               },
             },

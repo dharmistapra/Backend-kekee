@@ -97,10 +97,10 @@ const postCategory = async (req, res, next) => {
         image: filepath,
         ...(attributes &&
           attributes.length > 0 && {
-            CategoryAttribute: {
-              create: attributeConnection, // connect attributes to the category
-            },
-          }),
+          CategoryAttribute: {
+            create: attributeConnection, // connect attributes to the category
+          },
+        }),
       },
     });
     return res.status(200).json({
@@ -183,9 +183,7 @@ const categoryPagination = async (req, res, next) => {
     const skip = (page - 1) * take;
 
     const filter = [{ name: { contains: search, mode: "insensitive" } }];
-
     const searchFilter = createSearchFilter(search, filter);
-
     const count = await prisma.categoryMaster.count({
       where: { parent_id: parent_id || null },
     });
@@ -244,7 +242,6 @@ const categoryPagination = async (req, res, next) => {
                 },
               },
             },
-            // CatalogueCategory: true,
           },
         },
       },
@@ -383,16 +380,16 @@ const updateCategory = async (req, res, next) => {
         meta_description,
         ...(attributes !== ""
           ? attributes.length > 0 && {
-              CategoryAttribute: {
-                deleteMany: {},
-                create: attributeConnections,
-              },
-            }
+            CategoryAttribute: {
+              deleteMany: {},
+              create: attributeConnections,
+            },
+          }
           : {
-              CategoryAttribute: {
-                deleteMany: {},
-              },
-            }),
+            CategoryAttribute: {
+              deleteMany: {},
+            },
+          }),
       },
     });
 

@@ -110,6 +110,47 @@ const findproductpriceOnSize = async (product_id, size_id, quantity = 1) => {
   return { subtotal: 0, tax: 0 };
 };
 
+
+const findcataloguepriceOnSize = async (catalogue_id, size_id, quantity = 1) => {
+  const catalogue = await prisma.catalogue.findUnique({
+    where: { id: catalogue_id },
+    include: {
+      CatalogueSize: true,
+    }
+    // include: { sizes: true, categories: true },
+  });
+  if (!catalogue) {
+    return { subtotal: 0, tax: 0 };
+  }
+
+  let parseSizes = JSON.parse(size_id);
+
+  if (catalogue?.CatalogueSize && parseSizes) {
+    let finddata = catalogue?.CatalogueSize?.find(
+      (item) => String(item?.size_id) === String(parseSizes[0]?.id)
+    );
+    if (finddata) {
+      if (finddata?.quantity < quantity) {
+        return {
+          subtotal: 0,
+          tax: 0,
+          message: "At this time stock is un available",
+        };
+      }
+
+      const subtotalPerItem = product?.offer_price + finddata?.price;
+      const subtotal = subtotalPerItem * quantity;
+      const taxRate = product.retail_GST || 0;
+      const taxPerItem = (subtotalPerItem * taxRate) / 100;
+      const tax = taxPerItem * quantity;
+
+      return { subtotal, tax };
+    }
+  }
+
+  return { subtotal: 0, tax: 0 };
+};
+
 const findproductpriceonStitching = async (product_id, stitching, quantity) => {
   if (!product_id) {
     return { subtotal: 0, tax: 0 };
@@ -453,4 +494,5 @@ export {
   extractMeasurementData,
   updateStitchingValues,
   findCatalogueStitchingprice,
+  findcataloguepriceOnSize
 };

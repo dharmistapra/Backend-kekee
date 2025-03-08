@@ -5,6 +5,8 @@ import {
   postCartItem,
   getAllcartitem,
   deleteCartItem,
+  postCartItemOptimizeCode,
+  getAllcartitemOptimizecode,
 } from "../controller/public/cartItem.js";
 import {
   cartSchema,
@@ -34,6 +36,8 @@ import {
 
 // publicProtected.post("/cart-item", cartSchema, postCartItem);
 publicProtected.post("/cart-item", cartSchema, postCartItem);
+publicProtected.post("/optimizecart-item", cartSchema, postCartItemOptimizeCode);
+publicProtected.get("/getcart-item/:id", getAllcartitemOptimizecode);
 publicProtected.put("/cart-item", editCartSchema, updateCartItem);
 publicProtected.get("/cart-item/:id", getAllcartitem);
 publicProtected.delete("/deletecart-item/:id", deleteCartItem);

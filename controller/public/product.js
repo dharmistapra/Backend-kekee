@@ -383,7 +383,6 @@ const getProductDetails = async (req, res, next) => {
                 id: true,
                 value: true,
                 position: true,
-                isActive: true,
               },
             },
           },
@@ -397,11 +396,17 @@ const getProductDetails = async (req, res, next) => {
         .json({ isSuccess: false, message: "Product not found!" });
 
     if (data?.attributeValues?.length) {
+      let labels = [];
+      let colours = [];
       const processedAttributes = data.attributeValues.reduce((acc, item) => {
         const { attribute, attributeValue } = item;
         if (attribute.type === "ExpiryTime") return acc;
         if (attribute.type === "Label") {
-          data.label = attributeValue.value;
+          labels.push(attributeValue.value);
+          return acc;
+        }
+        if (attribute.type === "Colour") {
+          colours.push(attributeValue.value);
           return acc;
         }
 
@@ -417,18 +422,19 @@ const getProductDetails = async (req, res, next) => {
         }
         return acc;
       }, {});
-
+      data.labels = labels;
+      data.colours = colours;
       data.attributeValues = Object.values(processedAttributes);
     }
-    if (data?.colours && data?.colours?.length > 0) {
-      data.colours = data.colours.map((item) => item.colour);
-    }
-    if (data?.labels && data?.labels?.length > 0) {
-      data.labels = data.labels.map((item) => {
-        item.label["expiryTime"] = item.expiryTime;
-        return { label: item.label };
-      });
-    }
+    // if (data?.colours && data?.colours?.length > 0) {
+    //   data.colours = data.colours.map((item) => item.colour);
+    // }
+    // if (data?.labels && data?.labels?.length > 0) {
+    //   data.labels = data.labels.map((item) => {
+    //     item.label["expiryTime"] = item.expiryTime;
+    //     return { label: item.label };
+    //   });
+    // }
     if (data && data.stitching) {
       data.stitchingOption = data.categories
         ?.map((item) => {

@@ -678,7 +678,7 @@ const getMenuPageWiseBanner = async (req, res, next) => {
             id: true,
             bannerType: true,
             title: true,
-            url: true,
+            // url: true,
             description: true,
             desktopImage: true,
             mobileImage: true,

@@ -174,7 +174,6 @@ const getCatalogueProduct = async (req, res, next) => {
         meta_title: true,
         meta_keyword: true,
         meta_description: true,
-        // coverImage: true,
         description: true,
         tag: true,
         isActive: true,
@@ -234,6 +233,20 @@ const getCatalogueProduct = async (req, res, next) => {
             attributeValue: true,
           },
         },
+        CatalogueSize: {
+          where: { size: { isActive: true } },
+          select: {
+            size: {
+              select: {
+                id: true,
+                position: true,
+                value: true,
+              },
+            },
+            price: true,
+            quantity: true,
+          },
+        },
         Product: {
           select: {
             id: true,
@@ -248,42 +261,6 @@ const getCatalogueProduct = async (req, res, next) => {
             isActive: true,
             showInSingle: true,
             readyToShip: true,
-            // attributeValues: {
-            //   where: { attribute: { type: "Label" } },
-            //   select: {
-            //     id: true,
-            //     attribute: {
-            //       select: {
-            //         id: true,
-            //         name: true,
-            //         key: true,
-            //         type: true,
-            //         isActive: true,
-            //       },
-            //     },
-            //     attributeValue: {
-            //       select: {
-            //         id: true,
-            //         name: true,
-            //         value: true,
-            //         colour: true,
-            //         isActive: true,
-            //       },
-            //     },
-            //   },
-            // },
-            // labels: {
-            //   select: {
-            //     id: true,
-            //     label: {
-            //       select: {
-            //         id: true,
-            //         name: true,
-            //       },
-            //     },
-            //     expiryTime: true,
-            //   },
-            // },
           },
         },
       },
@@ -350,6 +327,16 @@ const getCatalogueProduct = async (req, res, next) => {
       product.attributeValues = Object.values(processedAttributes);
     }
 
+    if (product.size === true && product.CatalogueSize.length > 0) {
+      product.Size = product.CatalogueSize.map((val) => ({
+        id: val.size.id,
+        value: val.size.value,
+        position: val.size.position,
+        price: val.price,
+        quantity: val.quantity,
+      }));
+    }
+    delete product?.CatalogueSize;
     delete product?.CatalogueCategory;
 
     return res.status(200).json({

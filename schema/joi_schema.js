@@ -1021,11 +1021,10 @@ const cartSchema = async (req, res, next) => {
         "array.min": "Please select at least one stitching option.",
       })
       .optional(),
-    size: Joi.array()
-      .items({
-        id: Joi.string().required(),
-        value: Joi.string().required(),
-      })
+    size: Joi.object({
+      id: Joi.string().required(),
+      value: Joi.string().required(),
+    })
       .optional(),
   })
     .xor("stitching", "size")

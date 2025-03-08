@@ -158,10 +158,15 @@ const paginationSize = async (req, res, next) => {
         const take = +perPage || 10;
         const skip = (page - 1) * take;
 
-
         const count = await prisma.size.count();
 
         const result = await prisma.size.findMany({
+            select: {
+                id: true,
+                position: true,
+                value: true,
+            },
+
             skip,
             take,
             orderBy: { position: "asc" },

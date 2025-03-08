@@ -616,8 +616,8 @@ const updateCatalogueProduct = async (req, res, next) => {
     const processedImages = imagePaths
       ? [...imagePaths, ...(findData?.image || [])]
       : typeof images === "string"
-        ? [images]
-        : images;
+      ? [images]
+      : images;
 
     console.log("stitching =======>", stitching);
     const productData = {
@@ -945,21 +945,21 @@ const catlogtGetSingleProduct = async (req, res, next) => {
       newProduct.categories = product.categories.map((cat) =>
         cat.category
           ? {
-            id: cat.category.id,
-            parentId: cat.category.parent_id ? cat.category.parent_id : null,
-            name: cat.category.name,
-            isActive: cat.category.isActive,
-          }
+              id: cat.category.id,
+              parentId: cat.category.parent_id ? cat.category.parent_id : null,
+              name: cat.category.name,
+              isActive: cat.category.isActive,
+            }
           : null
       );
 
       newProduct.collection = product.collection.map((cat) =>
         cat.collection
           ? {
-            id: cat.collection.id,
-            name: cat.collection.name,
-            isActive: cat.collection.isActive,
-          }
+              id: cat.collection.id,
+              name: cat.collection.name,
+              isActive: cat.collection.isActive,
+            }
           : null
       );
 
@@ -1523,8 +1523,8 @@ const addCatalogue = async (req, res, next) => {
     if (size === "true") {
       let size = sizes.map((value) => value.quantity);
       let totalSize = size.reduce((acc, currentValue) => acc + currentValue);
-      console.log("totalSize", totalSize)
-      console.log("quantity", quantity)
+      console.log("totalSize", totalSize);
+      console.log("quantity", quantity);
       if (totalSize !== quantity) {
         if (req.file) await deleteFile(filepath);
         return res
@@ -1642,13 +1642,13 @@ const addCatalogue = async (req, res, next) => {
             },
             ...(attributes &&
               attributes.length > 0 && {
-              attributeValues: { create: attributeValueConnection },
-            }),
+                attributeValues: { create: attributeValueConnection },
+              }),
             ...(size === "true" &&
               sizes &&
               sizes.length > 0 && {
-              CatalogueSize: { create: catalogueSizeConnection },
-            }),
+                CatalogueSize: { create: catalogueSizeConnection },
+              }),
             tag,
             isActive: true,
             deletedAt: null,
@@ -1694,19 +1694,19 @@ const addCatalogue = async (req, res, next) => {
             },
             ...(attributes && attributes.length > 0
               ? {
-                attributeValues: {
-                  deleteMany: {},
-                  create: attributeValueConnection,
-                },
-              }
+                  attributeValues: {
+                    deleteMany: {},
+                    create: attributeValueConnection,
+                  },
+                }
               : { attributeValues: { deleteMany: {} } }),
             ...(size === "true" && sizes && sizes.length > 0
               ? {
-                CatalogueSize: {
-                  deleteMany: {},
-                  create: catalogueSizeConnection,
-                },
-              }
+                  CatalogueSize: {
+                    deleteMany: {},
+                    create: catalogueSizeConnection,
+                  },
+                }
               : { CatalogueSize: { deleteMany: {} } }),
             tag,
             isActive: true,
@@ -1753,7 +1753,7 @@ const addCatalogue = async (req, res, next) => {
             productQuantity = result.quantity;
           }
 
-          if (result.size === true && isApply === true) {
+          if (result.size === "true" && isApply === "true") {
             let size = sizes.map((value) => value.quantity);
             let totalSize = size.reduce(
               (acc, currentValue) => acc + currentValue
@@ -1793,11 +1793,11 @@ const addCatalogue = async (req, res, next) => {
                 },
                 ...(result.size === true && sizes?.length > 0
                   ? {
-                    sizes: {
-                      deleteMany: {},
-                      create: catalogueSizeConnection,
-                    },
-                  }
+                      sizes: {
+                        deleteMany: {},
+                        create: catalogueSizeConnection,
+                      },
+                    }
                   : { sizes: { deleteMany: {} } }),
                 catalogue_id: result.id,
                 average_price: parseFloat(value.average_price),
@@ -2064,23 +2064,23 @@ const getCatalogueProduct = async (req, res, next) => {
       datas.CatalogueCategory = product.CatalogueCategory.map((cat) =>
         cat.category
           ? {
-            id: cat.category.id,
-            parentId: cat.category.parent_id ? cat.category.parent_id : null,
-            name: cat.category.name,
-            isActive: cat.category.isActive,
-          }
+              id: cat.category.id,
+              parentId: cat.category.parent_id ? cat.category.parent_id : null,
+              name: cat.category.name,
+              isActive: cat.category.isActive,
+            }
           : null
       );
 
       datas.CatalogueSize = product.CatalogueSize.map((cat) => {
         return cat.size
           ? {
-            id: cat.size.id,
-            // value: cat.size.value,
-            quantity: cat.quantity,
-            price: cat.price,
-            // isActive: cat.size.isActive,
-          }
+              id: cat.size.id,
+              // value: cat.size.value,
+              quantity: cat.quantity,
+              price: cat.price,
+              // isActive: cat.size.isActive,
+            }
           : null;
       });
 
@@ -2160,13 +2160,13 @@ const getCatalogueProduct = async (req, res, next) => {
         newProduct.categories = product.categories.map((cat) =>
           cat.category
             ? {
-              id: cat.category.id,
-              parentId: cat.category.parent_id
-                ? cat.category.parent_id
-                : null,
-              name: cat.category.name,
-              isActive: cat.category.isActive,
-            }
+                id: cat.category.id,
+                parentId: cat.category.parent_id
+                  ? cat.category.parent_id
+                  : null,
+                name: cat.category.name,
+                isActive: cat.category.isActive,
+              }
             : null
         );
 

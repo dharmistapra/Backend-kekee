@@ -499,6 +499,7 @@ export const checkStock = async (orderId) => {
     }
 };
 
+
 export const reduceProductQuantity = async (orderId) => {
     try {
         const findorderId = await prisma.order.findUnique({ where: { orderId: orderId }, select: { id: true } })

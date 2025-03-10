@@ -998,6 +998,7 @@ const collectionSchema = async (req, res, next) => {
 const cartSchema = async (req, res, next) => {
   const schema = Joi.object({
     product_id: Joi.string().optional(),
+    user_id: Joi.string().required(),
     catalogue_id: Joi.string().optional(),
     // user_id: Joi.string().required(),
     quantity: Joi.number().required(),

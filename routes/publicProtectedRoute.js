@@ -3,7 +3,6 @@ const publicProtected = express.Router();
 import {
   updateCartItem,
   postCartItem,
-  getAllcartitem,
   deleteCartItem,
   postCartItemOptimizeCode,
   getAllcartitemOptimizecode,
@@ -35,11 +34,10 @@ import {
 } from "../controller/public/orderHistory.js";
 
 // publicProtected.post("/cart-item", cartSchema, postCartItem);
-publicProtected.post("/cart-item", cartSchema, postCartItem);
-publicProtected.post("/optimizecart-item", cartSchema, postCartItemOptimizeCode);
-publicProtected.get("/getcart-item/:id", getAllcartitemOptimizecode);
+publicProtected.post("/cart-item", cartSchema, postCartItemOptimizeCode);
+// publicProtected.get("/getcart-item/:id", getAllcartitemOptimizecode);
 publicProtected.put("/cart-item", editCartSchema, updateCartItem);
-publicProtected.get("/cart-item/:id", getAllcartitem);
+publicProtected.get("/cart-item/:id", getAllcartitemOptimizecode);
 publicProtected.delete("/deletecart-item/:id", deleteCartItem);
 
 publicProtected.post("/wish-list", wishListSchema, postWishList);

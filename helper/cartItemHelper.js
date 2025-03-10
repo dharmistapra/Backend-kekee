@@ -117,7 +117,6 @@ const findcataloguepriceOnSize = async (catalogue_id, size_id, quantity = 1) => 
     include: {
       CatalogueSize: true,
     }
-    // include: { sizes: true, categories: true },
   });
   if (!catalogue) {
     return { subtotal: 0, tax: 0 };
@@ -411,6 +410,7 @@ const findCatalogueStitchingprice = async (
       CatalogueSize: true,
     },
   });
+
   if (catalogue && stitching) {
     const extranct_Option_Id = stitching
       ?.map((item) => {
@@ -420,14 +420,11 @@ const findCatalogueStitchingprice = async (
       })
       .flat();
 
-    const outOfStockCount = checkproductquantity?.filter(
-      (data) => data.outOfStock === true
-    ).length;
+    const outOfStockCount = checkproductquantity?.filter((data) => data.outOfStock === true).length;
     const availableProductCount = checkproductquantity.length - outOfStockCount;
     const stitchingPricePerItem =
       (await findStitchingOptionPrices(extranct_Option_Id)) || 0;
-    const subtotal =
-      availableProductCount * catalogue.average_price +
+    const subtotal = availableProductCount * catalogue.average_price +
       availableProductCount * stitchingPricePerItem;
 
     const taxRate = catalogue.GST || 0;
@@ -484,6 +481,23 @@ const findCatalogueSizeprice = async (
 
   return { subtotal: 0, tax: 0 };
 };
+
+
+
+const validateStitchingOption=async(stitching)=>{
+  if (!Array.isArray(stitching) || stitching.length === 0) {
+    throw new Error("Invalid stitching data");
+}
+
+for(let item of stitching){
+  if (!item.optionid) {throw new Error("Missing optionid")}
+  const optionExists = await prisma.stitchingOption.findUnique({where: { id: item.optionid }});
+  console.log(optionExists)
+  if (!optionExists) {throw new Error(`Invalid optionid: ${item.optionid}`)}
+}
+
+return { success: true, message: "Validation successful" };
+}
 export {
   isvalidstitching,
   validateStitching,
@@ -494,5 +508,6 @@ export {
   extractMeasurementData,
   updateStitchingValues,
   findCatalogueStitchingprice,
-  findcataloguepriceOnSize
+  findcataloguepriceOnSize,
+  validateStitchingOption
 };

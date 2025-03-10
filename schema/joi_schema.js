@@ -1002,26 +1002,29 @@ const cartSchema = async (req, res, next) => {
     catalogue_id: Joi.string().optional(),
     // user_id: Joi.string().required(),
     quantity: Joi.number().required(),
-    stitching: Joi.array()
-      .items({
-        group_id: Joi.string().required(),
-        options: Joi.array()
-          .items({
-            id: Joi.string().required(),
-            price: Joi.string().optional(),
-            dispatch_time: Joi.string().optional(),
-            measurment_id: Joi.array().items({
-              id: Joi.string().required(),
-              value: Joi.string().required(),
-            }),
-          })
-          .optional(),
-      })
-      .min(1)
-      .messages({
-        "array.min": "Please select at least one stitching option.",
-      })
-      .optional(),
+    // stitching: Joi.array()
+    //   .items({
+    //     group_id: Joi.string().required(),
+    //     options: Joi.array()
+    //       .items({
+    //         id: Joi.string().required(),
+    //         price: Joi.string().optional(),
+    //         dispatch_time: Joi.string().optional(),
+    //         measurment_id: Joi.array().items({
+    //           id: Joi.string().required(),
+    //           value: Joi.string().required(),
+    //         }),
+    //       })
+    //       .optional(),
+    //   })
+    //   .min(1)
+    //   .messages({
+    //     "array.min": "Please select at least one stitching option.",
+    //   })
+    //   .optional(),
+
+
+    stitching: Joi.array().optional(),
     size: Joi.object({
       id: Joi.string().required(),
       value: Joi.string().required(),

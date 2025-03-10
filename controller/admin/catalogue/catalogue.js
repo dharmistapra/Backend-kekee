@@ -1835,7 +1835,7 @@ const addCatalogue = async (req, res, next) => {
             });
         })
       );
-    });
+    },{timeout:10000 });
 
     const conditionalmessage = catalogue
       ? "Catalogue update successfully"

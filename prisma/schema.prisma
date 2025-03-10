@@ -556,6 +556,7 @@ model StitchingOption {
   updatedAt            DateTime               @updatedAt
   stitchingValues      StitchingValue[]
   StitchingGroupOption StitchingGroupOption[]
+  stitchingItems CartItemStitching[]
 }
 
 model StitchingValue {
@@ -660,10 +661,20 @@ model CartItem {
   product      Product?   @relation(fields: [product_id], references: [id], onDelete: Cascade)
   catalogue    Catalogue? @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
   cart         cart?      @relation(fields: [cart_id], references: [id])
+  stitchingItems CartItemStitching[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
+model CartItemStitching{
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  cartItem_id  String    @db.ObjectId
+  stitching_option  String  @db.ObjectId
+  measurment    Json?
+  cartItem         CartItem   @relation(fields: [cartItem_id], references: [id], onDelete: Cascade)  
+  option         StitchingOption   @relation(fields: [stitching_option], references: [id], onDelete: Cascade)  
 
+
+}
 model WishList {
   id           String     @id @default(auto()) @map("_id") @db.ObjectId
   user_id      String     @db.ObjectId

@@ -854,6 +854,7 @@ const productSchema = async (req, res, next) => {
 
     colour_id: Joi.array().items(Joi.string()).optional().default([]),
     stitching: Joi.boolean().optional().default(false),
+    isSize: Joi.boolean().optional().default(false),
     meta_title: Joi.string().optional().allow("").default(""),
     meta_keyword: Joi.string().optional().allow("").default(""),
     meta_description: Joi.string().optional().allow("").default(""),
@@ -1028,8 +1029,7 @@ const cartSchema = async (req, res, next) => {
     size: Joi.object({
       id: Joi.string().required(),
       value: Joi.string().required(),
-    })
-      .optional(),
+    }).optional(),
   })
     .xor("stitching", "size")
     .xor("catalogue_id", "product_id")

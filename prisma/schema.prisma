@@ -317,6 +317,7 @@ model Product {
   // label            String?                 @default("")
   tag              String[]
   stitching        Boolean?                @default(false)
+  size             Boolean?                @default(false)
   isActive         Boolean?                @default(true)
   showInSingle     Boolean?                @default(false)
   isDraft          Boolean                 @default(false)

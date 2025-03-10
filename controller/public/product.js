@@ -224,7 +224,7 @@ const getProductpublic = async (req, res, next) => {
             meta_keyword: true,
             meta_description: true,
             attributeValues: {
-              select: { id: true, attributeValue: true },
+              select: { id: true, attribute: true, attributeValue: true },
             },
           },
         },
@@ -235,6 +235,40 @@ const getProductpublic = async (req, res, next) => {
     });
 
     const product = productData.map((value) => {
+      if (value?.product?.attributeValues?.length > 0) {
+        let labels = [];
+        let colours = [];
+        const processedAttributes = value.product.attributeValues.reduce(
+          (acc, item) => {
+            const { attribute, attributeValue } = item;
+            if (attribute.type === "ExpiryTime") return acc;
+            if (attribute.type === "Label") {
+              labels.push(attributeValue.value);
+              return acc;
+            }
+            if (attribute.type === "Colour") {
+              colours.push(attributeValue.value);
+              return acc;
+            }
+
+            if (!acc[attribute.id]) {
+              acc[attribute.id] = {
+                name: attribute.name,
+                key: attribute.key,
+                values: [],
+              };
+            }
+            if (attributeValue && attributeValue.attr_id === attribute.id) {
+              acc[attribute.id].values.push(attributeValue.value);
+            }
+            return acc;
+          },
+          {}
+        );
+        value.product.labels = labels;
+        value.product.colours = colours;
+        value.product.attributeValues = Object.values(processedAttributes);
+      }
       value.product.wishList = wishList.some(
         (wish) => wish.product_id === value.product.id
       );
@@ -395,7 +429,7 @@ const getProductDetails = async (req, res, next) => {
         .status(404)
         .json({ isSuccess: false, message: "Product not found!" });
 
-    if (data?.attributeValues?.length) {
+    if (data?.attributeValues?.length > 0) {
       let labels = [];
       let colours = [];
       const processedAttributes = data.attributeValues.reduce((acc, item) => {

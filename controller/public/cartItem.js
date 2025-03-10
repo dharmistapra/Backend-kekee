@@ -1,5 +1,6 @@
 import prisma from "../../db/config.js";
 import {
+  calculateCartItemTotal,
   isvalidstitching,
   validateStitching,
   validateStitchingOption,
@@ -352,78 +353,8 @@ const getAllcartitemOptimizecode = async (req, res, next) => {
       },
     });
 
-    let totalSubtotal = 0;
-    let totalTax = 0;
-
-    const DataModified2 = await Promise.all(
-      cartItems.map((item) => {
-        const { quantity, size, isCatalogue, stitchingItems, catalogue, product } = item;
-        const totalStitchingPrice = stitchingItems.reduce((acc, stitch) => acc + (stitch.option?.price || 0), 0);
-        let subtotal = 0;
-        let tax = 0;
-        let outOfStock = false;
-
-        if (isCatalogue && catalogue) {
-          let availableProductCount = catalogue.Product.reduce((count, data) => {
-            if (size) {
-              const selectedSize = JSON.parse(size);
-              const sizeData = data.sizes.find(s => s?.size?.id === selectedSize?.id);
-              if (sizeData && sizeData.quantity >= quantity) return count + 1;
-              data.outOfStock = true;
-            } else {
-              if (data.quantity >= quantity) return count + 1;
-              data.outOfStock = true;
-            }
-            return count;
-          }, 0);
-
-          outOfStock = availableProductCount === 0;
-          const sizePrice = size ? catalogue.Product[0]?.sizes?.find(s => s?.size?.id === JSON.parse(size)?.id)?.price || 0 : 0;
-          subtotal = availableProductCount * (catalogue.average_price + sizePrice + totalStitchingPrice);
-          tax = (subtotal * (catalogue.GST || 0)) / 100;
-        } else if (product) {
-          const sizePrice = size ? product.sizes?.find(s => s?.size?.id === JSON.parse(size)?.id)?.price || 0 : 0;
-          if ((size && !sizePrice) || product.quantity < quantity) {
-            outOfStock = true;
-          } else {
-            subtotal = (product.offer_price + sizePrice + totalStitchingPrice) * quantity;
-            tax = (subtotal * (product.retail_GST || 0)) / 100;
-          }
-        }
-
-        totalSubtotal += subtotal;
-        totalTax += tax;
-
-        return {
-          id: item.id,
-          product_id: item.product_id,
-          catalogue_id: item.catalogue_id,
-          isCatalogue,
-          stitching: stitchingItems,
-          no_of_product: catalogue?.no_of_product,
-          average_price: catalogue?.average_price || product?.price,
-          url: catalogue?.url || product?.url,
-          name: catalogue?.name || product?.name,
-          quantity,
-          sku: catalogue?.cat_code || product?.sku,
-          weight: catalogue?.weight || product?.weight,
-          price: catalogue?.offer_price || product?.offer_price,
-          image: catalogue?.coverImage || product?.image?.[0],
-          category: { name: catalogue?.CatalogueCategory?.[0]?.category?.name || product?.categories?.[0]?.category?.name, url: catalogue?.CatalogueCategory?.[0]?.category?.url || product?.categories?.[0]?.category?.url },
-          size,
-          subtotal,
-          tax,
-          outOfStock,
-          products: isCatalogue ? catalogue.Product.map(prod => ({
-            name: prod.name,
-            url: prod.url,
-            quantity: prod.quantity,
-            outOfStock: prod.outOfStock,
-            code: prod.sku
-          })) : undefined,
-        };
-      })
-    );
+    const { DataModified2, totalSubtotal, totalTax } = calculateCartItemTotal(cartItems);
+   
 
     return res.status(200).json({
       status: true,
@@ -441,3 +372,5 @@ const getAllcartitemOptimizecode = async (req, res, next) => {
 
 
 export { updateCartItem, postCartItem, deleteCartItem, postCartItemOptimizeCode, getAllcartitemOptimizecode };
+
+

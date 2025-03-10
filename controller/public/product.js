@@ -333,6 +333,7 @@ const getProductDetails = async (req, res, next) => {
         tag: true,
         readyToShip: true,
         stitching: true,
+        size: true,
         categories: {
           select: {
             category: {

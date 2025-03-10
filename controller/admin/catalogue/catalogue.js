@@ -50,6 +50,7 @@ const postCatlogProduct = async (req, res, next) => {
       colour_id,
       productlabels,
       size,
+      isSize,
       stitching,
       readyToShip,
     } = req.body;
@@ -142,6 +143,7 @@ const postCatlogProduct = async (req, res, next) => {
       isActive: false,
       isDraft: catalogue_id ? false : true,
       stitching: stitching,
+      size: isSize,
     };
 
     let categoryConnection = [];
@@ -520,6 +522,7 @@ const updateCatalogueProduct = async (req, res, next) => {
       meta_keyword,
       meta_description,
       stitching,
+      isSize,
     } = req.body;
 
     quantity = parseInt(quantity);
@@ -643,6 +646,7 @@ const updateCatalogueProduct = async (req, res, next) => {
       meta_keyword,
       meta_description,
       stitching: stitching === "true" ? true : false,
+      isSize: isSize === "true" ? true : false,
     };
     let categoryId = [];
     if (category_id) {
@@ -1799,6 +1803,9 @@ const addCatalogue = async (req, res, next) => {
                       },
                     }
                   : { sizes: { deleteMany: {} } }),
+                ...(result.size === true && sizes?.length > 0
+                  ? { size: true }
+                  : { size: false }),
                 catalogue_id: result.id,
                 average_price: parseFloat(value.average_price),
                 retail_price: retailPrice,

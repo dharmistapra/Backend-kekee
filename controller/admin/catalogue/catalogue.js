@@ -1617,225 +1617,240 @@ const addCatalogue = async (req, res, next) => {
     url = `${slug(name)}-${cat_code}`;
     // Process catalogue updates
     let result;
-    await prisma.$transaction(async (transaction) => {
-      if (!catalogue) {
-        result = await transaction.catalogue.create({
-          data: {
-            name,
-            cat_code,
-            url,
-            quantity: quantity,
-            no_of_product,
-            price,
-            catalogue_discount,
-            average_price,
-            GST,
-            offer_price: finalOfferPrice,
-            stitching: stitching === "true" ? true : false,
-            size: Boolean(size),
-            weight,
-            meta_title,
-            meta_keyword,
-            meta_description,
-            coverImage: filepath,
-            description,
-            CatalogueCategory: {
-              create: category_id.map((catId) => ({
-                category: { connect: { id: catId } },
-              })),
-            },
-            ...(attributes &&
-              attributes.length > 0 && {
-                attributeValues: { create: attributeValueConnection },
-              }),
-            ...(size === "true" &&
-              sizes &&
-              sizes.length > 0 && {
-                CatalogueSize: { create: catalogueSizeConnection },
-              }),
-            tag,
-            isActive: true,
-            deletedAt: null,
-          },
-        });
-
-        if (collection_id && collection_id.length > 0) {
-          await transaction.catalogueCollection.createMany({
-            data: collection_id.map((collectionId) => ({
-              catalogue_id: result.id,
-              collection_id: collectionId,
-              product_id: null,
-            })),
-          });
-        }
-      } else {
-        result = await transaction.catalogue.update({
-          where: { id },
-          data: {
-            name,
-            cat_code,
-            url,
-            quantity: quantity,
-            no_of_product,
-            price,
-            catalogue_discount,
-            average_price,
-            GST,
-            offer_price: finalOfferPrice,
-            stitching: stitching === "true" ? true : false,
-            size: Boolean(size),
-            weight,
-            meta_title,
-            meta_keyword,
-            meta_description,
-            ...(req.file && { coverImage: filepath }),
-            description,
-            CatalogueCategory: {
-              deleteMany: {},
-              create: category_id.map((catId) => ({
-                category: { connect: { id: catId } },
-              })),
-            },
-            ...(attributes && attributes.length > 0
-              ? {
-                  attributeValues: {
-                    deleteMany: {},
-                    create: attributeValueConnection,
-                  },
-                }
-              : { attributeValues: { deleteMany: {} } }),
-            ...(size === "true" && sizes && sizes.length > 0
-              ? {
-                  CatalogueSize: {
-                    deleteMany: {},
-                    create: catalogueSizeConnection,
-                  },
-                }
-              : { CatalogueSize: { deleteMany: {} } }),
-            tag,
-            isActive: true,
-            deletedAt: null,
-          },
-        });
-
-        // Delete products
-        if (delete_product_ids && delete_product_ids.length > 0) {
-          await transaction.product.deleteMany({
-            where: { id: { in: delete_product_ids } },
-          });
-        }
-        await transaction.catalogueCollection.deleteMany({
-          where: { catalogue_id: result.id },
-        });
-        if (collection_id && collection_id.length > 0) {
-          await transaction.catalogueCollection.createMany({
-            data: collection_id.map((collectionId) => ({
-              catalogue_id: result.id,
-              collection_id: collectionId,
-              product_id: null,
-            })),
-          });
-        }
-      }
-
-      // Update products
-      await Promise.all(
-        product?.map(async (value) => {
-          const existingProduct = isProductExists.find(
-            (p) => p.id === value.id
-          );
-          const discount = existingProduct.retail_discount || 0;
-          const retailPrice = parseInt(value.retail_price);
-          const offer_price =
-            discount > 0
-              ? parseInt(retailPrice) * (1 - parseInt(discount) / 100)
-              : retailPrice;
-          const url = `${slug(name)}-${existingProduct.sku}`;
-          let productSizeConnection;
-          let productQuantity = existingProduct.quantity;
-          if (result.size === false && value.showInSingle === false) {
-            productQuantity = result.quantity;
-          }
-
-          if (result.size === "true" && isApply === "true") {
-            let size = sizes.map((value) => value.quantity);
-            let totalSize = size.reduce(
-              (acc, currentValue) => acc + currentValue
-            );
-            productQuantity = totalSize;
-            // if (totalSize !== quantity) {
-            //   if (req.file) await deleteFile(filepath);
-            //   return res.status(400).json({
-            //     isSuccess: false,
-            //     message: "Product quantity not matched!",
-            //   });
-            // }
-            productSizeConnection = value.sizes.map((size) => ({
-              size: { connect: { id: size.id } },
-              price: parseInt(size.price),
-              quantity: parseInt(size.quantity),
-            }));
-
-            // productData["sizes"] = {
-            //   create: productSizeConnection,
-            // };
-          }
-          return transaction.product
-            .update({
-              where: { id: value.id },
-              data: {
-                name: value.name,
-                url,
-                ...(productQuantity && {
-                  quantity: productQuantity,
-                }),
-                categories: {
-                  deleteMany: {},
-                  create: category_id.map((catId) => ({
-                    category: { connect: { id: catId } },
-                  })),
-                },
-                ...(result.size === true && sizes?.length > 0
-                  ? {
-                      sizes: {
-                        deleteMany: {},
-                        create: catalogueSizeConnection,
-                      },
-                    }
-                  : { sizes: { deleteMany: {} } }),
-                ...(result.size === true && sizes?.length > 0
-                  ? { size: true }
-                  : { size: false }),
-                catalogue_id: result.id,
-                average_price: parseFloat(value.average_price),
-                retail_price: retailPrice,
-                retail_GST: GST,
-                retail_discount: discount,
-                offer_price,
-                isActive: true,
-                isDraft: false,
-                stitching: result.stitching,
-                showInSingle: Boolean(value.showInSingle),
-                outofStock: Boolean(value.outofStock),
+    await prisma.$transaction(
+      async (transaction) => {
+        if (!catalogue) {
+          result = await transaction.catalogue.create({
+            data: {
+              name,
+              cat_code,
+              url,
+              quantity: quantity,
+              no_of_product,
+              price,
+              catalogue_discount,
+              average_price,
+              GST,
+              offer_price: finalOfferPrice,
+              stitching: stitching === "true" ? true : false,
+              size: size === "true" ? true : false,
+              weight,
+              meta_title,
+              meta_keyword,
+              meta_description,
+              coverImage: filepath,
+              description,
+              CatalogueCategory: {
+                create: category_id.map((catId) => ({
+                  category: { connect: { id: catId } },
+                })),
               },
-            })
-            .then(async () => {
-              await transaction.catalogueCollection.deleteMany({
-                where: { product_id: value.id },
-              });
-              if (collection_id && collection_id.length > 0) {
-                return transaction.catalogueCollection.createMany({
-                  data: collection_id.map((collectionId) => ({
-                    catalogue_id: null,
-                    collection_id: collectionId,
-                    product_id: value.id,
-                  })),
-                });
-              }
+              ...(attributes &&
+                attributes.length > 0 && {
+                  attributeValues: { create: attributeValueConnection },
+                }),
+              ...(size === "true" &&
+                sizes &&
+                sizes.length > 0 && {
+                  CatalogueSize: { create: catalogueSizeConnection },
+                }),
+              tag,
+              isActive: true,
+              deletedAt: null,
+            },
+          });
+
+          if (collection_id && collection_id.length > 0) {
+            await transaction.catalogueCollection.createMany({
+              data: collection_id.map((collectionId) => ({
+                catalogue_id: result.id,
+                collection_id: collectionId,
+                product_id: null,
+              })),
             });
-        })
-      );
-    },{timeout:10000 });
+          }
+        } else {
+          result = await transaction.catalogue.update({
+            where: { id },
+            data: {
+              name,
+              cat_code,
+              url,
+              quantity: quantity,
+              no_of_product,
+              price,
+              catalogue_discount,
+              average_price,
+              GST,
+              offer_price: finalOfferPrice,
+              stitching: stitching === "true" ? true : false,
+              size: size === "true" ? true : false,
+              weight,
+              meta_title,
+              meta_keyword,
+              meta_description,
+              ...(req.file && { coverImage: filepath }),
+              description,
+              CatalogueCategory: {
+                deleteMany: {},
+                create: category_id.map((catId) => ({
+                  category: { connect: { id: catId } },
+                })),
+              },
+              ...(attributes && attributes.length > 0
+                ? {
+                    attributeValues: {
+                      deleteMany: {},
+                      create: attributeValueConnection,
+                    },
+                  }
+                : { attributeValues: { deleteMany: {} } }),
+              ...(size === "true" && sizes && sizes.length > 0
+                ? {
+                    CatalogueSize: {
+                      deleteMany: {},
+                      create: catalogueSizeConnection,
+                    },
+                  }
+                : { CatalogueSize: { deleteMany: {} } }),
+              tag,
+              isActive: true,
+              deletedAt: null,
+            },
+          });
+
+          // Delete products
+          if (delete_product_ids && delete_product_ids.length > 0) {
+            await transaction.product.deleteMany({
+              where: { id: { in: delete_product_ids } },
+            });
+          }
+          await transaction.catalogueCollection.deleteMany({
+            where: { catalogue_id: result.id },
+          });
+          if (collection_id && collection_id.length > 0) {
+            await transaction.catalogueCollection.createMany({
+              data: collection_id.map((collectionId) => ({
+                catalogue_id: result.id,
+                collection_id: collectionId,
+                product_id: null,
+              })),
+            });
+          }
+        }
+
+        // Update products
+        await Promise.all(
+          product?.map(async (value) => {
+            const existingProduct = isProductExists.find(
+              (p) => p.id === value.id
+            );
+            const discount = existingProduct.retail_discount || 0;
+            const retailPrice = parseInt(value.retail_price);
+            const offer_price =
+              discount > 0
+                ? parseInt(retailPrice) * (1 - parseInt(discount) / 100)
+                : retailPrice;
+            const url = `${slug(name)}-${existingProduct.sku}`;
+            let productSizeConnection;
+            let sizeConnection = {};
+            let productQuantity = existingProduct.quantity;
+            if (result.size === false && value.showInSingle === false) {
+              productQuantity = result.quantity;
+            }
+
+            if (result.size === true && isApply === "true") {
+              let size = sizes.map((value) => value.quantity);
+              let totalSize = size.reduce(
+                (acc, currentValue) => acc + currentValue
+              );
+              productQuantity = totalSize;
+              // if (totalSize !== quantity) {
+              //   if (req.file) await deleteFile(filepath);
+              //   return res.status(400).json({
+              //     isSuccess: false,
+              //     message: "Product quantity not matched!",
+              //   });
+              // }
+              // productSizeConnection = catalogueSizeConnection;
+              sizeConnection = {
+                sizes: {
+                  deleteMany: {},
+                  create: catalogueSizeConnection,
+                },
+              };
+              // productSizeConnection = value.sizes.map((size) => ({
+              //   size: { connect: { id: size.id } },
+              //   price: parseInt(size.price),
+              //   quantity: parseInt(size.quantity),
+              // }));
+
+              // productData["sizes"] = {
+              //   create: productSizeConnection,
+              // };
+              console.log(sizeConnection);
+            } else if (result.size === false) {
+              sizeConnection = { sizes: { deleteMany: {} } };
+            }
+            return transaction.product
+              .update({
+                where: { id: value.id },
+                data: {
+                  name: value.name,
+                  url,
+                  ...(productQuantity && {
+                    quantity: productQuantity,
+                  }),
+                  categories: {
+                    deleteMany: {},
+                    create: category_id.map((catId) => ({
+                      category: { connect: { id: catId } },
+                    })),
+                  },
+                  // ...(result.size === true && sizes?.length > 0
+                  //   ? {
+                  //       sizes: {
+                  //         deleteMany: {},
+                  //         create: catalogueSizeConnection,
+                  //       },
+                  //     }
+                  //   : { sizes: { deleteMany: {} } }),
+                  ...sizeConnection,
+                  ...(result.size === true && sizes?.length > 0
+                    ? { size: true }
+                    : { size: false }),
+                  catalogue_id: result.id,
+                  average_price: parseFloat(value.average_price),
+                  retail_price: retailPrice,
+                  retail_GST: GST,
+                  retail_discount: discount,
+                  offer_price,
+                  isActive: true,
+                  isDraft: false,
+                  stitching: result.stitching,
+                  showInSingle: Boolean(value.showInSingle),
+                  outofStock: Boolean(value.outofStock),
+                },
+              })
+              .then(async () => {
+                await transaction.catalogueCollection.deleteMany({
+                  where: { product_id: value.id },
+                });
+                if (collection_id && collection_id.length > 0) {
+                  return transaction.catalogueCollection.createMany({
+                    data: collection_id.map((collectionId) => ({
+                      catalogue_id: null,
+                      collection_id: collectionId,
+                      product_id: value.id,
+                    })),
+                  });
+                }
+              });
+          })
+        );
+      },
+      { timeout: 10000 }
+    );
 
     const conditionalmessage = catalogue
       ? "Catalogue update successfully"

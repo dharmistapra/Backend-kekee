@@ -215,7 +215,7 @@ const OrderPlace = async (req, res, next) => {
 
         let ordertotal = subtotal + tax + shippingconst.shippingCost;
         const now = new Date();
-        const date = now.toISOString().slice(0, 10).replace(/-/g, ''); // Format YYYYMMDD
+        const date = now.toISOString().slice(0, 10).replace(/-/g, ''); 
         const time = now.toTimeString().slice(0, 8).replace(/:/g, '');
         const orderId = `ORD-${date}-${time}`;
 

@@ -556,7 +556,7 @@ model StitchingOption {
   updatedAt            DateTime               @updatedAt
   stitchingValues      StitchingValue[]
   StitchingGroupOption StitchingGroupOption[]
-  stitchingItems CartItemStitching[]
+  stitchingItems       CartItemStitching[]
 }
 
 model StitchingValue {
@@ -650,31 +650,31 @@ model cart {
 }
 
 model CartItem {
-  id           String     @id @default(auto()) @map("_id") @db.ObjectId
-  product_id   String?    @db.ObjectId
-  catalogue_id String?    @db.ObjectId
-  cart_id      String     @db.ObjectId
-  size         Json?
-  stitching    Json?
-  quantity     Int
-  isCatalogue  Boolean    @default(false)
-  product      Product?   @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  catalogue    Catalogue? @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
-  cart         cart?      @relation(fields: [cart_id], references: [id])
+  id             String              @id @default(auto()) @map("_id") @db.ObjectId
+  product_id     String?             @db.ObjectId
+  catalogue_id   String?             @db.ObjectId
+  cart_id        String              @db.ObjectId
+  size           Json?
+  stitching      Json?
+  quantity       Int
+  isCatalogue    Boolean             @default(false)
+  product        Product?            @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  catalogue      Catalogue?          @relation(fields: [catalogue_id], references: [id], onDelete: Cascade)
+  cart           cart?               @relation(fields: [cart_id], references: [id])
   stitchingItems CartItemStitching[]
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 }
-model CartItemStitching{
-  id           String     @id @default(auto()) @map("_id") @db.ObjectId
-  cartItem_id  String    @db.ObjectId
-  stitching_option  String  @db.ObjectId
-  measurment    Json?
-  cartItem         CartItem   @relation(fields: [cartItem_id], references: [id], onDelete: Cascade)  
-  option         StitchingOption   @relation(fields: [stitching_option], references: [id], onDelete: Cascade)  
 
-
+model CartItemStitching {
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  cartItem_id      String          @db.ObjectId
+  stitching_option String          @db.ObjectId
+  measurment       Json?
+  cartItem         CartItem        @relation(fields: [cartItem_id], references: [id], onDelete: Cascade)
+  option           StitchingOption @relation(fields: [stitching_option], references: [id], onDelete: Cascade)
 }
+
 model WishList {
   id           String     @id @default(auto()) @map("_id") @db.ObjectId
   user_id      String     @db.ObjectId
@@ -779,16 +779,17 @@ model OrderItem {
 }
 
 model Shipping {
-  id            String         @id @default(auto()) @map("_id") @db.ObjectId
-  orderId       String         @db.ObjectId
-  fullName      String
-  address1      String
-  address2      String?
-  city          String
-  country       String
-  state         String
-  zipCode       String
-  mobile        String
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  orderId  String  @db.ObjectId
+  fullName String
+  address1 String
+  address2 String?
+  city     String
+  country  String
+  state    String
+  zipCode  String
+  mobile   String
+
   shippingPrice Float?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -811,6 +812,7 @@ model Billing {
   whatsapp    String?
   companyname String?
   GstNumber   String?
+  isSame      Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)

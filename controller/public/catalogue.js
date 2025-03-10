@@ -642,7 +642,7 @@ const relatedProduct = async (req, res, next) => {
       data: shuffledProducts,
     });
   } catch (err) {
-    console.log(err);
+   
     const error = new Error("Something went wrong, Please try again!");
     next(error);
   }

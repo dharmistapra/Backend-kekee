@@ -640,7 +640,7 @@ adminRouter.put("/size/:id", [sizeSchema], updateSize);
 adminRouter.delete("/size/:id", deleteSize);
 adminRouter.get("/size-status/:id", sizeStatus);
 adminRouter.post("/size-position", [positionSchema], sortingSizes);
-adminRouter.post("/size-pagination", paginationSize);
+adminRouter.get("/size-pagination", paginationSize);
 
 // IN THIS ROUTE HIS CONTROLLER WE CAN ADD STITCHING GROP AND STITCHING OPTION
 adminRouter.post(

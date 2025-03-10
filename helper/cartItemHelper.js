@@ -465,12 +465,14 @@ const validateStitchingOption = async (stitching) => {
 const calculateCartItemTotal = (cartItems) => {
   let totalSubtotal = 0;
   let totalTax = 0;
+  let totalWeight = 0;
 
   const DataModified2 = cartItems.map((item) => {
     const { quantity, size, isCatalogue, stitchingItems, catalogue, product } = item;
     const totalStitchingPrice = stitchingItems.reduce((acc, stitch) => acc + (stitch.option?.price || 0), 0);
     let subtotal = 0;
     let tax = 0;
+    let itemWeight = 0;
     let outOfStock = false;
 
     if (isCatalogue && catalogue) {
@@ -487,22 +489,27 @@ const calculateCartItemTotal = (cartItems) => {
         return count;
       }, 0);
 
+
       outOfStock = availableProductCount === 0;
       const sizePrice = size ? catalogue.Product[0]?.sizes?.find(s => s?.size?.id === JSON.parse(size)?.id)?.price || 0 : 0;
       subtotal = availableProductCount * (catalogue.average_price + sizePrice + totalStitchingPrice);
       tax = (subtotal * (catalogue.GST || 0)) / 100;
-    } else if (product) {
+      itemWeight = (catalogue.weight || 0) * quantity
+    }
+    else if (product) {
       const sizePrice = size ? product.sizes?.find(s => s?.size?.id === JSON.parse(size)?.id)?.price || 0 : 0;
       if ((size && !sizePrice) || product.quantity < quantity) {
         outOfStock = true;
       } else {
         subtotal = (product.offer_price + sizePrice + totalStitchingPrice) * quantity;
         tax = (subtotal * (product.retail_GST || 0)) / 100;
+        itemWeight = (product.weight || 0) * quantity;
       }
     }
 
     totalSubtotal += subtotal;
     totalTax += tax;
+    totalWeight += itemWeight;
 
     return {
       id: item.id,
@@ -534,7 +541,7 @@ const calculateCartItemTotal = (cartItems) => {
     };
   });
 
-  return { DataModified2, totalSubtotal, totalTax };
+  return { DataModified2, totalSubtotal, totalTax, totalWeight };
 };
 
 

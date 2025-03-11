@@ -97,10 +97,10 @@ const postCategory = async (req, res, next) => {
         image: filepath,
         ...(attributes &&
           attributes.length > 0 && {
-          CategoryAttribute: {
-            create: attributeConnection, // connect attributes to the category
-          },
-        }),
+            CategoryAttribute: {
+              create: attributeConnection, // connect attributes to the category
+            },
+          }),
       },
     });
     return res.status(200).json({
@@ -233,7 +233,12 @@ const categoryPagination = async (req, res, next) => {
                 product: {
                   AND: [
                     { showInSingle: true },
-                    { catalogue: { deletedAt: null } },
+                    {
+                      OR: [
+                        { catalogue_id: null },
+                        { catalogue: { deletedAt: null } },
+                      ],
+                    },
                   ],
                 },
               },
@@ -383,16 +388,16 @@ const updateCategory = async (req, res, next) => {
         meta_description,
         ...(attributes !== ""
           ? attributes.length > 0 && {
-            CategoryAttribute: {
-              deleteMany: {},
-              create: attributeConnections,
-            },
-          }
+              CategoryAttribute: {
+                deleteMany: {},
+                create: attributeConnections,
+              },
+            }
           : {
-            CategoryAttribute: {
-              deleteMany: {},
-            },
-          }),
+              CategoryAttribute: {
+                deleteMany: {},
+              },
+            }),
       },
     });
 

@@ -243,7 +243,10 @@ const getProductpublic = async (req, res, next) => {
             const { attribute, attributeValue } = item;
             if (attribute.type === "ExpiryTime") return acc;
             if (attribute.type === "Label") {
-              labels.push(attributeValue.value);
+              labels.push({
+                label: attributeValue.value,
+                colour: attributeValue.colour,
+              });
               return acc;
             }
             if (attribute.type === "Colour") {
@@ -332,8 +335,9 @@ const getProductDetails = async (req, res, next) => {
         description: true,
         tag: true,
         readyToShip: true,
-        stitching: true,
-        size: true,
+        // stitching: true,
+        // size: true,
+        optionType: true,
         categories: {
           select: {
             category: {
@@ -437,7 +441,10 @@ const getProductDetails = async (req, res, next) => {
         const { attribute, attributeValue } = item;
         if (attribute.type === "ExpiryTime") return acc;
         if (attribute.type === "Label") {
-          labels.push(attributeValue.value);
+          labels.push({
+            label: attributeValue.value,
+            colour: attributeValue.colour,
+          });
           return acc;
         }
         if (attribute.type === "Colour") {
@@ -470,7 +477,7 @@ const getProductDetails = async (req, res, next) => {
     //     return { label: item.label };
     //   });
     // }
-    if (data && data.stitching) {
+    if (data && data.optionType === "Stitching") {
       data.stitchingOption = data.categories
         ?.map((item) => {
           const stitchingGroup = item.category?.StitchingGroup;

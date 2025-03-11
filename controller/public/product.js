@@ -243,7 +243,10 @@ const getProductpublic = async (req, res, next) => {
             const { attribute, attributeValue } = item;
             if (attribute.type === "ExpiryTime") return acc;
             if (attribute.type === "Label") {
-              labels.push(attributeValue.value);
+              labels.push({
+                label: attributeValue.value,
+                colour: attributeValue.colour,
+              });
               return acc;
             }
             if (attribute.type === "Colour") {

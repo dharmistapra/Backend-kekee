@@ -49,6 +49,7 @@ const postCatlogProduct = async (req, res, next) => {
       attributes,
       colour_id,
       productlabels,
+      optionType,
       size,
       isSize,
       stitching,
@@ -142,8 +143,9 @@ const postCatlogProduct = async (req, res, next) => {
       image: imagePaths,
       isActive: false,
       isDraft: catalogue_id ? false : true,
-      stitching: stitching,
-      size: isSize,
+      optionType,
+      // stitching: stitching,
+      // size: isSize,
     };
 
     let categoryConnection = [];
@@ -234,7 +236,7 @@ const postCatlogProduct = async (req, res, next) => {
       };
     }
     let productSizeConnection = [];
-    if (size) {
+    if (optionType === "Size" && size.length > 0) {
       let sizes = size.map((value) => value.quantity);
       let totalSize = sizes.reduce((acc, currentValue) => acc + currentValue);
       if (totalSize !== quantity) {
@@ -521,10 +523,13 @@ const updateCatalogueProduct = async (req, res, next) => {
       meta_title,
       meta_keyword,
       meta_description,
-      stitching,
-      isSize,
+      optionType,
+      // stitching,
+      // isSize,
     } = req.body;
 
+    // stitching = stitching === "true" ? true : false;
+    // isSize = isSize === "true" ? true : false;
     quantity = parseInt(quantity);
     weight = parseFloat(weight);
     retail_price = parseFloat(retail_price);
@@ -599,6 +604,23 @@ const updateCatalogueProduct = async (req, res, next) => {
           .status(404)
           .json({ isSuccess: false, message: "Catalogue not found!" });
       }
+
+      if (findCatalogue.optionType !== optionType) {
+        if (req.files && req.files.length > 0)
+          await removeProductImage(imagePaths);
+        return res.status(400).json({
+          isSuccess: false,
+          message: `You don't change ${optionType} option`,
+        });
+      }
+
+      // if (isSize && findCatalogue.size !== isSize) {
+      //   if (req.files & (req.files.length > 0))
+      //     await removeProductImage(imagePaths);
+      //   return res
+      //     .status(400)
+      //     .json({ isSuccess: false, message: "You don't change size option" });
+      // }
     } else {
       catalogue_id = null;
     }
@@ -645,8 +667,9 @@ const updateCatalogueProduct = async (req, res, next) => {
       meta_title,
       meta_keyword,
       meta_description,
-      stitching: stitching === "true" ? true : false,
-      isSize: isSize === "true" ? true : false,
+      optionType,
+      // stitching: stitching,
+      // isSize: isSize,
     };
     let categoryId = [];
     if (category_id) {
@@ -763,7 +786,7 @@ const updateCatalogueProduct = async (req, res, next) => {
     }
 
     let productSizeConnection = [];
-    if (size) {
+    if (optionType === "Size" && size.length > 0) {
       let sizes = size.map((value) => value.quantity);
       let totalSize = sizes.reduce((acc, currentValue) => acc + currentValue);
       if (totalSize !== quantity) {
@@ -793,7 +816,7 @@ const updateCatalogueProduct = async (req, res, next) => {
         deleteMany: {},
         create: productSizeConnection,
       };
-    } else if (size?.length === 0) {
+    } else if (optionType !== "Size" && size?.length === 0) {
       productData["sizes"] = {
         deleteMany: {},
       };
@@ -1326,6 +1349,7 @@ const addCatalogue = async (req, res, next) => {
       average_price,
       GST,
       offer_price,
+      optionType,
       stitching,
       size,
       weight,
@@ -1420,7 +1444,7 @@ const addCatalogue = async (req, res, next) => {
         .json({ isSuccess: false, message: "Catalogue code already exists!" });
     }
 
-    if (stitching === "true" && isCategoryExists.length > 0) {
+    if (optionType === "Stitching" && isCategoryExists.length > 0) {
       const parentCategory = isCategoryExists.find(
         (cat) => cat.parent_id === null
       );
@@ -1492,7 +1516,7 @@ const addCatalogue = async (req, res, next) => {
     }
 
     let catalogueSizeConnection = [];
-    if (sizes && sizes.length > 0) {
+    if (optionType === "Size" && sizes && sizes.length > 0) {
       const { status, message } = await handleLabelConnection(
         sizes,
         "size",
@@ -1524,7 +1548,7 @@ const addCatalogue = async (req, res, next) => {
         .status(404)
         .json({ isSuccess: false, message: "No of product not matched!" });
     }
-    if (size === "true") {
+    if (optionType === "Size" && sizes.length > 0) {
       let size = sizes.map((value) => value.quantity);
       let totalSize = size.reduce((acc, currentValue) => acc + currentValue);
       console.log("totalSize", totalSize);
@@ -1632,8 +1656,9 @@ const addCatalogue = async (req, res, next) => {
               average_price,
               GST,
               offer_price: finalOfferPrice,
-              stitching: stitching === "true" ? true : false,
-              size: size === "true" ? true : false,
+              optionType,
+              // stitching: stitching === "true" ? true : false,
+              // size: size === "true" ? true : false,
               weight,
               meta_title,
               meta_keyword,
@@ -1649,7 +1674,7 @@ const addCatalogue = async (req, res, next) => {
                 attributes.length > 0 && {
                   attributeValues: { create: attributeValueConnection },
                 }),
-              ...(size === "true" &&
+              ...(optionType === "Size" &&
                 sizes &&
                 sizes.length > 0 && {
                   CatalogueSize: { create: catalogueSizeConnection },
@@ -1683,8 +1708,9 @@ const addCatalogue = async (req, res, next) => {
               average_price,
               GST,
               offer_price: finalOfferPrice,
-              stitching: stitching === "true" ? true : false,
-              size: size === "true" ? true : false,
+              optionType,
+              // stitching: stitching === "true" ? true : false,
+              // size: size === "true" ? true : false,
               weight,
               meta_title,
               meta_keyword,
@@ -1705,7 +1731,7 @@ const addCatalogue = async (req, res, next) => {
                     },
                   }
                 : { attributeValues: { deleteMany: {} } }),
-              ...(size === "true" && sizes && sizes.length > 0
+              ...(optionType === "Size" && sizes && sizes.length > 0
                 ? {
                     CatalogueSize: {
                       deleteMany: {},
@@ -1755,11 +1781,11 @@ const addCatalogue = async (req, res, next) => {
             let productSizeConnection;
             let sizeConnection = {};
             let productQuantity = existingProduct.quantity;
-            if (result.size === false && value.showInSingle === false) {
+            if (result.optionType !== "Size" && value.showInSingle === false) {
               productQuantity = result.quantity;
             }
 
-            if (result.size === true && isApply === "true") {
+            if (result.optionType === "Size" && isApply === "true") {
               let size = sizes.map((value) => value.quantity);
               let totalSize = size.reduce(
                 (acc, currentValue) => acc + currentValue
@@ -1789,7 +1815,7 @@ const addCatalogue = async (req, res, next) => {
               //   create: productSizeConnection,
               // };
               console.log(sizeConnection);
-            } else if (result.size === false) {
+            } else if (result.optionType !== "Size") {
               sizeConnection = { sizes: { deleteMany: {} } };
             }
             return transaction.product
@@ -1816,9 +1842,10 @@ const addCatalogue = async (req, res, next) => {
                   //     }
                   //   : { sizes: { deleteMany: {} } }),
                   ...sizeConnection,
-                  ...(result.size === true && sizes?.length > 0
-                    ? { size: true }
-                    : { size: false }),
+                  optionType: result.optionType,
+                  // ...(result.size === true && sizes?.length > 0
+                  //   ? { size: true }
+                  //   : { size: false }),
                   catalogue_id: result.id,
                   average_price: parseFloat(value.average_price),
                   retail_price: retailPrice,
@@ -1827,7 +1854,7 @@ const addCatalogue = async (req, res, next) => {
                   offer_price,
                   isActive: true,
                   isDraft: false,
-                  stitching: result.stitching,
+                  // stitching: result.stitching,
                   showInSingle: Boolean(value.showInSingle),
                   outofStock: Boolean(value.outofStock),
                 },

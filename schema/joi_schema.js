@@ -427,8 +427,9 @@ const catalogueSchema = async (req, res, next) => {
     type: Joi.optional(),
     delete_product_ids: Joi.optional(),
     // retail_discount: Joi.number().required(),
-    stitching: Joi.boolean().optional().default(false),
-    size: Joi.boolean().optional().default(false),
+    optionType: Joi.string().valid("Stitching", "Size", "Other").required(),
+    // stitching: Joi.boolean().optional().default(false),
+    // size: Joi.boolean().optional().default(false),
     weight: Joi.number().required(),
     attributes: Joi.array()
       .items({
@@ -449,8 +450,8 @@ const catalogueSchema = async (req, res, next) => {
     //   then: Joi.array().items(Joi.string().required()).required(),
     //   otherwise: Joi.forbidden(),
     // }),
-    sizes: Joi.when("size", {
-      is: true,
+    sizes: Joi.when("OptionType", {
+      is: "Size",
       then: Joi.array()
         .items({
           id: Joi.string().required(),
@@ -842,19 +843,35 @@ const productSchema = async (req, res, next) => {
       })
       .optional()
       .default([]),
-
-    size: Joi.array()
-      .items({
-        id: Joi.string().required(),
-        price: Joi.number().required().default(0),
-        quantity: Joi.number().required().default(0),
-      })
-      .optional()
-      .default([]),
+    optionType: Joi.string().valid("Stitching", "Size", "Other").required(),
+    // isSize: Joi.boolean().optional().default(false),
+    size: Joi.when("optionType", {
+      is: "Size",
+      then: Joi.array()
+        .items({
+          id: Joi.string().required(),
+          price: Joi.number().required().default(0),
+          quantity: Joi.number().required().default(0),
+        })
+        .required(),
+      otherwise: Joi.forbidden(),
+    }),
+    // array()
+    // .items({
+    //   id: Joi.string().required(),
+    //   price: Joi.number().required().default(0),
+    //   quantity: Joi.number().required().default(0),
+    // })
+    // .optional()
+    // .default([]),
 
     colour_id: Joi.array().items(Joi.string()).optional().default([]),
-    stitching: Joi.boolean().optional().default(false),
-    isSize: Joi.boolean().optional().default(false),
+    // stitching: Joi.when("optionType", {
+    //   is: "Stitching",
+    //   then: Joi.boolean().required().default(false),
+    //   otherwise: Joi.forbidden(),
+    // }),
+
     meta_title: Joi.string().optional().allow("").default(""),
     meta_keyword: Joi.string().optional().allow("").default(""),
     meta_description: Joi.string().optional().allow("").default(""),
@@ -1023,7 +1040,6 @@ const cartSchema = async (req, res, next) => {
     //     "array.min": "Please select at least one stitching option.",
     //   })
     //   .optional(),
-
 
     stitching: Joi.array().optional(),
     size: Joi.object({

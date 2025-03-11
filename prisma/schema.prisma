@@ -316,8 +316,9 @@ model Product {
   // attribute_value String[] @db.ObjectId
   // label            String?                 @default("")
   tag              String[]
-  stitching        Boolean?                @default(false)
-  size             Boolean?                @default(false)
+  optionType       ProductOptionType
+  // stitching        Boolean?                @default(false)
+  // size             Boolean?                @default(false)
   isActive         Boolean?                @default(true)
   showInSingle     Boolean?                @default(false)
   isDraft          Boolean                 @default(false)
@@ -338,6 +339,12 @@ model Product {
   CartItem         CartItem[]
   WishList         WishList[]
   orderItems       OrderItem[]
+}
+
+enum ProductOptionType {
+  Stitching
+  Size
+  Other
 }
 
 model Labels {
@@ -406,8 +413,9 @@ model Catalogue {
   average_price       Int
   GST                 Float?                    @default(0)
   offer_price         Float
-  stitching           Boolean?                  @default(false)
-  size                Boolean?                  @default(false)
+  optionType          ProductOptionType
+  // stitching           Boolean?                  @default(false)
+  // size                Boolean?                  @default(false)
   weight              Int
   meta_title          String?
   meta_keyword        String?

@@ -19,7 +19,11 @@ const postAttributeValue = async (req, res, next) => {
         .status(404)
         .json({ isSuccess: false, message: "Attribute not found!" });
 
-    if (isAttributeExists.type === "Colour" && !colour)
+    if (
+      (isAttributeExists.type === "Colour" ||
+        isAttributeExists.type === "Label") &&
+      !colour
+    )
       return res
         .status(400)
         .json({ isSuccess: false, message: "Colour is required!" });

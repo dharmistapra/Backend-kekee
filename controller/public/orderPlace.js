@@ -1,5 +1,6 @@
 import prisma from "../../db/config.js";
 import {
+    calculateCartItemTotal,
     findCatalogueStitchingprice,
     findproductpriceOnSize,
     findproductpriceonStitching,
@@ -16,206 +17,231 @@ const OrderPlace = async (req, res, next) => {
 
         if (!finduser)
             return res.status(400).json({ isSuccess: false, message: "User not found", data: null });
+
+
+        // const cartItems = await prisma.cartItem.findMany({
+        //     where: { cart_id: finduser?.id },
+        //     select: {
+        //         id: true,
+        //         quantity: true,
+        //         product_id: true,
+        //         isCatalogue: true,
+        //         catalogue_id: true,
+        //         size: true,
+        //         stitching: true,
+        //         product: {
+        //             select: {
+        //                 id: true,
+        //                 name: true,
+        //                 catalogue_id: true,
+        //                 sku: true,
+        //                 url: true,
+        //                 average_price: true,
+        //                 retail_price: true,
+        //                 retail_discount: true,
+        //                 offer_price: true,
+        //                 image: true,
+        //                 weight: true,
+        //                 categories: {
+        //                     select: {
+        //                         id: true,
+        //                         category: {
+        //                             select: {
+        //                                 id: true,
+        //                                 Menu: { select: { id: true, name: true, url: true } },
+        //                             },
+        //                         },
+        //                     },
+        //                 },
+        //                 tag: true,
+        //                 showInSingle: true,
+        //                 quantity: true,
+        //             },
+        //         },
+        //         catalogue: {
+        //             select: {
+        //                 id: true,
+        //                 name: true,
+        //                 cat_code: true,
+        //                 url: true,
+        //                 quantity: true,
+        //                 price: true,
+        //                 GST: true,
+        //                 offer_price: true,
+        //                 coverImage: true,
+        //                 weight: true,
+        //                 CatalogueCategory: {
+        //                     select: {
+        //                         category: {
+        //                             select: {
+        //                                 id: true,
+        //                                 name: true,
+        //                                 Menu: {
+        //                                     select: {
+        //                                         id: true,
+        //                                         name: true,
+        //                                         url: true,
+        //                                     },
+        //                                 },
+        //                             },
+        //                         },
+        //                     },
+        //                 },
+        //                 Product: {
+        //                     select: {
+        //                         id: true,
+        //                         name: true,
+        //                         catalogue_id: true,
+        //                         sku: true,
+        //                         url: true,
+        //                         average_price: true,
+        //                         retail_price: true,
+        //                         retail_discount: true,
+        //                         offer_price: true,
+        //                         image: true,
+        //                         tag: true,
+        //                         quantity: true,
+        //                         showInSingle: true,
+        //                     },
+        //                 },
+        //             },
+        //         },
+        //     },
+        // });
+
+        // if (cartItems?.length === 0)
+        //     return res
+        //         .status(400)
+        //         .json({ isSuccess: false, message: "items not Found", data: null });
+
+        // let outOfStockItems = [];
+        // for (const item of cartItems) {
+        //     if (!item.isCatalogue) {
+        //         if (item.quantity > item.product.quantity) {
+        //             outOfStockItems.push(`Product: ${item.product.sku}`);
+        //         }
+        //     } else {
+        //         if (item.quantity > item.catalogue.quantity) {
+        //             outOfStockItems.push(`Catalogue: ${item.catalogue.cat_code}`);
+        //         }
+        //     }
+        // }
+
+        // if (outOfStockItems.length > 0) {
+        //     return res.status(400).json({
+        //         isSuccess: false,
+        //         message: `Stock unavailable for: ${outOfStockItems.join(", ")}`,
+        //         data: null,
+        //     });
+        // }
+
+        // let subtotal = 0,
+        //     tax = 0,
+        //     totalweight = 0,
+        //     discount = 0;
+        // let stitchingDataMap = [];
+        // for (let item of cartItems) {
+        //     const { quantity, stitching, size, isCatalogue, catalogue, product_id } =
+        //         item;
+        //     if (item.isCatalogue && item.catalogue_id) {
+        //         const checkproductquantity = catalogue?.Product?.map((data) => {
+        //             if (data.quantity < quantity) {
+        //                 return { ...data, outOfStock: true };
+        //             }
+        //             return data;
+        //         });
+
+        //         catalogue.Product = checkproductquantity;
+        //         if (item.stitching) {
+        //             const parsedStitching = JSON.parse(stitching);
+        //             const priceDetails = await findCatalogueStitchingprice(
+        //                 catalogue?.id,
+        //                 parsedStitching,
+        //                 quantity,
+        //                 checkproductquantity
+        //             );
+        //             item.Subtotal = priceDetails?.subtotal * quantity || 0;
+        //             item.Tax = priceDetails?.tax || 0;
+        //             item.outOfStock = priceDetails.catalogueOutOfStock;
+        //             item.discount = item.price - item.offer_price;
+        //             totalweight += Number(catalogue?.weight) * Number(quantity);
+        //             stitchingDataMap = await getAllStitchingData(
+        //                 parsedStitching,
+        //                 parsedStitching
+        //             );
+        //         }
+        //     } else {
+        //         if (size) {
+        //             const priceDetails = await findproductpriceOnSize(
+        //                 product_id,
+        //                 size,
+        //                 quantity
+        //             );
+        //             item.Subtotal = priceDetails?.subtotal || 0;
+        //             item.Tax = priceDetails?.tax || 0;
+        //         } else if (stitching) {
+        //             const parsedStitching = JSON.parse(stitching);
+        //             const priceDetails = await findproductpriceonStitching(
+        //                 product_id,
+        //                 parsedStitching,
+        //                 quantity
+        //             );
+
+        //             item.Subtotal = priceDetails?.subtotal * quantity || 0;
+        //             item.Tax = priceDetails?.tax || 0;
+        //             item.message = priceDetails.message || "";
+        //             item.discount = item.price - item.offer_price;
+        //             totalweight += Number(item.product?.weight) * Number(quantity);
+        //             stitchingDataMap = await getAllStitchingData(
+        //                 parsedStitching,
+        //                 parsedStitching
+        //             );
+        //         }
+        //     }
+        //     subtotal += item.Subtotal;
+        //     tax += item.Tax;
+        //     discount += item.discount;
+        // }
+
+
         const cartItems = await prisma.cartItem.findMany({
-            where: { cart_id: finduser?.id },
-            select: {
-                id: true,
-                quantity: true,
-                product_id: true,
-                isCatalogue: true,
-                catalogue_id: true,
-                size: true,
-                stitching: true,
+            where: { cart_id: finduser.id },
+            include: {
+                stitchingItems: {
+                    include: {
+                        option: true,
+                    },
+                },
                 product: {
-                    select: {
-                        id: true,
-                        name: true,
-                        catalogue_id: true,
-                        sku: true,
-                        url: true,
-                        average_price: true,
-                        retail_price: true,
-                        retail_discount: true,
-                        offer_price: true,
-                        image: true,
-                        weight: true,
-                        categories: {
-                            select: {
-                                id: true,
-                                category: {
-                                    select: {
-                                        id: true,
-                                        Menu: { select: { id: true, name: true, url: true } },
-                                    },
-                                },
-                            },
-                        },
-                        tag: true,
-                        showInSingle: true,
-                        quantity: true,
+                    include: {
+                        categories: { include: { category: true } },
+                        sizes: { include: { size: true } },
                     },
                 },
                 catalogue: {
-                    select: {
-                        id: true,
-                        name: true,
-                        cat_code: true,
-                        url: true,
-                        quantity: true,
-                        price: true,
-                        GST: true,
-                        offer_price: true,
-                        coverImage: true,
-                        weight: true,
-                        CatalogueCategory: {
-                            select: {
-                                category: {
-                                    select: {
-                                        id: true,
-                                        name: true,
-                                        Menu: {
-                                            select: {
-                                                id: true,
-                                                name: true,
-                                                url: true,
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        Product: {
-                            select: {
-                                id: true,
-                                name: true,
-                                catalogue_id: true,
-                                sku: true,
-                                url: true,
-                                average_price: true,
-                                retail_price: true,
-                                retail_discount: true,
-                                offer_price: true,
-                                image: true,
-                                tag: true,
-                                quantity: true,
-                                showInSingle: true,
-                            },
-                        },
+                    include: {
+                        Product: { include: { sizes: { include: { size: true } } } },
+                        CatalogueCategory: { include: { category: true } },
+                        CatalogueSize: { include: { size: true } },
                     },
                 },
             },
         });
 
-        if (cartItems?.length === 0)
-            return res
-                .status(400)
-                .json({ isSuccess: false, message: "items not Found", data: null });
-
-        let outOfStockItems = [];
-        for (const item of cartItems) {
-            if (!item.isCatalogue) {
-                if (item.quantity > item.product.quantity) {
-                    outOfStockItems.push(`Product: ${item.product.sku}`);
-                }
-            } else {
-                if (item.quantity > item.catalogue.quantity) {
-                    outOfStockItems.push(`Catalogue: ${item.catalogue.cat_code}`);
-                }
-            }
+        const { DataModified2, totalSubtotal, totalTax, totalWeight } = calculateCartItemTotal(cartItems);
+        if (DataModified2?.length == 0 || totalSubtotal === 0) {
+            return res.status(400).json({ isSuccess: false, message: "Data Not Found", data: null });
         }
 
-        if (outOfStockItems.length > 0) {
-            return res.status(400).json({
-                isSuccess: false,
-                message: `Stock unavailable for: ${outOfStockItems.join(", ")}`,
-                data: null,
-            });
-        }
 
-        let subtotal = 0,
-            tax = 0,
-            totalweight = 0,
-            discount = 0;
-        let stitchingDataMap = [];
-        for (let item of cartItems) {
-            const { quantity, stitching, size, isCatalogue, catalogue, product_id } =
-                item;
-            if (item.isCatalogue && item.catalogue_id) {
-                const checkproductquantity = catalogue?.Product?.map((data) => {
-                    if (data.quantity < quantity) {
-                        return { ...data, outOfStock: true };
-                    }
-                    return data;
-                });
 
-                catalogue.Product = checkproductquantity;
-                if (item.stitching) {
-                    const parsedStitching = JSON.parse(stitching);
-                    const priceDetails = await findCatalogueStitchingprice(
-                        catalogue?.id,
-                        parsedStitching,
-                        quantity,
-                        checkproductquantity
-                    );
-                    item.Subtotal = priceDetails?.subtotal * quantity || 0;
-                    item.Tax = priceDetails?.tax || 0;
-                    item.outOfStock = priceDetails.catalogueOutOfStock;
-                    item.discount = item.price - item.offer_price;
-                    totalweight += Number(catalogue?.weight) * Number(quantity);
-                    stitchingDataMap = await getAllStitchingData(
-                        parsedStitching,
-                        parsedStitching
-                    );
-                }
-            } else {
-                if (size) {
-                    const priceDetails = await findproductpriceOnSize(
-                        product_id,
-                        size,
-                        quantity
-                    );
-                    item.Subtotal = priceDetails?.subtotal || 0;
-                    item.Tax = priceDetails?.tax || 0;
-                } else if (stitching) {
-                    const parsedStitching = JSON.parse(stitching);
-                    const priceDetails = await findproductpriceonStitching(
-                        product_id,
-                        parsedStitching,
-                        quantity
-                    );
-
-                    item.Subtotal = priceDetails?.subtotal * quantity || 0;
-                    item.Tax = priceDetails?.tax || 0;
-                    item.message = priceDetails.message || "";
-                    item.discount = item.price - item.offer_price;
-                    totalweight += Number(item.product?.weight) * Number(quantity);
-                    stitchingDataMap = await getAllStitchingData(
-                        parsedStitching,
-                        parsedStitching
-                    );
-                }
-            }
-            subtotal += item.Subtotal;
-            tax += item.Tax;
-            discount += item.discount;
-        }
-
-        if (totalweight === 0) {
-            return res
-                .status(200)
-                .json({ isSuccess: false, message: "Total weight is 0", data: null });
-        }
-
-        const shippingconst = await calculateShippingCost(
-            totalweight,
-            shippingdata?.country
-        );
+        const shippingconst = await calculateShippingCost(totalWeight, shippingdata?.country);
 
         let findstitchingcharge = subtotal
 
-        let ordertotal = subtotal + tax + shippingconst.shippingCost;
+        let ordertotal = subtotal + totalTax + shippingconst.shippingCost;
         const now = new Date();
-        const date = now.toISOString().slice(0, 10).replace(/-/g, ''); 
+        const date = now.toISOString().slice(0, 10).replace(/-/g, '');
         const time = now.toTimeString().slice(0, 8).replace(/:/g, '');
         const orderId = `ORD-${date}-${time}`;
 
@@ -224,8 +250,8 @@ const OrderPlace = async (req, res, next) => {
                 userId: user_id,
                 orderId: orderId,
                 subtotal: subtotal,
-                Tax: tax,
-                discount: discount,
+                Tax: totalTax,
+                discount: 0,
                 shippingcharge: shippingconst.shippingCost,
                 totalAmount: ordertotal,
                 status: "PENDING",
@@ -350,22 +376,10 @@ const OrderPlace = async (req, res, next) => {
                 transactionId: razorpayOrder.id
             };
         }
-
         if (paymentMethod === "bank") {
-            const bankrecordCreate = await prisma.bankAccount.create({
-                data: bankdata,
-                select: {
-                    id: true
-                }
-            })
-
+            const bankrecordCreate = await prisma.bankAccount.create({ data: bankdata, select: { id: true } })
             bankAccountId = bankrecordCreate?.id
-            paymentData = {
-                orderId: order.id,
-                paymentMethod,
-                status: "PROCESSING",
-                bankAccountId: bankAccountId
-            };
+            paymentData = { orderId: order.id, paymentMethod, status: "PROCESSING", bankAccountId: bankAccountId };
         }
         const payment = await prisma.payment.create({ data: paymentData });
 

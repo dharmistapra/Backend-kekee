@@ -826,6 +826,7 @@ model Billing {
   companyname String?
   GstNumber   String?
   isSame      Boolean  @default(false)
+  isDefault   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   order       Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)

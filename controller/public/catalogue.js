@@ -168,8 +168,9 @@ const getCatalogueProduct = async (req, res, next) => {
         catalogue_discount: true,
         average_price: true,
         offer_price: true,
-        stitching: true,
-        size: true,
+        optionType: true,
+        // stitching: true,
+        // size: true,
         weight: true,
         meta_title: true,
         meta_keyword: true,
@@ -261,12 +262,19 @@ const getCatalogueProduct = async (req, res, next) => {
             isActive: true,
             showInSingle: true,
             readyToShip: true,
+            attributeValues: {
+              where: { attribute: { type: "Label" } },
+              select: {
+                attribute: true,
+                attributeValue: true,
+              },
+            },
           },
         },
       },
     });
 
-    if (product && product.stitching) {
+    if (product && product.optionType === "Stitching") {
       product.stitchingOption = product.CatalogueCategory?.map((item) => {
         const stitchingGroup = item.category?.StitchingGroup;
 
@@ -327,7 +335,7 @@ const getCatalogueProduct = async (req, res, next) => {
       product.attributeValues = Object.values(processedAttributes);
     }
 
-    if (product.size === true && product.CatalogueSize.length > 0) {
+    if (product.optionType === "Size" && product.CatalogueSize.length > 0) {
       product.Size = product.CatalogueSize.map((val) => ({
         id: val.size.id,
         value: val.size.value,
@@ -335,6 +343,25 @@ const getCatalogueProduct = async (req, res, next) => {
         price: val.price,
         quantity: val.quantity,
       }));
+    }
+
+    if (product.Product.length > 0) {
+      for (let value of product.Product) {
+        if (value?.attributeValues?.length > 0) {
+          let labels = [];
+
+          value.attributeValues.reduce((acc, item) => {
+            const { attribute, attributeValue } = item;
+            labels.push({
+              label: attributeValue.value,
+              colour: attributeValue.colour,
+            });
+            return acc;
+          }, {});
+          value.labels = labels;
+        }
+        delete value.attributeValues;
+      }
     }
     delete product?.CatalogueSize;
     delete product?.CatalogueCategory;
@@ -642,7 +669,6 @@ const relatedProduct = async (req, res, next) => {
       data: shuffledProducts,
     });
   } catch (err) {
-   
     const error = new Error("Something went wrong, Please try again!");
     next(error);
   }

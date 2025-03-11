@@ -2,7 +2,6 @@ import express from "express";
 const publicProtected = express.Router();
 import {
   updateCartItem,
-  postCartItem,
   deleteCartItem,
   postCartItemOptimizeCode,
   getAllcartitemOptimizecode,
@@ -32,6 +31,7 @@ import {
   getOrderdetails,
   getOrderHistory,
 } from "../controller/public/orderHistory.js";
+import { getshipAddress, postshipAddress, } from "../controller/public/address.js";
 
 // publicProtected.post("/cart-item", cartSchema, postCartItem);
 publicProtected.post("/cart-item", cartSchema, postCartItemOptimizeCode);
@@ -59,4 +59,7 @@ publicProtected.post("/verify/order", verifyOrder);
 publicProtected.post("/cancel/payment", orderFailed);
 publicProtected.post("/order/details", getOrderdetails);
 publicProtected.post("/order/history", getOrderHistory);
+
+publicProtected.post("/shipping/address", postshipAddress);
+publicProtected.get("/shipping/address", getshipAddress);
 export default publicProtected;

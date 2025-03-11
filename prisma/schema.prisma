@@ -514,6 +514,8 @@ model users {
   // Order             Order[]
   // Address           Address[]
   BankAccount       BankAccount[]
+  Billing           Billing[]
+  Shipping          Shipping[]
 }
 
 model size {
@@ -788,7 +790,8 @@ model OrderItem {
 
 model Shipping {
   id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  orderId  String  @db.ObjectId
+  orderId  String? @db.ObjectId
+  userId   String? @db.ObjectId
   fullName String
   address1 String
   address2 String?
@@ -802,12 +805,14 @@ model Shipping {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   status        ShippingStatus
-  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order         Order?         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user          users?         @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Billing {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  orderId     String   @db.ObjectId
+  orderId     String?  @db.ObjectId
+  userId      String?  @db.ObjectId
   fullName    String
   address1    String
   address2    String?
@@ -823,7 +828,8 @@ model Billing {
   isSame      Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user        users?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model payment {

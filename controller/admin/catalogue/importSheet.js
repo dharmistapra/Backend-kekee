@@ -608,6 +608,8 @@ const importCatalogues = async (req, res, next) => {
         image,
         isStitching,
         isSize,
+        optionType,
+        size,
         isActive,
         catCode,
         cat_tag,
@@ -806,7 +808,8 @@ const importCatalogues = async (req, res, next) => {
         }
       }
       cat_tag = _.uniq(await arraySplit(tag));
-
+      let sizes = _.uniq(await arraySplit(size));
+      console.log(sizes);
       let catalogue = catalogues.find((cat) => cat.cat_code === catCode);
       if (catCode && !productCode) {
         if (catalogue) {
@@ -849,8 +852,9 @@ const importCatalogues = async (req, res, next) => {
           ...(attributes.length > 0 && { attributes: attributeData }),
           tag: cat_tag,
           coverImage: cat_image,
-          ...(isStitching && { stitching: isStitching != "N" ? true : false }),
-          ...(isSize && { size: isSize != "N" ? true : false }),
+          optionType: optionType,
+          // ...(isStitching && { stitching: isStitching != "N" ? true : false }),
+          // ...(isSize && { size: isSize != "N" ? true : false }),
           ...(isActive && { isActive: isActive != "N" ? true : false }),
           product: [],
         };
@@ -930,8 +934,9 @@ const importCatalogues = async (req, res, next) => {
             showInSingle: showInSingle !== "N" ? true : false,
           }),
           image: image,
+          optionType,
           ...(isActive && { isActive: isActive !== "N" ? true : false }),
-          ...(isStitching && { stitching: isStitching !== "N" ? true : false }),
+          // ...(isStitching && { stitching: isStitching !== "N" ? true : false }),
           ...(category.length > 0 && { category: category }),
         };
 

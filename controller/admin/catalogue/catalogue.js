@@ -644,7 +644,6 @@ const updateCatalogueProduct = async (req, res, next) => {
       ? [images]
       : images;
 
-    console.log("stitching =======>", stitching);
     const productData = {
       name,
       catalogue_id: catalogue_id,

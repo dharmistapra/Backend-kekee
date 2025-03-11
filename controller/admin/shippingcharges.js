@@ -208,7 +208,7 @@ const countrylistGroup = async (req, res, next) => {
   }
 };
 
-const calculateShippingCost = async (weight, country) => {
+const calculateShippingCost = async (weight = 0, country) => {
   try {
     const shippingRules = await prisma.shippingCharges.findMany({
       where: { country: country },
@@ -218,7 +218,7 @@ const calculateShippingCost = async (weight, country) => {
     if (!shippingRules || shippingRules.length === 0) {
       return {
         success: false,
-        message: "No shipping rules found for this country",
+        message: "No shipping  found for this country",
       };
     }
 
@@ -237,12 +237,10 @@ const calculateShippingCost = async (weight, country) => {
 
     }
 
-
-
     if (shippingCost === null) {
       return {
         success: false,
-        message: "No matching shipping rule found for this weight",
+        message: "No matching shipping  found for this weight",
       };
     }
 

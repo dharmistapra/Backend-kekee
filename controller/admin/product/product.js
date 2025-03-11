@@ -50,8 +50,9 @@ const postRetailProduct = async (req, res, next) => {
       colour_id,
       readyToShip,
       productlabels,
+      optionType,
       size,
-      stitching,
+      // stitching,
     } = req.body;
 
     quantity = parseInt(quantity);
@@ -139,7 +140,8 @@ const postRetailProduct = async (req, res, next) => {
       showInSingle,
       readyToShip,
       image: imagePaths,
-      stitching: stitching === true ? true : false,
+      optionType: optionType,
+      // stitching: stitching === true ? true : false,
     };
     let categoryIds = [];
     let categoryConnection = [];
@@ -259,7 +261,7 @@ const postRetailProduct = async (req, res, next) => {
     }
 
     let productSizeConnection = [];
-    if (size) {
+    if (optionType === "Size" && size && size.length > 0) {
       let sizes = size.map((value) => value.quantity);
       let totalSize = sizes.reduce((acc, currentValue) => acc + currentValue);
       if (totalSize !== quantity) {

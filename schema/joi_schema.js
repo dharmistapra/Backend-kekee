@@ -450,7 +450,7 @@ const catalogueSchema = async (req, res, next) => {
     //   then: Joi.array().items(Joi.string().required()).required(),
     //   otherwise: Joi.forbidden(),
     // }),
-    sizes: Joi.when("OptionType", {
+    sizes: Joi.when("optionType", {
       is: "Size",
       then: Joi.array()
         .items({

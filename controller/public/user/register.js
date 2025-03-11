@@ -32,6 +32,7 @@ const userRegister = async (req, res, next) => {
     next(err);
   }
 };
+
 const userlogin = async (req, res, next) => {
   try {
     passport.authenticate(
@@ -66,6 +67,8 @@ const userlogin = async (req, res, next) => {
     });
   }
 };
+
+
 const SendOtp = async (req, res, next) => {
   try {
     const { email } = await req.body;

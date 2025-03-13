@@ -656,11 +656,9 @@ const importCatalogues = async (req, res, next) => {
 
       if (missingAttributes.length > 0) {
         await deleteFile(filePath);
-        missingAttributes.map((val) => {
-          let addAttribute = additional_attr.includes(val);
-          console.log(additional_attr.includes(val));
-          if (addAttribute === false) {
-            additional_attr.push(missingAttributes);
+        missingAttributes.forEach((val) => {
+          if (!additional_attr.includes(val)) {
+            additional_attr.push(val);
           }
         });
         // message = `Row ${index} ${missingAttributes} attributes not found!`;
@@ -673,7 +671,6 @@ const importCatalogues = async (req, res, next) => {
       const nonDefaultAttributeNames = isAttributeExists
         .filter((attr) => !attr.isDefault)
         .map((attr) => attr.name);
-      console.log(nonDefaultAttributeNames);
       if (!category) {
         await deleteFile(filePath);
         message = `Row ${index} Please enter Category!`;
@@ -737,7 +734,6 @@ const importCatalogues = async (req, res, next) => {
             const missing = nonDefaultAttributeNames.filter(
               (attr) => !existingAttributesNames.includes(attr)
             );
-            console.log(missing);
             if (missing.length > 0) {
               const categoryName = await prisma.categoryMaster.findUnique({
                 where: { id: val },

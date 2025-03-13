@@ -1,290 +1,282 @@
 import prisma from "../../db/config.js";
 
 const getOrderdetails = async (req, res, next) => {
-    try {
-        const { orderId } = req.body;
-        console.log("orderId", orderId)
-        const orderDetails = await prisma.order.findUnique({
-            where: { orderId: orderId },
-            select: {
-                orderId: true,
-                createdAt: true,
-                subtotal: true,
-                Tax: true,
-                discount: true,
-                shippingcharge: true,
-                totalAmount: true,
-                status: true,
-                orderItems: {
-                    select: {
-                        id: true,
-                        quantity: true,
-                        productsnapshots: true,
-                        product: {
-                            select: {
-                                name: true,
-                                image: true,
-                                categories: {
-                                    select: {
-                                        category: {
-                                            select: {
-                                                name: true, url: true
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-
-                        catalogue: {
-                            select: {
-                                name: true,
-                                url: true,
-                                coverImage: true,
-                                CatalogueCategory: {
-                                    select: {
-                                        category: {
-                                            select: {
-                                                name: true,
-                                                url: true
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                shipping: {
-                    select: {
-                        fullName: true,
-                        address1: true,
-                        address2: true,
-                        city: true,
-                        country: true,
-                        state: true,
-                        zipCode: true,
-                        mobile: true,
+  try {
+    const { orderId } = req.body;
+    console.log("orderId", orderId);
+    const orderDetails = await prisma.order.findUnique({
+      where: { orderId: orderId },
+      select: {
+        orderId: true,
+        createdAt: true,
+        subtotal: true,
+        Tax: true,
+        discount: true,
+        shippingcharge: true,
+        totalAmount: true,
+        status: true,
+        orderItems: {
+          select: {
+            id: true,
+            quantity: true,
+            productsnapshots: true,
+            product: {
+              select: {
+                name: true,
+                image: true,
+                categories: {
+                  select: {
+                    category: {
+                      select: {
+                        name: true,
+                        url: true,
+                      },
                     },
+                  },
                 },
-                billing: {
-                    select: {
-                        fullName: true,
-                        address1: true,
-                        address2: true,
-                        city: true,
-                        country: true,
-                        state: true,
-                        zipCode: true,
-                        mobile: true,
-                        GstNumber: true,
-                        companyname: true,
-                        whatsapp: true,
-                        isSame: true
-                    }
-                },
-                payment: {
-                    select: {
-                        paymentMethod: true,
-                        transactionId: true,
-                        status: true,
-                        bankAccountId: true,
-                        bankaccount: {
-                            select: {
-                                bankName: true,
-                                accountHolderName: true,
-                                accountNumber: true,
-                                ifscCode: true,
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        if (!orderDetails) {
-            return res.status(404).json({
-                message: "Order not found",
-                isSuccess: false,
-            });
-        }
-
-
-
-
-
-        const transformedOrderItems = orderDetails?.orderItems?.map((item) => {
-            return {
-                ...item,
-                name: item?.product?.name || item?.catalogue.name,
-                url: item?.product?.url || item?.catalogue.url,
-                image: item?.catalogue.coverImage || item?.product?.image?.[0],
-                type: item?.catalogue ? 'Catalogue' : "product",
-                categoryURL: item?.product?.categories?.[0]?.category?.url || item?.catalogue?.CatalogueCategory?.[0]?.category?.url,
-                productsnapshots: JSON.parse(item.productsnapshots)
-            }
-        })
-
-
-        return res.status(200).json({
-            message: "Order retrieved successfully",
-            isSuccess: true,
-            data: {
-                ...orderDetails,
-                orderDate: new Date(orderDetails.createdAt).toLocaleDateString('en-GB', {
-                    day: '2-digit', month: 'long', year: 'numeric'
-                }),
-                orderItems: transformedOrderItems,
+              },
             },
-        });
 
-    } catch (error) {
-        console.log("Error fetching order details:", error);
-        let err = new Error("Something went wrong, Please try again!");
-        next(err);
+            catalogue: {
+              select: {
+                name: true,
+                url: true,
+                coverImage: true,
+                CatalogueCategory: {
+                  select: {
+                    category: {
+                      select: {
+                        name: true,
+                        url: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        shipping: {
+          select: {
+            fullName: true,
+            address1: true,
+            address2: true,
+            city: true,
+            country: true,
+            state: true,
+            zipCode: true,
+            mobile: true,
+          },
+        },
+        billing: {
+          select: {
+            fullName: true,
+            address1: true,
+            address2: true,
+            city: true,
+            country: true,
+            state: true,
+            zipCode: true,
+            mobile: true,
+            GstNumber: true,
+            companyname: true,
+            whatsapp: true,
+            isSame: true,
+          },
+        },
+        payment: {
+          select: {
+            paymentMethod: true,
+            transactionId: true,
+            status: true,
+            bankAccountId: true,
+            bankaccount: {
+              select: {
+                bankName: true,
+                accountHolderName: true,
+                accountNumber: true,
+                ifscCode: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!orderDetails) {
+      return res.status(404).json({
+        message: "Order not found",
+        isSuccess: false,
+      });
     }
+
+    const transformedOrderItems = orderDetails?.orderItems?.map((item) => {
+      return {
+        ...item,
+        name: item?.product?.name || item?.catalogue?.name,
+        url: item?.product?.url || item?.catalogue?.url,
+        image: item?.catalogue?.coverImage || item?.product?.image?.[0],
+        type: item?.catalogue ? "Catalogue" : "product",
+        categoryURL:
+          item?.product?.categories?.[0]?.category?.url ||
+          item?.catalogue?.CatalogueCategory?.[0]?.category?.url,
+        productsnapshots: JSON.parse(item.productsnapshots),
+      };
+    });
+
+    return res.status(200).json({
+      message: "Order retrieved successfully",
+      isSuccess: true,
+      data: {
+        ...orderDetails,
+        orderDate: new Date(orderDetails.createdAt).toLocaleDateString(
+          "en-GB",
+          {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          }
+        ),
+        orderItems: transformedOrderItems,
+      },
+    });
+  } catch (error) {
+    console.log("Error fetching order details:", error);
+    let err = new Error("Something went wrong, Please try again!");
+    next(err);
+  }
 };
 
 const getOrderHistory = async (req, res, next) => {
-    try {
-
-        const { perPage, pageNo, userId } = req.body;
-        const page = +pageNo || 1;
-        const take = +perPage || 10;
-        const skip = (page - 1) * take;
-        const result = await prisma.order.findMany({
-            where: {
-                userId: userId
-
+  try {
+    const { perPage, pageNo, userId } = req.body;
+    const page = +pageNo || 1;
+    const take = +perPage || 10;
+    const skip = (page - 1) * take;
+    const result = await prisma.order.findMany({
+      where: {
+        userId: userId,
+      },
+      select: {
+        id: true,
+        orderId: true,
+        createdAt: true,
+        status: true,
+        totalAmount: true,
+        orderItems: {
+          select: {
+            productname: true,
+            type: true,
+            quantity: true,
+            product: {
+              select: {
+                name: true,
+                categories: {
+                  select: {
+                    category: {
+                      select: {
+                        name: true,
+                        url: true,
+                      },
+                    },
+                  },
+                },
+              },
             },
-            select: {
-                id: true,
-                orderId: true,
-                createdAt: true,
-                status: true,
-                totalAmount: true,
-                orderItems: {
-                    select: {
-                        productname: true,
-                        type: true,
-                        quantity: true,
-                        product: {
-                            select: {
-                                name: true,
-                                categories: {
-                                    select: {
-                                        category: {
-                                            select: {
-                                                name: true, url: true
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        },
 
-                        catalogue: {
-                            select: {
-                                name: true,
-                                url: true,
-                                CatalogueCategory: {
-                                    select: {
-                                        category: {
-                                            select: {
-                                                name: true,
-                                                url: true
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            catalogue: {
+              select: {
+                name: true,
+                url: true,
+                CatalogueCategory: {
+                  select: {
+                    category: {
+                      select: {
+                        name: true,
+                        url: true,
+                      },
+                    },
+                  },
+                },
+              },
             },
-            skip,
-            take
-        })
+          },
+        },
+      },
+      skip,
+      take,
+    });
 
+    const formattedResult = result.map((order) => {
+      const catalogue = order.orderItems?.[0]?.catalogue;
+      const prdoduct = order.orderItems?.[0]?.product;
+      return {
+        orderId: order?.orderId,
+        name: prdoduct?.name || catalogue.name,
+        url: prdoduct?.url || catalogue.url,
+        type: catalogue ? "Catalogur" : "product",
+        categoryURL:
+          prdoduct?.categories?.[0]?.category?.url ||
+          catalogue?.CatalogueCategory?.[0]?.category?.url,
 
+        orderDate: new Date(order.createdAt).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }),
+        status: order.status,
+        amount: order.totalAmount.toFixed(2),
+      };
+    });
 
-        const formattedResult = result.map(order => {
-            const catalogue = order.orderItems?.[0]?.catalogue;
-            const prdoduct = order.orderItems?.[0]?.product;
-            return {
-                orderId: order?.orderId,
-                name: prdoduct?.name || catalogue.name,
-                url: prdoduct?.url || catalogue.url,
-                type: catalogue ? 'Catalogur' : "product",
-                categoryURL: prdoduct?.categories?.[0]?.category?.url || catalogue?.CatalogueCategory?.[0]?.category?.url,
-
-                orderDate: new Date(order.createdAt).toLocaleDateString('en-GB', {
-                    day: '2-digit', month: 'long', year: 'numeric'
-                }),
-                status: order.status,
-                amount: order.totalAmount.toFixed(2),
-            }
-        });
-
-        return res.status(200).json({
-            message: "Order history fetched successfully",
-            isSuccess: true,
-            data: formattedResult
-        });
-
-
-    } catch (error) {
-        let err = new Error("Something went wrong, Please try again!");
-        next(err)
-    }
-}
-
+    return res.status(200).json({
+      message: "Order history fetched successfully",
+      isSuccess: true,
+      data: formattedResult,
+    });
+  } catch (error) {
+    let err = new Error("Something went wrong, Please try again!");
+    next(err);
+  }
+};
 
 const getdefaultAddress = async (req, res, next) => {
-    try {
-        const { id } = req.params
+  try {
+    const { id } = req.params;
 
+    const result = await prisma.billing.findFirst({
+      where: {
+        userId: id,
+        isDefault: true,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        address1: true,
+        address2: true,
+        city: true,
+        country: true,
+        state: true,
+        zipCode: true,
+        email: true,
+        mobile: true,
+        whatsapp: true,
+        companyname: true,
+        GstNumber: true,
+      },
+    });
 
-        const result = await prisma.billing.findFirst({
-            where: {
-                userId: id,
-                isDefault: true,
-            },
-            select: {
-                id: true,
-                fullName: true,
-                address1: true,
-                address2: true,
-                city: true,
-                country: true,
-                state: true,
-                zipCode: true,
-                email: true,
-                mobile: true,
-                whatsapp: true,
-                companyname: true,
-                GstNumber: true,
-            }
-        })
+    console.log(result);
 
-        console.log(result)
-
-
-
-
-
-
-        return res.status(200).json({
-            message: "Default address successfully",
-            isSuccess: true,
-            data: result
-        });
-
-
-    } catch (error) {
-        console.log(error)
-        let err = new Error("Something went wrong, Please try again!");
-        next(err)
-    }
-}
-export { getOrderdetails, getOrderHistory, getdefaultAddress }
+    return res.status(200).json({
+      message: "Default address successfully",
+      isSuccess: true,
+      data: result,
+    });
+  } catch (error) {
+    console.log(error);
+    let err = new Error("Something went wrong, Please try again!");
+    next(err);
+  }
+};
+export { getOrderdetails, getOrderHistory, getdefaultAddress };

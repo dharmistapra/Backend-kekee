@@ -105,13 +105,10 @@ const deleteCartItem = async (req, res, next) => {
     return res
       .status(200)
       .json({ isSuccess: true, message: "Cart item deleted successfully." });
-
   } catch (error) {
     return next(new Error("Something went wrong, please try again!"));
   }
 };
-
-
 
 const postCartItem = async (req, res, next) => {
   try {
@@ -119,7 +116,9 @@ const postCartItem = async (req, res, next) => {
     let { product_id, catalogue_id, size, stitching, quantity } = req.body;
     const findUser = await prisma.users.findUnique({ where: { id: user_id } });
     if (!findUser)
-      return res.status(404).json({ isSuccess: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ isSuccess: false, message: "User not found." });
 
     let cart = await prisma.cart.findUnique({ where: { user_id: user_id } });
     if (!cart) {
@@ -128,7 +127,7 @@ const postCartItem = async (req, res, next) => {
 
     if (stitching && Array.isArray(stitching) && stitching.length > 0) {
       console.log("stitching", stitching);
-      return
+      return;
       const stitchingValidationResult = await validateStitching(stitching);
       if (!stitchingValidationResult?.isValid)
         return res.status(400).json({
@@ -138,7 +137,9 @@ const postCartItem = async (req, res, next) => {
     } else if (size) {
       const result = await isvalidstitching(size.id, "size");
       if (!result)
-        return res.status(400).json({ isSuccess: false, message: "Size does not exist." });
+        return res
+          .status(400)
+          .json({ isSuccess: false, message: "Size does not exist." });
     }
 
     if (catalogue_id && !product_id) {
@@ -176,7 +177,6 @@ const postCartItem = async (req, res, next) => {
           .status(404)
           .json({ isSuccess: false, message: "Product not found." });
 
-
       let result;
       let message;
       result = await prisma.cartItem.create({
@@ -202,19 +202,16 @@ const postCartItem = async (req, res, next) => {
   }
 };
 
-
-
-
-
-
-
 const postCartItemOptimizeCode = async (req, res, next) => {
   try {
     // const user_id = req.user.id;
-    let { product_id, catalogue_id, size, stitching, quantity, user_id } = req.body;
+    let { product_id, catalogue_id, size, stitching, quantity, user_id } =
+      req.body;
     const findUser = await prisma.users.findUnique({ where: { id: user_id } });
     if (!findUser)
-      return res.status(404).json({ isSuccess: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ isSuccess: false, message: "User not found." });
 
     let cart = await prisma.cart.findUnique({ where: { user_id: user_id } });
     if (!cart) {
@@ -232,13 +229,19 @@ const postCartItemOptimizeCode = async (req, res, next) => {
     } else if (size) {
       const result = await isvalidstitching(size.id, "size");
       if (!result)
-        return res.status(400).json({ isSuccess: false, message: "Size does not exist." });
+        return res
+          .status(400)
+          .json({ isSuccess: false, message: "Size does not exist." });
     }
 
     if (catalogue_id && !product_id) {
-      const products = await prisma.product.findMany({ where: { catalogue_id: catalogue_id }, });
+      const products = await prisma.product.findMany({
+        where: { catalogue_id: catalogue_id },
+      });
       if (!products.length)
-        return res.status(400).json({ error: "No products found in this catalogue" });
+        return res
+          .status(400)
+          .json({ error: "No products found in this catalogue" });
 
       const result = await prisma.cartItem.create({
         data: {
@@ -257,7 +260,9 @@ const postCartItemOptimizeCode = async (req, res, next) => {
             data: {
               cartItem_id: result.id,
               stitching_option: stitch.optionid,
-              measurment: stitch.measurment ? JSON.stringify(stitch.measurment) : null,
+              measurment: stitch.measurment
+                ? JSON.stringify(stitch.measurment)
+                : null,
             },
           });
         }
@@ -279,7 +284,6 @@ const postCartItemOptimizeCode = async (req, res, next) => {
           .status(404)
           .json({ isSuccess: false, message: "Product not found." });
 
-
       let result;
       let message;
       result = await prisma.cartItem.create({
@@ -299,12 +303,13 @@ const postCartItemOptimizeCode = async (req, res, next) => {
             data: {
               cartItem_id: result.id,
               stitching_option: stitch.optionid,
-              measurment: stitch.measurment ? JSON.stringify(stitch.measurment) : null,
+              measurment: stitch.measurment
+                ? JSON.stringify(stitch.measurment)
+                : null,
             },
           });
         }
       }
-
 
       message = "item add in cart successfully";
       return res.status(200).json({
@@ -319,14 +324,15 @@ const postCartItemOptimizeCode = async (req, res, next) => {
   }
 };
 
-
 const getAllcartitemOptimizecode = async (req, res, next) => {
   try {
     const { id } = req.params;
     const finduser = await prisma.cart.findUnique({ where: { user_id: id } });
 
     if (!finduser) {
-      return res.status(400).json({ isSuccess: false, message: "Cart item not found" });
+      return res
+        .status(400)
+        .json({ isSuccess: false, message: "Cart item not found" });
     }
 
     const cartItems = await prisma.cartItem.findMany({
@@ -353,8 +359,8 @@ const getAllcartitemOptimizecode = async (req, res, next) => {
       },
     });
 
-    const { DataModified2, totalSubtotal, totalTax } = calculateCartItemTotal(cartItems);
-   
+    const { DataModified2, totalSubtotal, totalTax } =
+      calculateCartItemTotal(cartItems);
 
     return res.status(200).json({
       status: true,
@@ -370,7 +376,10 @@ const getAllcartitemOptimizecode = async (req, res, next) => {
   }
 };
 
-
-export { updateCartItem, postCartItem, deleteCartItem, postCartItemOptimizeCode, getAllcartitemOptimizecode };
-
-
+export {
+  updateCartItem,
+  postCartItem,
+  deleteCartItem,
+  postCartItemOptimizeCode,
+  getAllcartitemOptimizecode,
+};

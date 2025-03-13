@@ -23,26 +23,27 @@ const postshipAddress = async (req, res, next) => {
                         isDefault: false,
                     },
                 });
-                
+
             }
 
-                data = await prisma.billing.update({
-                    where: { id },
-                    data: {
-                        fullName,
-                        email,
-                        city,
-                        country, state, zipCode, address1, address2, companyname, GstNumber, mobile, whatsapp,
-                        isDefault: isDefault || false,
-                    },
-                });
-            
+            data = await prisma.billing.update({
+                where: { id },
+                data: {
+                    fullName,
+                    email,
+                    city,
+                    country, state, zipCode, address1, address2, companyname, GstNumber, mobile, whatsapp,
+                    isDefault: true,
+                    isSame: true,
+                },
+            });
+
 
             return res.status(200).json({ isSuccess: true, message: "Data updated successfully", data });
         } else {
             data = await prisma.billing.create({
                 data: {
-                    fullName, userId: user_id, email, city, country, state, zipCode, address1, address2, companyname, GstNumber, mobile, whatsapp, isDefault: false,
+                    fullName, userId: user_id, email, city, country, state, zipCode, address1, address2, companyname, GstNumber, mobile, whatsapp, isDefault: true, isSame: true,
                 },
             });
 

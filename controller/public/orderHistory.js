@@ -80,6 +80,7 @@ const getOrderdetails = async (req, res, next) => {
                         GstNumber: true,
                         companyname: true,
                         whatsapp: true,
+                        isSame: true
                     }
                 },
                 payment: {
@@ -107,6 +108,10 @@ const getOrderdetails = async (req, res, next) => {
                 isSuccess: false,
             });
         }
+
+
+
+
 
         const transformedOrderItems = orderDetails?.orderItems?.map((item) => {
             return {
@@ -201,6 +206,8 @@ const getOrderHistory = async (req, res, next) => {
             take
         })
 
+
+
         const formattedResult = result.map(order => {
             const catalogue = order.orderItems?.[0]?.catalogue;
             const prdoduct = order.orderItems?.[0]?.product;
@@ -236,6 +243,8 @@ const getOrderHistory = async (req, res, next) => {
 const getdefaultAddress = async (req, res, next) => {
     try {
         const { id } = req.params
+
+
         const result = await prisma.billing.findFirst({
             where: {
                 userId: id,
@@ -258,6 +267,9 @@ const getdefaultAddress = async (req, res, next) => {
             }
         })
 
+        console.log(result)
+
+
 
 
 
@@ -270,6 +282,7 @@ const getdefaultAddress = async (req, res, next) => {
 
 
     } catch (error) {
+        console.log(error)
         let err = new Error("Something went wrong, Please try again!");
         next(err)
     }

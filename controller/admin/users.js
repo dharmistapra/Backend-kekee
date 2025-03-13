@@ -207,6 +207,7 @@ const getOrderdetailsUsers = async (req, res, next) => {
                         state: true,
                         zipCode: true,
                         mobile: true,
+                        isSame: true,
                     }
                 },
                 payment: {

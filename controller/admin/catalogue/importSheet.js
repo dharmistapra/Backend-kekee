@@ -1075,10 +1075,10 @@ const importCatalogues = async (req, res, next) => {
         errors.push(message);
       }
     }
-    // if (catImage.length > 0)
-    //   errors.push(`Row ${catImage} cat_image files not exist!`);
-    // if (productImage.length > 0)
-    //   errors.push(`Row ${productImage} product image file not exist!`);
+    if (catImage.length > 0)
+      errors.push(`Row ${catImage} cat_image files not exist!`);
+    if (productImage.length > 0)
+      errors.push(`Row ${productImage} product image file not exist!`);
     if (additional_attr.length > 0) {
       errors.push(`${additional_attr} attributes not found!`);
       return res.status(400).json({ isSuccess: false, message: errors });

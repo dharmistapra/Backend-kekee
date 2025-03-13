@@ -110,13 +110,16 @@ const findproductpriceOnSize = async (product_id, size_id, quantity = 1) => {
   return { subtotal: 0, tax: 0 };
 };
 
-
-const findcataloguepriceOnSize = async (catalogue_id, size_id, quantity = 1) => {
+const findcataloguepriceOnSize = async (
+  catalogue_id,
+  size_id,
+  quantity = 1
+) => {
   const catalogue = await prisma.catalogue.findUnique({
     where: { id: catalogue_id },
     include: {
       CatalogueSize: true,
-    }
+    },
   });
   if (!catalogue) {
     return { subtotal: 0, tax: 0 };
@@ -420,11 +423,14 @@ const findCatalogueStitchingprice = async (
       })
       .flat();
 
-    const outOfStockCount = checkproductquantity?.filter((data) => data.outOfStock === true).length;
+    const outOfStockCount = checkproductquantity?.filter(
+      (data) => data.outOfStock === true
+    ).length;
     const availableProductCount = checkproductquantity.length - outOfStockCount;
     const stitchingPricePerItem =
       (await findStitchingOptionPrices(extranct_Option_Id)) || 0;
-    const subtotal = availableProductCount * catalogue.average_price +
+    const subtotal =
+      availableProductCount * catalogue.average_price +
       availableProductCount * stitchingPricePerItem;
 
     const taxRate = catalogue.GST || 0;
@@ -436,31 +442,26 @@ const findCatalogueStitchingprice = async (
   return { subtotal: 0, tax: 0 };
 };
 
-
-
-
 const validateStitchingOption = async (stitching) => {
   if (!Array.isArray(stitching) || stitching.length === 0) {
     throw new Error("Invalid stitching data");
   }
 
   for (let item of stitching) {
-    if (!item.optionid) { throw new Error("Missing optionid") }
-    const optionExists = await prisma.stitchingOption.findUnique({ where: { id: item.optionid } });
-    console.log(optionExists)
-    if (!optionExists) { throw new Error(`Invalid optionid: ${item.optionid}`) }
+    if (!item.optionid) {
+      throw new Error("Missing optionid");
+    }
+    const optionExists = await prisma.stitchingOption.findUnique({
+      where: { id: item.optionid },
+    });
+    console.log(optionExists);
+    if (!optionExists) {
+      throw new Error(`Invalid optionid: ${item.optionid}`);
+    }
   }
 
   return { success: true, message: "Validation successful" };
-}
-
-
-
-
-
-
-
-
+};
 
 const calculateCartItemTotal = (cartItems) => {
   let totalSubtotal = 0;
@@ -468,9 +469,13 @@ const calculateCartItemTotal = (cartItems) => {
   let totalWeight = 0;
 
   const DataModified2 = cartItems.map((item) => {
-    const { quantity, size, isCatalogue, stitchingItems, catalogue, product } = item;
-    const sizeObject = typeof size === 'string' ? JSON.parse(size) : size;
-    const totalStitchingPrice = stitchingItems.reduce((acc, stitch) => acc + (stitch.option?.price || 0), 0);
+    const { quantity, size, isCatalogue, stitchingItems, catalogue, product } =
+      item;
+    const sizeObject = typeof size === "string" ? JSON.parse(size) : size;
+    const totalStitchingPrice = stitchingItems.reduce(
+      (acc, stitch) => acc + (stitch.option?.price || 0),
+      0
+    );
     let subtotal = 0;
     let tax = 0;
     let itemWeight = 0;
@@ -480,7 +485,9 @@ const calculateCartItemTotal = (cartItems) => {
       let availableProductCount = catalogue.Product.reduce((count, data) => {
         if (size) {
           const selectedSize = JSON.parse(size);
-          const sizeData = data.sizes.find(s => s?.size?.id === selectedSize?.id);
+          const sizeData = data.sizes.find(
+            (s) => s?.size?.id === selectedSize?.id
+          );
           if (sizeData && sizeData.quantity >= quantity) return count + 1;
           data.outOfStock = true;
         } else {
@@ -490,25 +497,32 @@ const calculateCartItemTotal = (cartItems) => {
         return count;
       }, 0);
 
-
       outOfStock = availableProductCount === 0;
-      const sizePrice = size ? catalogue.Product[0]?.sizes?.find(s => s?.size?.id === JSON.parse(size)?.id)?.price || 0 : 0;
+      const sizePrice = size
+        ? catalogue.Product[0]?.sizes?.find(
+            (s) => s?.size?.id === JSON.parse(size)?.id
+          )?.price || 0
+        : 0;
       if (sizePrice) {
-        sizeObject.price = sizePrice || 0
+        sizeObject.price = sizePrice || 0;
       }
 
-      subtotal = availableProductCount * (catalogue.average_price + sizePrice + totalStitchingPrice);
+      subtotal =
+        availableProductCount *
+        (catalogue.average_price + sizePrice + totalStitchingPrice);
       tax = (subtotal * (catalogue.GST || 0)) / 100;
-      itemWeight = (catalogue.weight || 0) * quantity
-
-    }
-    else if (product) {
-      const sizePrice = size ? product.sizes?.find(s => s?.size?.id === JSON.parse(size)?.id)?.price || 0 : 0;
+      itemWeight = (catalogue.weight || 0) * quantity;
+    } else if (product) {
+      const sizePrice = size
+        ? product.sizes?.find((s) => s?.size?.id === JSON.parse(size)?.id)
+            ?.price || 0
+        : 0;
       if ((size && !sizePrice) || product.quantity < quantity) {
         outOfStock = true;
+        sizeObject.price = sizePrice || 0;
       } else {
-        sizeObject.price = sizePrice || 0
-        subtotal = (product.offer_price + sizePrice + totalStitchingPrice) * quantity;
+        subtotal =
+          (product.offer_price + sizePrice + totalStitchingPrice) * quantity;
         tax = (subtotal * (product.retail_GST || 0)) / 100;
         itemWeight = (product.weight || 0) * quantity;
       }
@@ -533,25 +547,33 @@ const calculateCartItemTotal = (cartItems) => {
       weight: catalogue?.weight || product?.weight,
       price: catalogue?.offer_price || product?.offer_price,
       image: catalogue?.coverImage || product?.image?.[0],
-      category: { name: catalogue?.CatalogueCategory?.[0]?.category?.name || product?.categories?.[0]?.category?.name, url: catalogue?.CatalogueCategory?.[0]?.category?.url || product?.categories?.[0]?.category?.url },
+      category: {
+        name:
+          catalogue?.CatalogueCategory?.[0]?.category?.name ||
+          product?.categories?.[0]?.category?.name,
+        url:
+          catalogue?.CatalogueCategory?.[0]?.category?.url ||
+          product?.categories?.[0]?.category?.url,
+      },
       size: JSON.stringify(sizeObject),
       subtotal,
       tax,
       outOfStock,
-      products: isCatalogue ? catalogue.Product.map(prod => ({
-        name: prod.name,
-        url: prod.url,
-        quantity: prod.quantity,
-        outOfStock: prod?.outOfStock,
-        code: prod.sku,
-        // price: prod.retail_price,
-      })) : undefined,
+      products: isCatalogue
+        ? catalogue.Product.map((prod) => ({
+            name: prod.name,
+            url: prod.url,
+            quantity: prod.quantity,
+            outOfStock: prod?.outOfStock,
+            code: prod.sku,
+            // price: prod.retail_price,
+          }))
+        : undefined,
     };
   });
 
   return { DataModified2, totalSubtotal, totalTax, totalWeight };
 };
-
 
 export {
   isvalidstitching,
@@ -565,5 +587,5 @@ export {
   findCatalogueStitchingprice,
   findcataloguepriceOnSize,
   validateStitchingOption,
-  calculateCartItemTotal
+  calculateCartItemTotal,
 };

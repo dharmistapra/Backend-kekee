@@ -1,6 +1,0 @@
-category,productCode,catCode,productName,description,noOfProduct,quantity,catalogueItemMarketPrice,catalogueItemDiscount,retailPrice,retailDiscount,GST,metaTitle,metaKeyword,metaDescription,weight,tag,cat_image,image,isStitching,isSize,isActive,showInSingle,Color,Fabric
-"Studio Collection,Sarees",,254,abc,abc,3,2,3000,0,3000,0,5,abc,abc,abc,2,abc,abc.jpg,abc.jpg,Y,N,Y,N,"Red,Pink","Chiffon,Silk"
-Studio Collection,cbv-1,254,abc,abc,,2,1000,0,1000,50,5,abc,abc,abc,2,abc,,abc.jpg,Y,N,Y,N,"Red,Pink",Silk
-Studio Collection,cbv-2,254,abc,abc,,2,1000,0,1000,0,5,abc,abc,abc,2,abc,,abc.jpg,Y,N,Y,N,"Red,Pink",Silk
-Studio Collection,cbv-3,254,abc,abc,,2,1000,0,1000,0,5,abc,abc,abc,2,abc,,abc.jpg,Y,N,Y,N,"Red,Pink",Silk
-Studio Collection,cbv-4,,abc,abc,,2,1000,0,1000,0,5,abc,abc,abc,2,abc,,abc.jpg,Y,N,Y,N,"Red,Pink",Silk

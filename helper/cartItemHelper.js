@@ -469,6 +469,7 @@ const calculateCartItemTotal = (cartItems) => {
 
   const DataModified2 = cartItems.map((item) => {
     const { quantity, size, isCatalogue, stitchingItems, catalogue, product } = item;
+    const sizeObject = typeof size === 'string' ? JSON.parse(size) : size;
     const totalStitchingPrice = stitchingItems.reduce((acc, stitch) => acc + (stitch.option?.price || 0), 0);
     let subtotal = 0;
     let tax = 0;
@@ -492,15 +493,21 @@ const calculateCartItemTotal = (cartItems) => {
 
       outOfStock = availableProductCount === 0;
       const sizePrice = size ? catalogue.Product[0]?.sizes?.find(s => s?.size?.id === JSON.parse(size)?.id)?.price || 0 : 0;
+      if (sizePrice) {
+        sizeObject.price = sizePrice || 0
+      }
+
       subtotal = availableProductCount * (catalogue.average_price + sizePrice + totalStitchingPrice);
       tax = (subtotal * (catalogue.GST || 0)) / 100;
       itemWeight = (catalogue.weight || 0) * quantity
+
     }
     else if (product) {
       const sizePrice = size ? product.sizes?.find(s => s?.size?.id === JSON.parse(size)?.id)?.price || 0 : 0;
       if ((size && !sizePrice) || product.quantity < quantity) {
         outOfStock = true;
       } else {
+        sizeObject.price = sizePrice || 0
         subtotal = (product.offer_price + sizePrice + totalStitchingPrice) * quantity;
         tax = (subtotal * (product.retail_GST || 0)) / 100;
         itemWeight = (product.weight || 0) * quantity;
@@ -527,7 +534,7 @@ const calculateCartItemTotal = (cartItems) => {
       price: catalogue?.offer_price || product?.offer_price,
       image: catalogue?.coverImage || product?.image?.[0],
       category: { name: catalogue?.CatalogueCategory?.[0]?.category?.name || product?.categories?.[0]?.category?.name, url: catalogue?.CatalogueCategory?.[0]?.category?.url || product?.categories?.[0]?.category?.url },
-      size,
+      size: JSON.stringify(sizeObject),
       subtotal,
       tax,
       outOfStock,
@@ -536,7 +543,8 @@ const calculateCartItemTotal = (cartItems) => {
         url: prod.url,
         quantity: prod.quantity,
         outOfStock: prod?.outOfStock,
-        code: prod.sku
+        code: prod.sku,
+        // price: prod.retail_price,
       })) : undefined,
     };
   });

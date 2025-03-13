@@ -28,6 +28,7 @@ import OrderPlace, {
   verifyOrder,
 } from "../controller/public/orderPlace.js";
 import {
+  getdefaultAddress,
   getOrderdetails,
   getOrderHistory,
 } from "../controller/public/orderHistory.js";
@@ -54,7 +55,7 @@ publicProtected.post(
   updateUserbasicInfo
 );
 
-publicProtected.post("/oreder/place", [orderPlaceSchema], OrderPlace);
+publicProtected.post("/order/place", [orderPlaceSchema], OrderPlace);
 publicProtected.post("/verify/order", verifyOrder);
 publicProtected.post("/cancel/payment", orderFailed);
 publicProtected.post("/order/details", getOrderdetails);
@@ -62,4 +63,5 @@ publicProtected.post("/order/history", getOrderHistory);
 
 publicProtected.post("/shipping/address", postshipAddress);
 publicProtected.get("/shipping/address", getshipAddress);
+publicProtected.get("/default/address/:id", getdefaultAddress)
 export default publicProtected;

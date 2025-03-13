@@ -1,10 +1,6 @@
 import prisma from "../../db/config.js";
 import {
     calculateCartItemTotal,
-    findCatalogueStitchingprice,
-    findproductpriceOnSize,
-    findproductpriceonStitching,
-    getAllStitchingData,
 } from "../../helper/cartItemHelper.js";
 import { calculateShippingCost } from "../admin/shippingcharges.js";
 import { rozarpay } from "../../config/paymentConfig.js";
@@ -12,197 +8,9 @@ import crypto from "crypto";
 import "dotenv/config";
 const OrderPlace = async (req, res, next) => {
     try {
-        const { user_id, billingform, shippingdata, paymentMethod, currency, bankdata } = req.body;
+        const { user_id, billingform, shippingdata, paymentMethod, currency, bankdata, defaultAddressId } = req.body;
         const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
-
-        if (!finduser)
-            return res.status(400).json({ isSuccess: false, message: "User not found", data: null });
-
-
-        // const cartItems = await prisma.cartItem.findMany({
-        //     where: { cart_id: finduser?.id },
-        //     select: {
-        //         id: true,
-        //         quantity: true,
-        //         product_id: true,
-        //         isCatalogue: true,
-        //         catalogue_id: true,
-        //         size: true,
-        //         stitching: true,
-        //         product: {
-        //             select: {
-        //                 id: true,
-        //                 name: true,
-        //                 catalogue_id: true,
-        //                 sku: true,
-        //                 url: true,
-        //                 average_price: true,
-        //                 retail_price: true,
-        //                 retail_discount: true,
-        //                 offer_price: true,
-        //                 image: true,
-        //                 weight: true,
-        //                 categories: {
-        //                     select: {
-        //                         id: true,
-        //                         category: {
-        //                             select: {
-        //                                 id: true,
-        //                                 Menu: { select: { id: true, name: true, url: true } },
-        //                             },
-        //                         },
-        //                     },
-        //                 },
-        //                 tag: true,
-        //                 showInSingle: true,
-        //                 quantity: true,
-        //             },
-        //         },
-        //         catalogue: {
-        //             select: {
-        //                 id: true,
-        //                 name: true,
-        //                 cat_code: true,
-        //                 url: true,
-        //                 quantity: true,
-        //                 price: true,
-        //                 GST: true,
-        //                 offer_price: true,
-        //                 coverImage: true,
-        //                 weight: true,
-        //                 CatalogueCategory: {
-        //                     select: {
-        //                         category: {
-        //                             select: {
-        //                                 id: true,
-        //                                 name: true,
-        //                                 Menu: {
-        //                                     select: {
-        //                                         id: true,
-        //                                         name: true,
-        //                                         url: true,
-        //                                     },
-        //                                 },
-        //                             },
-        //                         },
-        //                     },
-        //                 },
-        //                 Product: {
-        //                     select: {
-        //                         id: true,
-        //                         name: true,
-        //                         catalogue_id: true,
-        //                         sku: true,
-        //                         url: true,
-        //                         average_price: true,
-        //                         retail_price: true,
-        //                         retail_discount: true,
-        //                         offer_price: true,
-        //                         image: true,
-        //                         tag: true,
-        //                         quantity: true,
-        //                         showInSingle: true,
-        //                     },
-        //                 },
-        //             },
-        //         },
-        //     },
-        // });
-
-        // if (cartItems?.length === 0)
-        //     return res
-        //         .status(400)
-        //         .json({ isSuccess: false, message: "items not Found", data: null });
-
-        // let outOfStockItems = [];
-        // for (const item of cartItems) {
-        //     if (!item.isCatalogue) {
-        //         if (item.quantity > item.product.quantity) {
-        //             outOfStockItems.push(`Product: ${item.product.sku}`);
-        //         }
-        //     } else {
-        //         if (item.quantity > item.catalogue.quantity) {
-        //             outOfStockItems.push(`Catalogue: ${item.catalogue.cat_code}`);
-        //         }
-        //     }
-        // }
-
-        // if (outOfStockItems.length > 0) {
-        //     return res.status(400).json({
-        //         isSuccess: false,
-        //         message: `Stock unavailable for: ${outOfStockItems.join(", ")}`,
-        //         data: null,
-        //     });
-        // }
-
-        // let subtotal = 0,
-        //     tax = 0,
-        //     totalweight = 0,
-        //     discount = 0;
-        // let stitchingDataMap = [];
-        // for (let item of cartItems) {
-        //     const { quantity, stitching, size, isCatalogue, catalogue, product_id } =
-        //         item;
-        //     if (item.isCatalogue && item.catalogue_id) {
-        //         const checkproductquantity = catalogue?.Product?.map((data) => {
-        //             if (data.quantity < quantity) {
-        //                 return { ...data, outOfStock: true };
-        //             }
-        //             return data;
-        //         });
-
-        //         catalogue.Product = checkproductquantity;
-        //         if (item.stitching) {
-        //             const parsedStitching = JSON.parse(stitching);
-        //             const priceDetails = await findCatalogueStitchingprice(
-        //                 catalogue?.id,
-        //                 parsedStitching,
-        //                 quantity,
-        //                 checkproductquantity
-        //             );
-        //             item.Subtotal = priceDetails?.subtotal * quantity || 0;
-        //             item.Tax = priceDetails?.tax || 0;
-        //             item.outOfStock = priceDetails.catalogueOutOfStock;
-        //             item.discount = item.price - item.offer_price;
-        //             totalweight += Number(catalogue?.weight) * Number(quantity);
-        //             stitchingDataMap = await getAllStitchingData(
-        //                 parsedStitching,
-        //                 parsedStitching
-        //             );
-        //         }
-        //     } else {
-        //         if (size) {
-        //             const priceDetails = await findproductpriceOnSize(
-        //                 product_id,
-        //                 size,
-        //                 quantity
-        //             );
-        //             item.Subtotal = priceDetails?.subtotal || 0;
-        //             item.Tax = priceDetails?.tax || 0;
-        //         } else if (stitching) {
-        //             const parsedStitching = JSON.parse(stitching);
-        //             const priceDetails = await findproductpriceonStitching(
-        //                 product_id,
-        //                 parsedStitching,
-        //                 quantity
-        //             );
-
-        //             item.Subtotal = priceDetails?.subtotal * quantity || 0;
-        //             item.Tax = priceDetails?.tax || 0;
-        //             item.message = priceDetails.message || "";
-        //             item.discount = item.price - item.offer_price;
-        //             totalweight += Number(item.product?.weight) * Number(quantity);
-        //             stitchingDataMap = await getAllStitchingData(
-        //                 parsedStitching,
-        //                 parsedStitching
-        //             );
-        //         }
-        //     }
-        //     subtotal += item.Subtotal;
-        //     tax += item.Tax;
-        //     discount += item.discount;
-        // }
-
+        if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
 
         const cartItems = await prisma.cartItem.findMany({
             where: { cart_id: finduser.id },
@@ -232,24 +40,19 @@ const OrderPlace = async (req, res, next) => {
         if (DataModified2?.length == 0 || totalSubtotal === 0) {
             return res.status(400).json({ isSuccess: false, message: "Data Not Found", data: null });
         }
-
-
-
         const shippingconst = await calculateShippingCost(totalWeight, shippingdata?.country);
-
-        let findstitchingcharge = subtotal
-
-        let ordertotal = subtotal + totalTax + shippingconst.shippingCost;
+        let ordertotal = totalSubtotal + totalTax + shippingconst.shippingCost;
         const now = new Date();
         const date = now.toISOString().slice(0, 10).replace(/-/g, '');
         const time = now.toTimeString().slice(0, 8).replace(/:/g, '');
         const orderId = `ORD-${date}-${time}`;
 
+
         const order = await prisma.order.create({
             data: {
                 userId: user_id,
                 orderId: orderId,
-                subtotal: subtotal,
+                subtotal: totalSubtotal,
                 Tax: totalTax,
                 discount: 0,
                 shippingcharge: shippingconst.shippingCost,
@@ -260,102 +63,80 @@ const OrderPlace = async (req, res, next) => {
 
 
         await prisma.orderItem.createMany({
-            data: cartItems.map((item) => {
-                let snapshot = {};
-                let itemSubtotal = 0;
-
-                if (item.isCatalogue) {
-                    const availableProducts = item.catalogue.Product.filter(
-                        (prod) => prod.quantity >= item.quantity
-                    ).map((prod) => ({
-                        id: prod.id,
-                        name: prod.name,
-                        sku: prod.sku,
-                        url: prod.url,
-                        offer_price: prod.offer_price,
-                    }));
-
-                    itemSubtotal = item.catalogue.offer_price * item.quantity;
-
-                    snapshot = {
-                        type: "catalogue",
-                        name: item.catalogue.name,
-                        url: item.catalogue.url,
-                        price: item.catalogue.offer_price,
-                        cartQuantity: item.quantity,
-                        products: availableProducts,
-                        discount: item.catalogue_discount,
-                        tax: item.isCatalogue?.GST,
-                        subtotal: subtotal,
-                        stitchingcharges: Math.round(findstitchingcharge - item.catalogue.offer_price),
-                        stitching: stitchingDataMap,
-                    };
-                } else {
-                    itemSubtotal = item.product.offer_price * item.quantity;
-
-                    snapshot = {
-                        type: "product",
-                        name: item.product.name,
-                        url: item.product.url,
-                        price: item.product.offer_price,
-                        cartQuantity: item.quantity,
-                        discount: item.retail_discount,
-                        tax: item.isCatalogue?.retail_GST,
-                        subtotal: subtotal,
-                        stitchingcharges: Math.round(findstitchingcharge - item.product.offer_price),
-                        stitching: stitchingDataMap,
-                    };
+            data: DataModified2?.map((item) => {
+                let availableProducts = [];
+                if (item?.isCatalogue) {
+                    availableProducts = item?.products?.filter(prod => prod.quantity >= item.quantity) || [];
                 }
 
+
+                const stitchingTotal = item?.stitching?.reduce((sum, stitch) => sum + (stitch.option.price || 0), 0) || 0;
+                const stitchingPrice = (availableProducts?.length > 0 ? availableProducts.length : 1) * stitchingTotal;
+
+                const snapshots = {
+                    quantity: item.quantity,
+                    stitching: item.stitching || [],
+                    stitchingPrice,
+                    products: availableProducts,
+                    price: item?.price,
+                    subtotal: item?.subtotal,
+                    tax: item?.tax,
+                    size: item?.size || {},
+                }
                 return {
                     orderId: order.id,
-                    productId: item.product_id,
-                    catlogueId: item.catalogue_id,
+                    productId: item?.product_id,
+                    catlogueId: item?.catalogue_id,
                     quantity: item.quantity,
-                    customersnotes: billingform.customersnotes,
-                    productname: item.isCatalogue
-                        ? item.catalogue.name
-                        : item.product.name,
-                    type: item.isCatalogue ? "catalogue" : "single",
-                    productsnapshots: JSON.stringify(snapshot),
+                    productsnapshots: JSON.stringify(snapshots)
                 };
-            }),
-        });
-
-        const billingData = await prisma.billing.create({
-            data: {
-                orderId: order.id,
-                email: billingform.email,
-                fullName: billingform.fullName,
-                country: billingform.country,
-                state: billingform.state,
-                city: billingform.city,
-                zipCode: billingform.zipCode,
-                address1: billingform.address1,
-                address2: billingform.address2,
-                companyname: billingform.companyname,
-                GstNumber: billingform.GstNumber,
-                mobile: billingform.mobile,
-                whatsapp: billingform.whatsapp,
-            },
-        });
-
-        const shippingData = await prisma.shipping.create({
-            data: {
-                orderId: order.id,
-                fullName: shippingdata.fullName,
-                country: shippingdata.country,
-                state: shippingdata.state,
-                city: shippingdata.city,
-                zipCode: shippingdata.zipCode,
-                address1: shippingdata.address1,
-                address2: shippingdata.address2,
-                mobile: shippingdata.mobile,
-                status: "PENDING",
-            },
+            }) ?? []
         });
 
 
+        if (defaultAddressId) {
+            await prisma.billing.update({
+                where: {
+                    id: defaultAddressId
+                },
+                data: {
+                    orderId: order.id
+                }
+            })
+        } else {
+            const billingData = await prisma.billing.create({
+                data: {
+                    orderId: order.id,
+                    email: billingform.email,
+                    fullName: billingform.fullName,
+                    country: billingform.country,
+                    state: billingform.state,
+                    city: billingform.city,
+                    zipCode: billingform.zipCode,
+                    address1: billingform.address1,
+                    address2: billingform.address2,
+                    companyname: billingform.companyname,
+                    GstNumber: billingform.GstNumber,
+                    mobile: billingform.mobile,
+                    whatsapp: billingform.whatsapp,
+                },
+            });
+            const shippingData = await prisma.shipping.create({
+                data: {
+                    orderId: order.id,
+                    fullName: shippingdata.fullName,
+                    country: shippingdata.country,
+                    state: shippingdata.state,
+                    city: shippingdata.city,
+                    zipCode: shippingdata.zipCode,
+                    address1: shippingdata.address1,
+                    address2: shippingdata.address2,
+                    mobile: shippingdata.mobile,
+                    status: "PENDING",
+                },
+            });
+
+        }
 
         const convertAmount = ordertotal / currency?.rate;
         let bankAccountId = null;

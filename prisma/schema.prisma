@@ -777,8 +777,8 @@ model OrderItem {
   catlogueId     String? @db.ObjectId
   quantity       Int
   customersnotes String?
-  productname    String?
-  type           String?
+  // productname    String?
+  // type           String?
 
   productsnapshots Json?
   createdAt        DateTime   @default(now())

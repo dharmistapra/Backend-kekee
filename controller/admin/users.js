@@ -72,13 +72,16 @@ const updateUsersStatus = async (req, res, next) => {
         next(err);
     }
 };
+
 const getOrderHistoryusers = async (req, res, next) => {
     try {
         const { perPage, pageNo, userId } = req.body;
         const page = +pageNo || 1;
         const take = +perPage || 10;
         const skip = (page - 1) * take;
+
         const whereCondition = userId ? { userId: userId } : {};
+
         const result = await prisma.order.findMany({
             where: whereCondition,
             select: {
@@ -86,77 +89,58 @@ const getOrderHistoryusers = async (req, res, next) => {
                 createdAt: true,
                 status: true,
                 totalAmount: true,
-
+                _count: { select: { orderItems: true } },
+                payment: { select: { paymentMethod: true, status: true } },
                 orderItems: {
                     select: {
-                        productname: true,
-                        type: true,
                         quantity: true,
-                        productsnapshots: true,
-                        product: {
-                            select: {
-                                sku: true,
-                                image: true,
-                            }
-                        },
-                        catalogue: {
-                            select: {
-                                cat_code: true,
-                                coverImage: true
-                            }
-                        }
-                    }
+                        product: { select: { sku: true, image: true } },
+                        catalogue: { select: { cat_code: true, coverImage: true } },
+                    },
                 },
-                payment: {
-                    select: {
-                        paymentMethod: true,
-                        status: true,
-                    }
-
-                }
             },
             skip,
-            take
+            take,
         });
 
         const formattedResult = result.map(order => {
-            const product = order.orderItems[0];
-            const parsedata = JSON.parse(product?.productsnapshots ? product?.productsnapshots : []);
-            const payment = order.payment?.[0];
+            const payment = order.payment[0] || null;
+            const orderItem = order.orderItems[0] || {};
+            const { sku, image } = orderItem.product || {};
+            const { cat_code, coverImage } = orderItem.catalogue || {};
+
             return {
-                orderId: order?.orderId,
-                productName: parsedata?.name || 'N/A',
-                orderDate: new Date(order.createdAt).toLocaleDateString('en-GB', {
-                    day: '2-digit', month: 'long', year: 'numeric'
-                }),
+                orderId: order.orderId,
+                createdAt: order.createdAt,
                 status: order.status,
-                amount: order.totalAmount.toFixed(2),
-                quantity: parsedata?.cartQuantity || '',
-                type: parsedata?.type || "",
-                url: parsedata?.url || "",
-                paymentMethod: payment?.paymentMethod,
-                paymentstatus: payment?.status,
-                image: product?.product?.image || product.catalogue.coverImage,
-                sku: product?.product?.sku || product.catalogue.cat_code,
+                totalAmount: order.totalAmount,
+                orderItemCount: order._count.orderItems,
+                payment,
+                orderItems: orderItem
+                    ? {
+                        sku: sku || cat_code,
+                        image: image || coverImage,
+                    } : null,
             };
         });
 
         return res.status(200).json({
             message: "Order history fetched successfully",
             isSuccess: true,
-            data: formattedResult
+            data: formattedResult,
         });
-
     } catch (error) {
-        console.log(error)
-        let err = new Error("Something went wrong, Please try again!");
+        console.error(error);
+        const err = new Error("Something went wrong, Please try again!");
         next(err);
     }
 };
+
+
+
 const getOrderdetailsUsers = async (req, res, next) => {
     try {
         const { orderId } = req.body;
-
         const orderDetails = await prisma.order.findUnique({
             where: { orderId: orderId },
             select: {
@@ -181,6 +165,24 @@ const getOrderdetailsUsers = async (req, res, next) => {
                         quantity: true,
                         productsnapshots: true,
                         type: true,
+                        product: {
+                            select: {
+                                name: true,
+                                sku: true,
+                                image: true,
+                                quantity: true,
+
+                            }
+                        },
+                        catalogue: {
+                            select: {
+                                name: true,
+                                cat_code: true,
+                                coverImage: true,
+                                quantity: true,
+                            }
+                        }
+
                     }
                 },
                 shipping: {
@@ -212,12 +214,12 @@ const getOrderdetailsUsers = async (req, res, next) => {
                         paymentMethod: true,
                         transactionId: true,
                         status: true,
-                        bankaccount:{
-                            select:{
-                                bankName:true,
-                                accountHolderName:true,
-                                ifscCode:true,
-                                accountNumber:true
+                        bankaccount: {
+                            select: {
+                                bankName: true,
+                                accountHolderName: true,
+                                ifscCode: true,
+                                accountNumber: true
                             }
                         }
                     }
@@ -233,26 +235,16 @@ const getOrderdetailsUsers = async (req, res, next) => {
         }
 
         let totalStitchingCharges = 0;
-        const transformedOrderItems = orderDetails.orderItems.map(item => {
-            const productSnapshot = JSON.parse(item.productsnapshots);
-            totalStitchingCharges += productSnapshot.stitchingcharges || 0;
+        const transformedOrderItems = orderDetails.orderItems.map((item) => {
 
             return {
                 id: item.id,
                 quantity: item.quantity,
-                productName: productSnapshot.name,
-                price: productSnapshot.price,
-                subtotal: productSnapshot.subtotal,
-                products: productSnapshot.products,
-                type: item.type,
-                stitching: productSnapshot.stitching.map(stitch => ({
-                    stitchingGroupName: stitch.stitchingGroup?.name || '',
-                    options: stitch.option.map(opt => ({
-                        name: opt.name,
-                        price: opt.price,
-                        dispatchTime: opt.dispatch_time
-                    }))
-                }))
+                products: JSON.parse(item.productsnapshots),
+                name: item?.catalogue?.name || item?.product?.name,
+                sku: item?.catalogue?.cat_code || item?.product?.sku,
+                type: item?.catalogue?.cat_code ? 'Catalogue' : "products",
+                image: item?.catalogue?.coverImage || item?.product?.image[0],
             };
         });
 
@@ -274,7 +266,6 @@ const getOrderdetailsUsers = async (req, res, next) => {
                 name: orderDetails?.user?.name,
                 email: orderDetails?.user?.email,
                 phone: orderDetails?.user?.mobile_number,
-
                 shippingDetails: orderDetails.shipping.length > 0 ? orderDetails.shipping[0] : {},
                 billingDetails: orderDetails.billing.length > 0 ? orderDetails.billing[0] : {},
 
@@ -290,40 +281,6 @@ const getOrderdetailsUsers = async (req, res, next) => {
     }
 };
 
-// const updateOrderStatus = async (req, res, next) => {
-//     try {
-//         const { orderstatus, orderId } = req.body;
-//         const order = await prisma.order.findUnique({ where: { orderId: orderId }, select: { id: true } });
-//         if (!order) {
-//             return res.status(400).json({ message: "Order not found", isSuccess: false });
-//         }
-
-//         const initialStatus = order.status;
-
-
-//         if (orderstatus === "CONFIRMED") {
-//             const stockCheck = await checkStock(orderId);
-//             if (!stockCheck.isSuccess) {
-//                 return res.status(400).json({ isSuccess: false, message: stockCheck.message });
-//             }
-//             await reduceProductQuantity(orderId);
-//         } else if (initialStatus === "CONFIRMED" && orderstatus !== "CONFIRMED") {
-//             await revertProductQuantity(orderId.id);
-//         }
-
-//         await prisma.order.update({
-//             where: { orderId },
-//             data: { status: orderstatus },
-//         });
-
-//         return res.status(200).json({ isSuccess: true, message: "Order status updated successfully" });
-
-//     } catch (error) {
-//         console.log(error)
-//         next(new Error("Something went wrong, Please try again!"));
-//     }
-// }
-
 
 
 
@@ -331,11 +288,9 @@ const getOrderdetailsUsers = async (req, res, next) => {
 const updateOrderStatus = async (req, res, next) => {
     try {
         const { orderstatus, orderId } = req.body;
-
-        // Fetch the current order status
         const order = await prisma.order.findUnique({
             where: { orderId },
-            select: { id: true, status: true }, // Select current status
+            select: { id: true, status: true },
         });
 
         if (!order) {

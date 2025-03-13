@@ -3,8 +3,9 @@ import prisma from "../../db/config.js";
 const getOrderdetails = async (req, res, next) => {
     try {
         const { orderId } = req.body;
+        console.log("orderId", orderId)
         const orderDetails = await prisma.order.findUnique({
-            where: { id: orderId },
+            where: { orderId: orderId },
             select: {
                 orderId: true,
                 createdAt: true,
@@ -19,6 +20,39 @@ const getOrderdetails = async (req, res, next) => {
                         id: true,
                         quantity: true,
                         productsnapshots: true,
+                        product: {
+                            select: {
+                                name: true,
+                                image: true,
+                                categories: {
+                                    select: {
+                                        category: {
+                                            select: {
+                                                name: true, url: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+
+                        catalogue: {
+                            select: {
+                                name: true,
+                                url: true,
+                                coverImage: true,
+                                CatalogueCategory: {
+                                    select: {
+                                        category: {
+                                            select: {
+                                                name: true,
+                                                url: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 shipping: {
@@ -74,10 +108,18 @@ const getOrderdetails = async (req, res, next) => {
             });
         }
 
-        const transformedOrderItems = orderDetails.orderItems.map(item => ({
-            ...item,
-            productsnapshots: JSON.parse(item.productsnapshots)
-        }));
+        const transformedOrderItems = orderDetails?.orderItems?.map((item) => {
+            return {
+                ...item,
+                name: item?.product?.name || item?.catalogue.name,
+                url: item?.product?.url || item?.catalogue.url,
+                image: item?.catalogue.coverImage || item?.product?.image?.[0],
+                type: item?.catalogue ? 'Catalogue' : "product",
+                categoryURL: item?.product?.categories?.[0]?.category?.url || item?.catalogue?.CatalogueCategory?.[0]?.category?.url,
+                productsnapshots: JSON.parse(item.productsnapshots)
+            }
+        })
+
 
         return res.status(200).json({
             message: "Order retrieved successfully",
@@ -98,8 +140,6 @@ const getOrderdetails = async (req, res, next) => {
     }
 };
 
-
-
 const getOrderHistory = async (req, res, next) => {
     try {
 
@@ -110,9 +150,11 @@ const getOrderHistory = async (req, res, next) => {
         const result = await prisma.order.findMany({
             where: {
                 userId: userId
+
             },
             select: {
                 id: true,
+                orderId: true,
                 createdAt: true,
                 status: true,
                 totalAmount: true,
@@ -121,7 +163,37 @@ const getOrderHistory = async (req, res, next) => {
                         productname: true,
                         type: true,
                         quantity: true,
-                        productsnapshots: true,
+                        product: {
+                            select: {
+                                name: true,
+                                categories: {
+                                    select: {
+                                        category: {
+                                            select: {
+                                                name: true, url: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+
+                        catalogue: {
+                            select: {
+                                name: true,
+                                url: true,
+                                CatalogueCategory: {
+                                    select: {
+                                        category: {
+                                            select: {
+                                                name: true,
+                                                url: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -130,20 +202,20 @@ const getOrderHistory = async (req, res, next) => {
         })
 
         const formattedResult = result.map(order => {
-            const product = order.orderItems[0];
-            const parsedata = JSON.parse(product.productsnapshots)
+            const catalogue = order.orderItems?.[0]?.catalogue;
+            const prdoduct = order.orderItems?.[0]?.product;
             return {
-                orderId: order?.id,
-                productName: parsedata?.name || 'N/A',
+                orderId: order?.orderId,
+                name: prdoduct?.name || catalogue.name,
+                url: prdoduct?.url || catalogue.url,
+                type: catalogue ? 'Catalogur' : "product",
+                categoryURL: prdoduct?.categories?.[0]?.category?.url || catalogue?.CatalogueCategory?.[0]?.category?.url,
+
                 orderDate: new Date(order.createdAt).toLocaleDateString('en-GB', {
                     day: '2-digit', month: 'long', year: 'numeric'
                 }),
                 status: order.status,
                 amount: order.totalAmount.toFixed(2),
-                quantity: parsedata?.cartQuantity || '',
-                type: parsedata?.type || "",
-                url: parsedata?.url || "",
-                products: parsedata?.products
             }
         });
 
@@ -155,11 +227,51 @@ const getOrderHistory = async (req, res, next) => {
 
 
     } catch (error) {
-        console.log(error)
         let err = new Error("Something went wrong, Please try again!");
         next(err)
     }
 }
 
 
-export { getOrderdetails, getOrderHistory }
+const getdefaultAddress = async (req, res, next) => {
+    try {
+        const { id } = req.params
+        const result = await prisma.billing.findFirst({
+            where: {
+                userId: id,
+                isDefault: true,
+            },
+            select: {
+                id: true,
+                fullName: true,
+                address1: true,
+                address2: true,
+                city: true,
+                country: true,
+                state: true,
+                zipCode: true,
+                email: true,
+                mobile: true,
+                whatsapp: true,
+                companyname: true,
+                GstNumber: true,
+            }
+        })
+
+
+
+
+
+        return res.status(200).json({
+            message: "Default address successfully",
+            isSuccess: true,
+            data: result
+        });
+
+
+    } catch (error) {
+        let err = new Error("Something went wrong, Please try again!");
+        next(err)
+    }
+}
+export { getOrderdetails, getOrderHistory, getdefaultAddress }

@@ -159,6 +159,7 @@ const paginationSize = async (req, res, next) => {
         id: true,
         position: true,
         value: true,
+        isActive: true,
       },
       orderBy: { position: "asc" },
     });

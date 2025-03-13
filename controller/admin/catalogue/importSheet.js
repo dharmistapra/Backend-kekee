@@ -8,7 +8,7 @@ import {
   isNameRecordsExist,
 } from "../../../helper/common.js";
 import slug from "slug";
-import _, { iteratee } from "underscore";
+import _, { iteratee, size } from "underscore";
 import {
   importCatalogue,
   importCatalogueSchema,
@@ -616,6 +616,7 @@ const importCatalogues = async (req, res, next) => {
         showInSingle,
       } = row;
       index = index + 1;
+      quantity = parseInt(quantity);
       if (!catCode && !productCode) {
         await deleteFile(filePath);
         message = `Row ${index} Please enter catCode or productCode!`;
@@ -664,7 +665,7 @@ const importCatalogues = async (req, res, next) => {
       const nonDefaultAttributeNames = isAttributeExists
         .filter((attr) => !attr.isDefault)
         .map((attr) => attr.name);
-
+      console.log(nonDefaultAttributeNames);
       if (!category) {
         await deleteFile(filePath);
         message = `Row ${index} Please enter Category!`;
@@ -725,9 +726,10 @@ const importCatalogues = async (req, res, next) => {
             const existingAttributesNames = isExistingCategoryAttribute.map(
               (attr) => attr.attribute.name
             );
-            const missing = attributes.filter(
+            const missing = nonDefaultAttributeNames.filter(
               (attr) => !existingAttributesNames.includes(attr)
             );
+            console.log(missing);
             if (missing.length > 0) {
               const categoryName = await prisma.categoryMaster.findUnique({
                 where: { id: val },
@@ -738,18 +740,33 @@ const importCatalogues = async (req, res, next) => {
                 attributes: missing,
               });
 
-              if (missingAttributes.length > 0) {
-                await deleteFile(filePath);
-                message = `Row ${index} Some attribues are missing for certain categories!`;
-                errors.push(message);
-                // return res.status(400).json({
-                //   isSuccess: false,
-                //   message: "Some attribues are missing for certain categories!",
-                //   data: missingAttributes,
-                // });
-              }
+              // if (missingAttributes.length > 0) {
+              //   await deleteFile(filePath);
+              //   message = `Row ${index} ${missingAttributes} Some attribues are missing for certain categories!`;
+              //   errors.push(message);
+              // return res.status(400).json({
+              //   isSuccess: false,
+              //   message: "Some attribues are missing for certain categories!",
+              //   data: missingAttributes,
+              // });
+              // }
             }
           }
+        }
+
+        if (missingAttributes.length > 0) {
+          await deleteFile(filePath);
+          const formattedAttributes = missingAttributes
+            .map(
+              (item) =>
+                `Category: "${
+                  item.category
+                }", Missing Attributes: [${item.attributes.join(", ")}]`
+            )
+            .join("; ");
+
+          message = `Row ${index} ${formattedAttributes} Some attribues are missing for certain categories!`;
+          errors.push(message);
         }
       }
       let attributeData = [];
@@ -799,8 +816,8 @@ const importCatalogues = async (req, res, next) => {
 
                 valueIds.push(existingValue?.id);
                 attributeData.push({
-                  attribute_id,
-                  attributeValue_id: existingValue?.id,
+                  attribute_id: attribute_id || "",
+                  attributeValue_id: existingValue?.id || "",
                 });
               }
             }
@@ -808,8 +825,50 @@ const importCatalogues = async (req, res, next) => {
         }
       }
       cat_tag = _.uniq(await arraySplit(tag));
-      let sizes = _.uniq(await arraySplit(size));
-      console.log(sizes);
+      let sizeDataWithIds = [];
+      if (size) {
+        let sizes = _.uniq(await arraySplit(size));
+        let sizeError = [];
+        const sizeEntries = sizes.map((entry) => {
+          const [size, quantity, price] = entry.split("-");
+          return {
+            size,
+            quantity: parseInt(quantity),
+            price: parseFloat(price || 0),
+          };
+        });
+        const validSizes = await prisma.size.findMany();
+        const sizeMap = new Map(
+          validSizes.map((size) => [size.value, size.id])
+        );
+        sizeDataWithIds = sizeEntries.map((entry) => {
+          const sizeId = sizeMap.get(entry.size);
+          if (!sizeId) {
+            deleteFile(filePath);
+            sizeError.push(entry.size);
+          }
+          return {
+            id: sizeId || "",
+            quantity: entry.quantity,
+            price: entry.price,
+          };
+        });
+        if (sizeError.length > 0) {
+          message = `Row ${index} ${sizeError} In valid sizes!`;
+          errors.push(message);
+        }
+
+        const totalSizeQuantity = sizeEntries.reduce(
+          (sum, entry) => sum + entry.quantity,
+          0
+        );
+        if (quantity !== totalSizeQuantity) {
+          await deleteFile(filePath);
+          message = `Row ${index} Total quantity of sizes ${totalSizeQuantity} does not match with quantity!`;
+          errors.push(message);
+        }
+      }
+
       let catalogue = catalogues.find((cat) => cat.cat_code === catCode);
       if (catCode && !productCode) {
         if (catalogue) {
@@ -843,7 +902,7 @@ const importCatalogues = async (req, res, next) => {
           average_price: parseFloat(average_price) || 0,
           offer_price: parseFloat(finalOfferPrice) || 0,
           weight: parseFloat(weight),
-          quantity: parseInt(quantity),
+          quantity: quantity,
           GST: parseFloat(GST),
           meta_title: metaTitle,
           meta_keyword: metaKeyword,
@@ -855,6 +914,7 @@ const importCatalogues = async (req, res, next) => {
           optionType: optionType,
           // ...(isStitching && { stitching: isStitching != "N" ? true : false }),
           // ...(isSize && { size: isSize != "N" ? true : false }),
+          ...(size && sizeDataWithIds.length > 0 && { size: sizeDataWithIds }),
           ...(isActive && { isActive: isActive != "N" ? true : false }),
           product: [],
         };
@@ -917,7 +977,7 @@ const importCatalogues = async (req, res, next) => {
           sku: productCode,
           url: url,
           cat_code: catCode,
-          quantity: parseInt(quantity),
+          quantity: quantity,
           ...(attributes.length > 0 && { attributes: attributeData }),
           weight: parseFloat(weight),
           average_price: catalogue ? catalogue.average_price : 0,
@@ -936,6 +996,7 @@ const importCatalogues = async (req, res, next) => {
           image: image,
           optionType,
           ...(isActive && { isActive: isActive !== "N" ? true : false }),
+          ...(size && sizeDataWithIds.length > 0 && { size: sizeDataWithIds }),
           // ...(isStitching && { stitching: isStitching !== "N" ? true : false }),
           ...(category.length > 0 && { category: category }),
         };
@@ -976,6 +1037,26 @@ const importCatalogues = async (req, res, next) => {
           });
         delete product["cat_code"];
         if (catalog) {
+          if (product.showInSingle !== true) {
+            const sortSizes = (a, b) => a.size?.localeCompare(b.size);
+            catalog?.size?.sort(sortSizes);
+            product?.size?.sort(sortSizes);
+
+            // Convert to JSON strings for direct comparison
+            const catalogueJson = JSON.stringify(catalog?.size);
+            const productJson = JSON.stringify(product?.size);
+            if (catalogueJson !== productJson) {
+              await deleteFile(filePath);
+              message = `Row ${index} catalogue size and product size not match!`;
+              errors.push(message);
+            }
+          }
+
+          if (product.optionType !== catalog.optionType) {
+            await deleteFile(filePath);
+            message = `Row ${index} Option type mismatch! Catalogue has '${catalog.optionType}', but Product has '${product.optionType}`;
+            errors.push(message);
+          }
           catalog.product.push(product);
         } else {
           productArray.push(product);
@@ -988,17 +1069,12 @@ const importCatalogues = async (req, res, next) => {
         await deleteFile(filePath);
         message = `${cat.cat_code} Catalogue of No of product not matched!`;
         errors.push(message);
-        // return res.status(400).json({
-        //   isSuccess: false,
-        //   message: `${cat.cat_code} Catalogue of No of product not matched!`,
-        // });
       }
     }
-
-    if (catImage.length > 0)
-      errors.push(`Row ${catImage} cat_image files not exist!`);
-    if (productImage.length > 0)
-      errors.push(`Row ${productImage} product image file not exist!`);
+    // if (catImage.length > 0)
+    //   errors.push(`Row ${catImage} cat_image files not exist!`);
+    // if (productImage.length > 0)
+    //   errors.push(`Row ${productImage} product image file not exist!`);
     if (errors.length > 0) {
       return res.status(400).json({ isSuccess: false, message: errors });
     }
@@ -1010,10 +1086,20 @@ const importCatalogues = async (req, res, next) => {
             let category = catalogue.category;
             const products = catalogue.product;
             const attributeValueConnection = catalogue?.attributes;
+            let catalogueSizeConnection = [];
+            if (catalogue.optionType === "Size") {
+              catalogueSizeConnection = catalogue?.size?.map((size) => ({
+                size: { connect: { id: size.id } },
+                price: size.price,
+                quantity: size.quantity,
+              }));
+              catalogue["CatalogueSize"] = { create: catalogueSizeConnection };
+            }
 
             delete catalogue.product;
             delete catalogue.category;
             delete catalogue.attributes;
+            delete catalogue?.size;
             catalogue["deletedAt"] = null;
 
             if (category.length > 0) {
@@ -1043,6 +1129,10 @@ const importCatalogues = async (req, res, next) => {
               await tx.catalogueAttributeValue.deleteMany({
                 where: { catalogue: { id: existingCatalogue.id } },
               });
+
+              await tx.catalogueSize.deleteMany({
+                where: { catalogue: { id: existingCatalogue.id } },
+              });
             }
 
             let savedCatalogue = await tx.catalogue.upsert({
@@ -1057,11 +1147,19 @@ const importCatalogues = async (req, res, next) => {
               const attributeValueConnection = product.attributes;
               delete product.attributes;
               delete product.category;
-
+              let productSizeConnection = [];
+              if (product.optionType === "Size") {
+                productSizeConnection = product.size.map((size) => ({
+                  size: { connect: { id: size.id } },
+                  price: size.price,
+                  quantity: size.quantity,
+                }));
+                product["sizes"] = { create: productSizeConnection };
+              }
               product["attributeValues"] = {
                 create: attributeValueConnection,
               };
-
+              delete product?.size;
               const existingProduct = await tx.product.findFirst({
                 where: { sku: product.sku },
                 select: { id: true },
@@ -1073,6 +1171,10 @@ const importCatalogues = async (req, res, next) => {
                 });
 
                 await tx.productAttributeValue.deleteMany({
+                  where: { product: { id: existingProduct.id } },
+                });
+
+                await tx.productSize.deleteMany({
                   where: { product: { id: existingProduct.id } },
                 });
               }
@@ -1098,11 +1200,27 @@ const importCatalogues = async (req, res, next) => {
               create: attributeValueConnection,
             };
 
+            let productSizeConnection = [];
+            if (product.optionType === "Size") {
+              productSizeConnection = product.size.map((size) => ({
+                size: { connect: { id: size.id } },
+                price: size.price,
+                quantity: size.quantity,
+              }));
+              product["sizes"] = { create: productSizeConnection };
+            }
+
+            delete product?.size;
+
             await tx.productCategory.deleteMany({
               where: { product: { sku: product.sku } },
             });
 
             await tx.productAttributeValue.deleteMany({
+              where: { product: { sku: product.sku } },
+            });
+
+            await tx.productSize.deleteMany({
               where: { product: { sku: product.sku } },
             });
 

@@ -514,23 +514,34 @@ const importCatalogueSchema = async (req, res, next) => {
     average_price: Joi.number().required(),
     GST: Joi.number().optional(),
     offer_price: Joi.number().optional(),
-    stitching: Joi.boolean()
-      .required()
-      .messages({ "any.required": "isStitching is required!" }),
-    size: Joi.boolean()
-      .required()
-      .messages({ "any.required": "isSize is required!" }),
+    // stitching: Joi.boolean()
+    //   .required()
+    //   .messages({ "any.required": "isStitching is required!" }),
+    // size: Joi.boolean()
+    //   .required()
+    //   .messages({ "any.required": "isSize is required!" }),
+    optionType: Joi.string().valid("Stitching", "Size", "Other").required(),
+    size: Joi.when("optionType", {
+      is: "Size",
+      then: Joi.array().items({
+        id: Joi.string().required(),
+        quantity: Joi.number().required().default(0),
+        price: Joi.number().required().default(0),
+      }),
+      otherwise: Joi.forbidden(),
+    }),
     weight: Joi.number().required(),
     attributes: Joi.array()
       .items({
-        attribute_id: Joi.string().required(),
+        attribute_id: Joi.string().allow("").required(),
         attributeValue_id: Joi.string()
+          .allow("")
           // .items({
           //   id: Joi.string().required(),
           //   value: Joi.string().optional().allow("").default(""),
           // })
-          .optional()
-          .default([]),
+          .required(),
+        // .default([]),
         // value: Joi.string().optional().allow("").default(""),
       })
       .optional()
@@ -582,7 +593,7 @@ const importCatalogueSchema = async (req, res, next) => {
       // attributeValue_id: Joi.array().optional().min(1),
       attributes: Joi.array()
         .items({
-          attribute_id: Joi.string().required(),
+          attribute_id: Joi.string().allow("").required(),
           attributeValue: Joi.array()
             .items({
               id: Joi.string().required(),
@@ -594,29 +605,35 @@ const importCatalogueSchema = async (req, res, next) => {
         })
         .optional()
         .default([]),
-      size: Joi.array()
-        .items({
-          id: Joi.string().required(),
-          price: Joi.number().required().default(0),
-          quantity: Joi.number().required().default(0),
-        })
-        .optional()
-        .default([]),
-      stitching: Joi.boolean().optional().default(false),
+      optionType: Joi.string().valid("Stitching", "Size", "Other").required(),
+      size: Joi.when("optionType", {
+        is: "Size",
+        then: Joi.array()
+          .items({
+            id: Joi.string().allow("").required(),
+            price: Joi.number().required().default(0),
+            quantity: Joi.number().required().default(0),
+          })
+          .required(),
+        otherwise: Joi.forbidden(),
+      }),
+      // .default([]),
+      // stitching: Joi.boolean().optional().default(false),
       meta_title: Joi.string().optional().allow("").default(""),
       meta_keyword: Joi.string().optional().allow("").default(""),
       meta_description: Joi.string().optional().allow("").default(""),
       product: Joi.array().items().optional(),
     }),
-  }).custom((value, helpers) => {
-    // If both stitching and size are true or both are false, return an error
-    if (value.stitching === value.size) {
-      return helpers.message(
-        "Stitching and Size cannot both be true or both be false. Choose only one!"
-      );
-    }
-    return value;
   });
+  // .custom((value, helpers) => {
+  //   // If both stitching and size are true or both are false, return an error
+  //   if (value.stitching === value.size) {
+  //     return helpers.message(
+  //       "Stitching and Size cannot both be true or both be false. Choose only one!"
+  //     );
+  //   }
+  //   return value;
+  // });
 
   return schema;
 };
@@ -673,8 +690,9 @@ const importProductSchema = async (req, res, next) => {
     // attributeValue_id: Joi.array().optional().min(1),
     attributes: Joi.array()
       .items({
-        attribute_id: Joi.string().required(),
+        attribute_id: Joi.string().allow("").required(),
         attributeValue_id: Joi.string()
+          .allow("")
           // .items({
           //   id: Joi.string().required(),
           //   value: Joi.string().optional().allow("").default(""),
@@ -685,15 +703,19 @@ const importProductSchema = async (req, res, next) => {
       })
       .optional()
       .default([]),
-    size: Joi.array()
-      .items({
-        id: Joi.string().required(),
-        price: Joi.number().required().default(0),
-        quantity: Joi.number().required().default(0),
-      })
-      .optional()
-      .default([]),
-    stitching: Joi.boolean().required(),
+    optionType: Joi.string().valid("Stitching", "Size", "Other").required(),
+    size: Joi.when("optionType", {
+      is: "Size",
+      then: Joi.array()
+        .items({
+          id: Joi.string().allow("").required(),
+          price: Joi.number().required().default(0),
+          quantity: Joi.number().required().default(0),
+        })
+        .required(),
+      otherwise: Joi.forbidden(),
+    }),
+    // stitching: Joi.boolean().required(),
     readyToShip: Joi.boolean().optional().default(false),
     isActive: Joi.boolean().required(),
     meta_title: Joi.string().optional().allow("").default(""),

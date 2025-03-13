@@ -112,6 +112,7 @@ const OrderPlace = async (req, res, next) => {
                     country: billingform.country,
                     state: billingform.state,
                     city: billingform.city,
+                    userId:user_id,
                     zipCode: billingform.zipCode,
                     address1: billingform.address1,
                     address2: billingform.address2,

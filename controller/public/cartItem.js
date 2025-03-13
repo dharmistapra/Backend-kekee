@@ -324,6 +324,7 @@ const getAllcartitemOptimizecode = async (req, res, next) => {
   try {
     const { id } = req.params;
     const finduser = await prisma.cart.findUnique({ where: { user_id: id } });
+    console.log(finduser)
 
     if (!finduser) {
       return res.status(400).json({ isSuccess: false, message: "Cart item not found" });
@@ -353,8 +354,10 @@ const getAllcartitemOptimizecode = async (req, res, next) => {
       },
     });
 
+
+
     const { DataModified2, totalSubtotal, totalTax } = calculateCartItemTotal(cartItems);
-   
+
 
     return res.status(200).json({
       status: true,

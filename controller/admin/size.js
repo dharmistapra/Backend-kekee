@@ -82,6 +82,19 @@ const deleteSize = async (req, res, next) => {
         .status(400)
         .json({ isSuccess: false, message: "Invalid ID format!" });
     }
+
+    const isCatalogueSizeExists = await prisma.catalogueSize.findFirst({
+      where: { size_id: id },
+    });
+    const isproductSizeExists = await prisma.productSize.findFirst({
+      where: { size_id: id },
+    });
+    if (isCatalogueSizeExists || isproductSizeExists) {
+      return res.status(400).json({
+        isSuccess: false,
+        message: `Size are use in Catalogue or Product!`,
+      });
+    }
     const result = await deleteData("size", id);
     if (result.status === false)
       return res

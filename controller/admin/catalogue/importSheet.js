@@ -574,7 +574,7 @@ const importCatalogues = async (req, res, next) => {
     if (!req.file)
       return res
         .status(400)
-        .json({ isSuccess: false, message: "Please upload file" });
+        .json({ isSuccess: false, message: "Please upload csv file!" });
 
     let filePath = req.file.path;
     // importFile(req.file.path);

@@ -8,7 +8,8 @@ import "dotenv/config";
 import prisma from "../db/config.js";
 
 // FOR ADMIN AUTHENTICATE PASSPORT  USE
-passport.use("admin",
+passport.use(
+  "admin",
   new LocalStrategy(
     { usernameField: "email", passwordField: "password" },
     async (usernameField, passwordField, done) => {
@@ -34,7 +35,6 @@ passport.use("admin",
   )
 );
 
-
 // FOR USER AUTHENTICATE PASSPORT  USE
 passport.use(
   "user",
@@ -44,7 +44,7 @@ passport.use(
       try {
         const validUser = await prisma.users.findFirst({
           where: {
-            email: usernameField
+            email: usernameField,
           },
         });
         if (!validUser)
@@ -57,19 +57,17 @@ passport.use(
           return done(null, false, { message: "email or password wrong!" });
         return done(null, validUser, { message: "LogIn successfully." });
       } catch (error) {
-        console.log("Errrorrorooror ===============<>", error)
+        console.log("Errrorrorooror ===============<>", error);
         return done(error);
       }
     }
   )
 );
 
-
 const jwtOptions = {
   secretOrKey: process.env.TOKEN_SECRET,
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 };
-
 
 // passport.use(
 //   new JwtStrategy(jwtOptions, async (payload, done) => {
@@ -84,8 +82,6 @@ const jwtOptions = {
 //     }
 //   })
 // );
-
-
 
 passport.use(
   new JwtStrategy(jwtOptions, async (payload, done) => {
@@ -113,7 +109,6 @@ passport.use(
   })
 );
 
-
 passport.use(
   new GoogleStrategy(
     {
@@ -125,18 +120,16 @@ passport.use(
       try {
         const { displayName, emails, photos, name } = profile;
         const email = emails && emails.length > 0 ? emails[0].value : null;
-        const firstName = name.givenName || '';
-        const lastName = name.familyName || '';
-        const provider_id = profile?.id
+        const firstName = name.givenName || "";
+        const lastName = name.familyName || "";
+        const provider_id = profile?.id;
 
         if (!provider_id) {
-          throw new Error('Something went wrong, please try again!');
+          throw new Error("Something went wrong, please try again!");
         }
         let user = await prisma.users.findFirst({
           where: { provider_id: provider_id },
         });
-
-
 
         if (!user) {
           user = await prisma.users.create({
@@ -144,7 +137,7 @@ passport.use(
               name: `${firstName} ${lastName}`,
               email: email,
               provider_id: profile?.id,
-              provider: profile?.provider
+              provider: profile?.provider,
               // image: picture,
             },
           });
@@ -152,15 +145,12 @@ passport.use(
 
         return done(null, user);
       } catch (error) {
-        console.log("errrr ====. ", error)
+        console.log("errrr ====. ", error);
         return done(error);
       }
     }
   )
 );
-
-
-
 
 passport.use(
   new FacebookStrategy(
@@ -168,7 +158,13 @@ passport.use(
       clientID: process.env.FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
       callbackURL: process.env.FACEBOOK_CALLBACK_URL,
-      profileFields: ["id", "displayName", "email", "picture.type(large)", "gender"],
+      profileFields: [
+        "id",
+        "displayName",
+        "email",
+        "picture.type(large)",
+        "gender",
+      ],
     },
     async (request, accessToken, refreshToken, profile, done) => {
       const { displayName, emails, photos, provider, id, name } = profile;
@@ -176,30 +172,27 @@ passport.use(
       const lastName = name.familyName || null;
 
       if (!id) {
-        throw new Error('Something went wrong, please try again!');
+        throw new Error("Something went wrong, please try again!");
       }
       let user = await prisma.users.findFirst({
         where: { provider_id: id },
       });
 
-
       if (!user) {
         user = await prisma.users.create({
           data: {
             name: `${firstName} ${lastName}`,
-            email: emails || '',
+            email: emails || "",
             provider_id: id,
-            provider: profile?.provider
+            provider: profile?.provider,
           },
         });
       }
 
       return done(null, user);
     }
-
-
   )
-)
+);
 
 const isAuthenticated = (req, res, next) => {
   passport.authenticate("jwt", { session: false }, (err, user, info) => {

@@ -165,8 +165,8 @@ const getOrderHistory = async (req, res, next) => {
         totalAmount: true,
         orderItems: {
           select: {
-            productname: true,
-            type: true,
+            // productname: true,
+            // type: true,
             quantity: true,
             product: {
               select: {
@@ -212,8 +212,8 @@ const getOrderHistory = async (req, res, next) => {
       const prdoduct = order.orderItems?.[0]?.product;
       return {
         orderId: order?.orderId,
-        name: prdoduct?.name || catalogue.name,
-        url: prdoduct?.url || catalogue.url,
+        name: prdoduct?.name || catalogue?.name,
+        url: prdoduct?.url || catalogue?.url,
         type: catalogue ? "Catalogur" : "product",
         categoryURL:
           prdoduct?.categories?.[0]?.category?.url ||
@@ -224,8 +224,8 @@ const getOrderHistory = async (req, res, next) => {
           month: "long",
           year: "numeric",
         }),
-        status: order.status,
-        amount: order.totalAmount.toFixed(2),
+        status: order?.status,
+        amount: order?.totalAmount.toFixed(2),
       };
     });
 
@@ -235,6 +235,7 @@ const getOrderHistory = async (req, res, next) => {
       data: formattedResult,
     });
   } catch (error) {
+    console.log(error);
     let err = new Error("Something went wrong, Please try again!");
     next(err);
   }

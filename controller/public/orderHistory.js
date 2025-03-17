@@ -267,7 +267,13 @@ const getdefaultAddress = async (req, res, next) => {
       },
     });
 
-    console.log(result);
+    if (!result) {
+      return res.status(400).json({
+        message: "Address not found",
+        isSuccess: false,
+        data: null,
+      });
+    }
 
     return res.status(200).json({
       message: "Default address successfully",

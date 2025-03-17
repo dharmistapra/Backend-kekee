@@ -146,7 +146,7 @@ const getCategoryCollection = async (req, res, next) => {
             return latestCatalogues.map((catalogue) => {
               let labels = [];
               catalogue.attributeValues.map((attribute) =>
-                labels.push(attribute.attributeValue.value)
+                labels.push(attribute.attributeValue.name)
               );
               catalogue.labels = labels;
               delete catalogue.attributeValues;

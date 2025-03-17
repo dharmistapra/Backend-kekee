@@ -353,7 +353,7 @@ const getCatalogueProduct = async (req, res, next) => {
           value.attributeValues.reduce((acc, item) => {
             const { attribute, attributeValue } = item;
             labels.push({
-              label: attributeValue.value,
+              label: attributeValue.name,
               colour: attributeValue.colour,
             });
             return acc;

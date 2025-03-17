@@ -84,6 +84,8 @@ const getOrderHistoryusers = async (req, res, next) => {
 
     const whereCondition = userId ? { userId: userId } : {};
 
+    const count = await prisma.order.count({ where: whereCondition })
+
     const result = await prisma.order.findMany({
       where: whereCondition,
       select: {
@@ -120,9 +122,9 @@ const getOrderHistoryusers = async (req, res, next) => {
         payment,
         orderItems: orderItem
           ? {
-              sku: sku || cat_code,
-              image: image || coverImage,
-            }
+            sku: sku || cat_code,
+            image: image?.[0] || coverImage,
+          }
           : null,
       };
     });
@@ -131,6 +133,9 @@ const getOrderHistoryusers = async (req, res, next) => {
       message: "Order history fetched successfully",
       isSuccess: true,
       data: formattedResult,
+      totalCount: count,
+      currentPage: page,
+      pageSize: take,
     });
   } catch (error) {
     console.error(error);
@@ -290,28 +295,27 @@ const getOrderdetailsUsers = async (req, res, next) => {
 const updateOrderStatus = async (req, res, next) => {
   try {
     const { orderstatus, orderId } = req.body;
-    const order = await prisma.order.findUnique({
-      where: { orderId },
-      select: { id: true, status: true },
-    });
-
-    if (!order) {
-      return res
-        .status(400)
-        .json({ message: "Order not found", isSuccess: false });
-    }
+    const order = await prisma.order.findUnique({ where: { orderId }, select: { id: true, status: true }, });
+    if (!order) return res.status(400).json({ message: "Order not found", isSuccess: false });
 
     const initialStatus = order.status;
     if (orderstatus === "CONFIRMED" && initialStatus !== "CONFIRMED") {
       const stockCheck = await checkStock(orderId);
+
       if (!stockCheck.isSuccess) {
-        return res
-          .status(400)
-          .json({ isSuccess: false, message: stockCheck.message });
+        return res.status(400).json({ isSuccess: false, message: stockCheck.message });
       }
-      await reduceProductQuantity(orderId);
+
+      const reduceResponse = await reduceProductQuantity(orderId);
+      if (!reduceResponse.isSuccess) {
+        return res.status(400).json(reduceResponse);
+      }
+
     } else if (initialStatus === "CONFIRMED" && orderstatus !== "CONFIRMED") {
-      await revertProductQuantity(order.id);
+      const revertResponse = await revertProductQuantity(order.id);
+      if (!revertResponse.isSuccess) {
+        return res.status(400).json(revertResponse);
+      }
     }
 
     await prisma.order.update({
@@ -328,32 +332,105 @@ const updateOrderStatus = async (req, res, next) => {
   }
 };
 
+// const revertProductQuantity = async (orderId) => {
+//   const orderDetails = await prisma.orderItem.findMany({ where: { orderId } });
+
+//   for (const item of orderDetails) {
+//     if (item.catlogueId) {
+//       await prisma.catalogue.update({
+//         where: { id: item.catlogueId },
+//         data: { quantity: { increment: item.quantity } },
+//       });
+
+//       await prisma.product.updateMany({
+//         where: {
+//           catalogue_id: item.catlogueId,
+//         },
+//         data: { quantity: { increment: item.quantity } },
+//       });
+//     } else {
+//       await prisma.product.update({
+//         where: { id: item.productId },
+//         data: { quantity: { increment: item.quantity } },
+//       });
+//     }
+//   }
+// };
+
+
+
 const revertProductQuantity = async (orderId) => {
-  const orderDetails = await prisma.orderItem.findMany({
-    where: { orderId },
-  });
+  try {
+    const orderDetails = await prisma.orderItem.findMany({
+      where: { orderId },
+      select: { productId: true, catlogueId: true, quantity: true, productsnapshots: true }
+    });
 
-  for (const item of orderDetails) {
-    if (item.catlogueId) {
-      await prisma.catalogue.update({
-        where: { id: item.catlogueId },
-        data: { quantity: { increment: item.quantity } },
-      });
-
-      await prisma.product.updateMany({
-        where: {
-          catalogue_id: item.catlogueId,
-        },
-        data: { quantity: { increment: item.quantity } },
-      });
-    } else {
-      await prisma.product.update({
-        where: { id: item.productId },
-        data: { quantity: { increment: item.quantity } },
-      });
+    if (!orderDetails.length) {
+      return { isSuccess: false, message: "No order items found" };
     }
+
+    for (const item of orderDetails) {
+      try {
+        const extractSize = item.productsnapshots ? JSON.parse(item.productsnapshots)?.size : null;
+
+        if (item.catlogueId) {
+          if (extractSize) {
+            const sizeId = JSON.parse(extractSize)?.id;
+
+            await prisma.catalogueSize.update({
+              where: {
+                catalogue_id_size_id: {
+                  catalogue_id: item.catlogueId,
+                  size_id: sizeId
+                }
+              },
+              data: { quantity: { increment: item.quantity } }
+            });
+          }
+
+          await prisma.catalogue.update({
+            where: { id: item.catlogueId },
+            data: { quantity: { increment: item.quantity } }
+          });
+
+          await prisma.product.updateMany({
+            where: { catalogue_id: item.catlogueId },
+            data: { quantity: { increment: item.quantity } }
+          });
+        } else if (item.productId) {
+
+          if (extractSize) {
+            const sizeId = JSON.parse(extractSize)?.id;
+            await prisma.productSize.update({
+              where: {
+                product_id_size_id: {
+                  product_id: item?.productId,
+                  size_id: sizeId
+                }
+              },
+              data: { quantity: { increment: item.quantity } }
+            })
+          }
+          await prisma.product.update({
+            where: { id: item.productId },
+            data: { quantity: { increment: item.quantity } }
+          });
+        }
+      } catch (error) {
+        console.error(`Error processing order item (ID: ${item.productId || item.catlogueId}):`, error);
+        return { isSuccess: false, message: "Error processing some order items" };
+      }
+    }
+
+    return { isSuccess: true, message: "Product quantities reverted successfully" };
+  } catch (error) {
+    console.error("Error reverting product quantity:", error);
+    return { isSuccess: false, message: "Internal server error" };
   }
 };
+
+
 
 export {
   paginationusers,

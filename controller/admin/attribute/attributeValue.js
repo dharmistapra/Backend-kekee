@@ -239,6 +239,8 @@ const updateAttributeValue = async (req, res, next) => {
       data,
     });
   } catch (error) {
+    console.log(error);
+
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }

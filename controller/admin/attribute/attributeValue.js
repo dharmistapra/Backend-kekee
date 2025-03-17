@@ -28,6 +28,11 @@ const postAttributeValue = async (req, res, next) => {
         .status(400)
         .json({ isSuccess: false, message: "Colour is required!" });
 
+    if (isAttributeExists.type === "Label" && !value)
+      return res
+        .status(400)
+        .json({ isSuccess: false, message: "Expiry days is required!" });
+
     const findUniqueName = await prisma.attributeValue.findFirst({
       where: { name: name },
     });
@@ -39,7 +44,7 @@ const postAttributeValue = async (req, res, next) => {
     const data = await prisma.attributeValue.create({
       data: {
         name: name,
-        value: slug(name),
+        value: value || slug(name),
         colour: colour,
         attr_id: attribute_id,
       },
@@ -196,10 +201,18 @@ const updateAttributeValue = async (req, res, next) => {
         .json({ isSuccess: false, message: "Parent attribute not match." });
     }
 
-    if (findUnique.type === "Colour" && !colour)
+    if (
+      (findUnique.type === "Colour" || isAttributeExists.type === "Label") &&
+      !colour
+    )
       return res
         .status(400)
         .json({ isSuccess: false, message: "Colour is required!" });
+
+    if (findUnique.type === "Label" && !value)
+      return res
+        .status(400)
+        .json({ isSuccess: false, message: "Expiry time is required!" });
 
     if (findUniqueName)
       return res
@@ -214,7 +227,7 @@ const updateAttributeValue = async (req, res, next) => {
       },
       data: {
         name: name,
-        value: slug(name),
+        value: value || slug(name),
         colour: colour,
         attr_id: attribute_id,
       },

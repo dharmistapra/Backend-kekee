@@ -1023,11 +1023,12 @@ const importCatalogues = async (req, res, next) => {
           //   .json({ isSuccess: false, message: error?.details[0].message });
         }
         product.image = product_image;
-        let images = await product_image.map((value) => {
-          if (!fs.existsSync(value)) {
-            return value;
-          }
-        });
+        // let images = await product_image.map((value) => {
+        //   if (!fs.existsSync(value)) {
+        //     return value;
+        //   }
+        // });
+        let images = product_image.filter((value) => !fs.existsSync(value));
         if (images.length > 0) {
           await deleteFile(filePath);
           productImage.push(index);

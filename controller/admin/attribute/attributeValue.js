@@ -202,7 +202,7 @@ const updateAttributeValue = async (req, res, next) => {
     }
 
     if (
-      (findUnique.type === "Colour" || isAttributeExists.type === "Label") &&
+      (findUnique.type === "Colour" || findUnique.type === "Label") &&
       !colour
     )
       return res
@@ -239,6 +239,8 @@ const updateAttributeValue = async (req, res, next) => {
       data,
     });
   } catch (error) {
+    console.log(error);
+
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }

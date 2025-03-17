@@ -6,6 +6,7 @@ import {
   deleteFile,
   getId,
   isNameRecordsExist,
+  removeProductImage,
 } from "../../../helper/common.js";
 import slug from "slug";
 import _, { iteratee, size } from "underscore";
@@ -1142,6 +1143,19 @@ const importCatalogues = async (req, res, next) => {
               await tx.catalogueSize.deleteMany({
                 where: { catalogue: { id: existingCatalogue.id } },
               });
+
+              let catCoverImage = await tx.catalogue.findMany({
+                where: {
+                  id: { not: existingCatalogue.id },
+                  coverImage: existingCatalogue.coverImage,
+                },
+              });
+              if (
+                existingCatalogue.coverImage !== catalogue.coverImage &&
+                catCoverImage.length === 0
+              ) {
+                await deleteFile(existingCatalogue.coverImage);
+              }
             }
 
             let savedCatalogue = await tx.catalogue.upsert({
@@ -1171,7 +1185,7 @@ const importCatalogues = async (req, res, next) => {
               delete product?.size;
               const existingProduct = await tx.product.findFirst({
                 where: { sku: product.sku },
-                select: { id: true },
+                select: { id: true, image: true },
               });
 
               if (existingProduct) {
@@ -1186,6 +1200,25 @@ const importCatalogues = async (req, res, next) => {
                 await tx.productSize.deleteMany({
                   where: { product: { id: existingProduct.id } },
                 });
+
+                let productImage = existingProduct.image.filter(
+                  (value) => !product.image.includes(value)
+                );
+
+                if (productImage.length > 0) {
+                  for (const value of productImage) {
+                    const productData = await tx.product.findMany({
+                      where: {
+                        id: { not: existingProduct.id },
+                        image: { has: value },
+                      },
+                    });
+                    if (productData.length === 0) {
+                      console.log(value);
+                      await deleteFile(value);
+                    }
+                  }
+                }
               }
 
               return tx.product.upsert({

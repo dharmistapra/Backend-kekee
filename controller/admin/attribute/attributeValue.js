@@ -202,7 +202,7 @@ const updateAttributeValue = async (req, res, next) => {
     }
 
     if (
-      (findUnique.type === "Colour" || isAttributeExists.type === "Label") &&
+      (findUnique.type === "Colour" || findUnique.type === "Label") &&
       !colour
     )
       return res

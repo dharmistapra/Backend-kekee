@@ -26,7 +26,7 @@ const deleteLabels = new cron.CronJob("0 0 * * *", async () => {
 
     const expiredIds = attributeValues
       .filter((av) => {
-        if (!av.value || isNaN(av.value)) return false;
+        if (!av.value) return false;
         // let expiryDate;
         // try {
         //   expiryDate = dayjs(av.value, "YYYY-MM-DD", true);
@@ -38,7 +38,7 @@ const deleteLabels = new cron.CronJob("0 0 * * *", async () => {
         //   console.warn(`Skipping invalid value format for ID: ${av.id}`);
         //   return false;
         // }
-        const daysToExpire = parseInt(av.value);
+        const daysToExpire = parseInt(av.value, 10);
         const expiryDate = dayjs(av.updatedAt).add(daysToExpire, "day");
         return expiryDate.isBefore(now);
       })

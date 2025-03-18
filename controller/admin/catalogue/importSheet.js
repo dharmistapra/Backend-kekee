@@ -810,7 +810,6 @@ const importCatalogues = async (req, res, next) => {
 
                 if (!existingValue) {
                   await deleteFile(filePath);
-
                   message = `Row ${index} ${key} attribute have ${value} attributeValue are not exist!`;
                   errors.push(message);
                   // return res.status(404).json({

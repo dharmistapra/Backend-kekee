@@ -75,17 +75,20 @@ const getAllCurrency = async (req, res, next) => {
 const paginationCurrency = async (req, res, next) => {
   try {
     const { perPage, pageNo, search } = req.body;
-    const page = +pageNo || 1;
-    const take = +perPage || 10;
+    const page = Number(pageNo) || 1;
+    const take = Number(perPage) || 10;
     const skip = (page - 1) * take;
-    const filter = [
-      { code: { contains: search, mode: "insensitive" } },
-      { rate: isNaN(search) ? undefined : { equals: parseFloat(search) } },
-    ];
+    
+    const searchFilter = search
+      ? {
+        OR: [
+          { code: { contains: search, mode: "insensitive" } },
+          isNaN(search) ? {} : { rate: parseFloat(search) },
+        ],
+      }
+      : {};
 
-    const searchFilter = createSearchFilter(search, filter);
-
-    const [count, result] = await Promise.all([
+    const [count, result] = await prisma.$transaction([
       prisma.currencyMaster.count({ where: searchFilter }),
       prisma.currencyMaster.findMany({
         where: searchFilter,
@@ -97,33 +100,26 @@ const paginationCurrency = async (req, res, next) => {
           isActive: true,
           flag: true,
         },
+        orderBy: { id: "asc" },
         skip,
         take,
-        orderBy: { id: "asc" },
       }),
     ]);
 
-    if (!count) {
-      return res.status(200).json({
-        isSuccess: true,
-        message: "Currency not found!",
-        data: [],
-      });
-    }
-
     return res.status(200).json({
       isSuccess: true,
-      message: "Currencies fetched successfully.",
+      message: count ? "Currencies fetched successfully." : "Currency not found!",
       data: result,
       totalCount: count,
       currentPage: page,
       pageSize: take,
     });
   } catch (error) {
-    let err = new Error("Something went wrong, please try again!");
-    next(err);
+    console.error("Error fetching currencies:", error);
+    next(new Error("Something went wrong, please try again!"));
   }
 };
+
 
 const updateCurrency = async (req, res, next) => {
   const flag = req.file;

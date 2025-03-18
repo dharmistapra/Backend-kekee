@@ -1452,13 +1452,12 @@ const zipImages = async (req, res, next) => {
 
 const exportCatalogue = async (req, res, next) => {
   try {
-    const { category_id } = req.query;
+    const { category_id } = req.body;
 
-    const category_ids = category_id.split(",");
     const catalogueData = await prisma.catalogue.findMany({
       where: {
         CatalogueCategory: {
-          some: { category_id: { in: category_ids } },
+          some: { category_id: { in: category_id } },
         },
       },
       include: {
@@ -1575,8 +1574,8 @@ const exportCatalogue = async (req, res, next) => {
               name: value.attribute.name,
               value: [value.attributeValue.name],
             });
-            !isAttribute && allAttributes.add(value.attribute.name);
           }
+          !isAttribute && allAttributes.add(value.attribute.name);
         } else {
           attributes.push({
             name: value.attribute.name,

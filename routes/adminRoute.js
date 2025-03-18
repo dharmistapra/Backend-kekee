@@ -711,7 +711,7 @@ adminRouter.delete("/newsletter/:id", deleteNewsLetter);
 // IMPORT CATALOGUE PRODUCTS API
 
 adminRouter.post("/importsheet", data.uploadCSV, importCatalogues);
-adminRouter.get("/exportsheet", exportCatalogue);
+adminRouter.post("/exportsheet", exportCatalogue);
 adminRouter.post("/importzip", data.uploadZip, zipImages);
 
 adminRouter.post("/users-pagination", paginationusers);

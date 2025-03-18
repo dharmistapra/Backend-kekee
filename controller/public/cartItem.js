@@ -360,9 +360,8 @@ const getAllcartitemOptimizecode = async (req, res, next) => {
       },
     });
 
-    const { DataModified2, totalSubtotal, totalTax } = calculateCartItemTotal(cartItems);
-
-    
+    const { DataModified2, totalSubtotal, totalTax } =
+      calculateCartItemTotal(cartItems);
 
     return res.status(200).json({
       status: true,

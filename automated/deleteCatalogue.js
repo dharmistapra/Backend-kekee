@@ -2,7 +2,7 @@ import cron from "cron";
 import prisma from "../db/config.js";
 import { deleteFile, removeProductImage } from "../helper/common.js";
 
-const deleteCatalogues = new cron.CronJob("0 * * * * ", async () => {
+const deleteCatalogues = new cron.CronJob("0 * * * *", async () => {
   try {
     const currentTime = new Date();
     const cutoffTime = new Date(currentTime - 48 * 60 * 60 * 1000);

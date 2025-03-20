@@ -2,12 +2,14 @@ import fs from "fs";
 import path from "path";
 import prisma from "../db/config.js";
 import slug from "slug";
+import sharp from "sharp";
 
 const deleteFile = async (filePath) => {
   if (!filePath) return;
   filePath = "./" + filePath;
   if (fs.existsSync(filePath)) {
     await fs.unlinkSync(filePath);
+    console.log(filePath);
   }
 };
 
@@ -685,6 +687,27 @@ const deleteImage = async (model, id) => {
   }
 };
 
+const processProductImages = async (files) => {
+  let productImages = [];
+
+  for (const image of files) {
+    const thumbImage = `uploads/product/thumb/${image.filename}`;
+    const mediumImage = `uploads/product/medium/${image.filename}`;
+
+    await sharp(image.path)
+      .resize(200, 200, { fit: "inside" })
+      .toFile(thumbImage);
+
+    await sharp(image.path)
+      .resize(300, 300, { fit: "inside" })
+      .toFile(mediumImage);
+
+    productImages.push({ thumbImage, mediumImage });
+  }
+
+  return productImages;
+};
+
 const cataloguesProductFields = [
   "category",
   // "collection",
@@ -764,4 +787,5 @@ export {
   handleLabelConnection,
   handleCatalogueConnection,
   cataloguesProductFields,
+  processProductImages,
 };

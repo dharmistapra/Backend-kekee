@@ -15,6 +15,7 @@ import {
 } from "../../../helper/common.js";
 import { catalogueSchema, productSchema } from "../../../schema/joi_schema.js";
 import createSearchFilter from "../../../helper/searchFilter.js";
+import sharp from "sharp";
 const postCatlogProduct = async (req, res, next) => {
   try {
     if (!req.files || req.files.length === 0) {
@@ -118,7 +119,25 @@ const postCatlogProduct = async (req, res, next) => {
         finalOfferPrice = offer_price ? parseFloat(offer_price) : retail_price;
       }
     }
+    const productImages = [];
 
+    for (const images of req.files) {
+      const thumbImage = `uploads/product/thumb/${images.filename}`;
+      const mediumImage = `uploads/product/medium/${images.filename}`;
+
+      await sharp(images.path)
+        .resize(200, 200, { fit: "inside" })
+        .toFile(thumbImage);
+
+      await sharp(images.path)
+        .resize(300, 300, { fit: "inside" })
+        .toFile(mediumImage);
+
+      productImages.push({
+        thumbImage,
+        mediumImage,
+      });
+    }
     url = `${slug(name)}-${sku}`;
     let products = [];
     const productData = {
@@ -141,6 +160,8 @@ const postCatlogProduct = async (req, res, next) => {
       showInSingle,
       readyToShip,
       image: imagePaths,
+      thumbImage: productImages.map((imageData) => imageData.thumbImage),
+      mediumImage: productImages.map((imageData) => imageData.mediumImage),
       isActive: false,
       isDraft: catalogue_id ? false : true,
       optionType,
@@ -488,6 +509,7 @@ const updateCatalogueProduct = async (req, res, next) => {
       (await Promise.all(
         req.files.map(async (file) => convertFilePathSlashes(file?.path))
       ));
+
     if (!/^[a-fA-F0-9]{24}$/.test(id)) {
       if (req.files && req.files?.length > 0)
         await removeProductImage(imagePaths);
@@ -592,7 +614,7 @@ const updateCatalogueProduct = async (req, res, next) => {
     catalogue_id = catalogue_id || null;
 
     // console.log("catalogue_id", catalogue_id);
-    if (catalogue_id) {
+    if (catalogue_id !== "null") {
       const findCatalogue = await prisma.catalogue.findUnique({
         where: { id: catalogue_id },
       });
@@ -643,7 +665,42 @@ const updateCatalogueProduct = async (req, res, next) => {
       : typeof images === "string"
       ? [images]
       : images;
+    let productImages = [];
+    if (req.files) {
+      for (const images of req.files) {
+        // const originalImage = req.files.image[i];
+        const thumbImage = `uploads/product/thumb/${images.filename}`;
+        const mediumImage = `uploads/product/medium/${images.filename}`;
 
+        await sharp(images.path)
+          .resize(200, 200, { fit: "inside" })
+          .toFile(thumbImage);
+
+        await sharp(images.path)
+          .resize(300, 300, { fit: "inside" })
+          .toFile(mediumImage);
+
+        productImages.push({
+          thumbImage,
+          mediumImage,
+        });
+      }
+    }
+
+    const processedThumbs =
+      imagePaths && productImages.length > 0
+        ? [
+            ...productImages.map((img) => img.thumbImage),
+            ...(findData?.thumbImage || []),
+          ]
+        : [];
+    const processedMediums =
+      imagePaths && processedImages.length > 0
+        ? [
+            ...productImages.map((img) => img.mediumImage),
+            ...(findData?.mediumImage || []),
+          ]
+        : [];
     const productData = {
       name,
       catalogue_id: catalogue_id,
@@ -662,6 +719,8 @@ const updateCatalogueProduct = async (req, res, next) => {
       showInSingle,
       readyToShip,
       image: processedImages,
+      ...(processedThumbs.length > 0 && { thumbImage: processedThumbs }),
+      ...(processedMediums.length > 0 && { mediumImage: processedMediums }),
       // isActive: false,
       meta_title,
       meta_keyword,

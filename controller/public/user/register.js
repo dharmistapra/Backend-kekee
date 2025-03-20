@@ -68,7 +68,6 @@ const userlogin = async (req, res, next) => {
   }
 };
 
-
 const SendOtp = async (req, res, next) => {
   try {
     const { email } = await req.body;

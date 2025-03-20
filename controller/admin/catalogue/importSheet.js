@@ -1213,7 +1213,7 @@ const importCatalogues = async (req, res, next) => {
                       },
                     });
                     if (productData.length === 0) {
-                      console.log(value);
+                      console.log(existingProduct, value);
                       await deleteFile(value);
                     }
                   }

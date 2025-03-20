@@ -312,6 +312,8 @@ model Product {
   retail_discount  Float?                  @default(0)
   offer_price      Float?                  @default(0)
   image            String[]
+  thumbImage       String[]
+  mediumImage      String[]
   description      String
   // attribute_value String[] @db.ObjectId
   // label            String?                 @default("")

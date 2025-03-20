@@ -173,7 +173,7 @@ const uploadConfiguration = {
   importZip: multer({
     storage: dynamicStorage("importZip"),
     fileFilter: zipFile,
-    limits: { fileSize: 10000000 * 5 },
+    limits: { fileSize: 1000000000 * 5 },
   }).single("zip"),
 
   paymentMethod: multer({

@@ -2,7 +2,7 @@ import cron from "cron";
 import prisma from "../db/config.js";
 import { deleteFile, removeProductImage } from "../helper/common.js";
 
-const deleteCatalogues = new cron.CronJob("0 * * * *", async () => {
+const deleteCatalogues = new cron.CronJob("0 0 * * *", async () => {
   try {
     const currentTime = new Date();
     const cutoffTime = new Date(currentTime - 48 * 60 * 60 * 1000);
@@ -23,6 +23,10 @@ const deleteCatalogues = new cron.CronJob("0 * * * *", async () => {
         if (product.image && product.image.length > 0) {
           // for (const imagePath of product.image) {
           await removeProductImage(product.image);
+          product.thumbImage.length > 0 &&
+            product.thumbImage.map(async (image) => await deleteFile(image));
+          product.mediumImage.length > 0 &&
+            product.mediumImage.map(async (image) => await deleteFile(image));
           // }
           console.log(`Deleted images for product ID: ${product.id}`);
         }

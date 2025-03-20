@@ -12,7 +12,7 @@ import cors from "cors";
 import adminAuthRouter from "./routes/adminLogin.js";
 import publicRouter from "./routes/publicRoute.js";
 import publicProtected from "./routes/publicProtectedRoute.js";
-// import "./automated/deleteCatalogue.js";
+import "./automated/deleteCatalogue.js";
 import "./automated/deleteLabel.js";
 import requestIp from "request-ip";
 const PORT = process.env.PORT || 3000;

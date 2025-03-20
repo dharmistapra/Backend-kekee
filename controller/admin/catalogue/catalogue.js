@@ -614,7 +614,7 @@ const updateCatalogueProduct = async (req, res, next) => {
     catalogue_id = catalogue_id || null;
 
     // console.log("catalogue_id", catalogue_id);
-    if (catalogue_id !== "null") {
+    if (catalogue_id) {
       const findCatalogue = await prisma.catalogue.findUnique({
         where: { id: catalogue_id },
       });

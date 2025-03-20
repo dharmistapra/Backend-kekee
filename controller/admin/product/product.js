@@ -8,6 +8,7 @@ import {
   handleLabelConnection,
   handleProductAttributeConnection,
   handleProductConnection,
+  processProductImages,
   removeProductImage,
   updateStatus,
 } from "../../../helper/common.js";
@@ -119,6 +120,9 @@ const postRetailProduct = async (req, res, next) => {
       }
     }
 
+    const productImages = await processProductImages(req.files);
+    console.log(productImages);
+
     url = `${slug(name)}-${sku}`;
 
     const productData = {
@@ -140,6 +144,8 @@ const postRetailProduct = async (req, res, next) => {
       showInSingle,
       readyToShip,
       image: imagePaths,
+      thumbImage: productImages.map((imageData) => imageData.thumbImage),
+      mediumImage: productImages.map((imageData) => imageData.mediumImage),
       optionType: optionType,
       // stitching: stitching === true ? true : false,
     };
@@ -1018,6 +1024,22 @@ const updateRetailProduct = async (req, res, next) => {
     const finalOfferPrice = offer_price
       ? parseFloat(offer_price)
       : parseFloat(retail_price) * (1 - parseFloat(retail_discount) / 100);
+    let processedThumbs = [];
+    let processedMediums = [];
+    if (req.files) {
+      const productImages = await processProductImages(req.files);
+
+      processedThumbs = imagePaths &&
+        productImages.length > 0 && [
+          ...productImages.map((img) => img.thumbImage),
+          ...(findUniqueData?.thumbImage || []),
+        ];
+      processedMediums = imagePaths &&
+        processedImages.length > 0 && [
+          ...productImages.map((img) => img.mediumImage),
+          ...(findUniqueData?.mediumImage || []),
+        ];
+    }
 
     url = `${slug(name)}-${sku}`;
 
@@ -1466,6 +1488,75 @@ const updateReatailProductStatus = async (req, res, next) => {
   }
 };
 
+// const deleteProductImage = async (req, res, next) => {
+//   try {
+//     const { id, image } = req.body;
+//     if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+//       return res
+//         .status(400)
+//         .json({ isSuccess: false, message: "Invalid ID format!" });
+//     }
+
+//     const uniqueProduct = await prisma.product.findUnique({
+//       where: { id: id },
+//     });
+
+//     if (!uniqueProduct)
+//       return res
+//         .status(404)
+//         .json({ isSuccess: false, message: "Product not found!" });
+
+//     if (!uniqueProduct.image.includes(image))
+//       return res
+//         .status(400)
+//         .json({ isSuccess: false, message: "image not exists!" });
+
+//     if (uniqueProduct.image.length === 1)
+//       return res.status(400).json({
+//         isSuccess: false,
+//         message: "At least minimum 1 image are exists in this product!",
+//       });
+
+//     // const getImagePaths = async (originalPath) => {
+//     //   const baseName = path.basename(originalPath);
+//     //   return {
+//     //     thumb: `/uploads/product/thumb/${baseName}`,
+//     //     medium: `/uploads/product/medium/${baseName}`,
+//     //   };
+//     // };
+
+//     // const { thumb, medium } = await getImagePaths(image);
+
+//     const updatedImages = uniqueProduct.image.filter((img) => img !== image);
+//     // const thumbImages = uniqueProduct.thumbImage.filter((img) => img !== thumb);
+//     // const mediumImages = uniqueProduct.mediumImage.filter(
+//     //   (img) => img !== medium
+//     // );
+
+//     await deleteFile(image);
+//     // await deleteFile(thumb);
+//     // await deleteFile(medium);
+
+//     const result = await prisma.product.update({
+//       where: { id: id },
+//       data: {
+//         image: updatedImages,
+//         // thumbImage: thumbImages,
+//         // mediumImage: mediumImages,
+//       },
+//     });
+
+//     return res.status(200).json({
+//       isSuccess: true,
+//       message: "Product image deleted successfully.",
+//     });
+//   } catch (err) {
+//     console.log(err);
+//     const error = new Error("Something went wrong, please try again!");
+//     next(error);
+//   }
+// };
+
 const deleteProductImage = async (req, res, next) => {
   try {
     const { id, image } = req.body;
@@ -1495,23 +1586,88 @@ const deleteProductImage = async (req, res, next) => {
         message: "At least minimum 1 image are exists in this product!",
       });
 
-    const updatedImages = uniqueProduct.image.filter((img) => img !== image);
+    const thumbImage = `uploads/product/thumb/${path.basename(image)}`;
+    const mediumImage = `uploads/product/medium/${path.basename(image)}`;
 
+    const updatedImages = uniqueProduct.image.filter((img) => img !== image);
+    const updatedThumbImage = uniqueProduct.thumbImage.filter(
+      (img) => img !== thumbImage
+    );
+    const updatedMediumImage = uniqueProduct.mediumImage.filter(
+      (img) => img !== mediumImage
+    );
+    console.log(mediumImage, "updatedImages");
+    console.log(thumbImage, "updatedThumbImage");
+    console.log(image, "image");
     await deleteFile(image);
+    await deleteFile(thumbImage);
+    await deleteFile(mediumImage);
 
     const result = await prisma.product.update({
       where: { id: id },
-      data: { image: updatedImages },
+      data: {
+        image: updatedImages,
+        thumbImage: updatedThumbImage,
+        mediumImage: updatedMediumImage,
+      },
     });
     return res.status(200).json({
       isSuccess: true,
       message: "Product image deleted successfully.",
     });
   } catch (err) {
+    console.log(err);
     const error = new Error("Something went wrong, please try again!");
     next(error);
   }
 };
+
+// const deleteProductImage = async (req, res, next) => {
+//   try {
+//     const { id, image } = req.body;
+//     if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+//       return res
+//         .status(400)
+//         .json({ isSuccess: false, message: "Invalid ID format!" });
+//     }
+
+//     const uniqueProduct = await prisma.product.findUnique({
+//       where: { id: id },
+//     });
+
+//     if (!uniqueProduct)
+//       return res
+//         .status(404)
+//         .json({ isSuccess: false, message: "Product not found!" });
+
+//     if (!uniqueProduct.image.includes(image))
+//       return res
+//         .status(400)
+//         .json({ isSuccess: false, message: "image not exists!" });
+
+//     if (uniqueProduct.image.length === 1)
+//       return res.status(400).json({
+//         isSuccess: false,
+//         message: "At least minimum 1 image are exists in this product!",
+//       });
+
+//     const updatedImages = uniqueProduct.image.filter((img) => img !== image);
+
+//     await deleteFile(image);
+
+//     const result = await prisma.product.update({
+//       where: { id: id },
+//       data: { image: updatedImages },
+//     });
+//     return res.status(200).json({
+//       isSuccess: true,
+//       message: "Product image deleted successfully.",
+//     });
+//   } catch (err) {
+//     const error = new Error("Something went wrong, please try again!");
+//     next(error);
+//   }
+// };
 
 const arrayProducts = async (req, res, next) => {
   try {

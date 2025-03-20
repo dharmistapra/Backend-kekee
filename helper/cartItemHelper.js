@@ -507,13 +507,12 @@ const calculateCartItemTotal = (cartItems) => {
         sizeObject.price = sizePrice || 0;
       }
 
-      subtotal =
-        availableProductCount *
-        (catalogue.average_price + sizePrice + totalStitchingPrice);
+      subtotal = availableProductCount * (catalogue.average_price + sizePrice + totalStitchingPrice) * quantity;
       tax = (subtotal * (catalogue.GST || 0)) / 100;
       itemWeight = (catalogue.weight || 0) * quantity;
+
     } else if (product) {
-      console.log(product.optionType);
+
       const sizeDetails = size
         ? product.sizes?.find((s) => s?.size?.id === JSON.parse(size)?.id)
         : null;
@@ -526,7 +525,9 @@ const calculateCartItemTotal = (cartItems) => {
 
       if (sizePriceAndQuantity.quantity === 0 || product.quantity < quantity) {
         outOfStock = true;
-        sizeObject.price = sizePriceAndQuantity?.price;
+        if (sizeObject) {
+          sizeObject.price = sizePriceAndQuantity?.price;
+        }
       } else {
         subtotal =
           (product.offer_price +
@@ -566,7 +567,7 @@ const calculateCartItemTotal = (cartItems) => {
           catalogue?.CatalogueCategory?.[0]?.category?.url ||
           product?.categories?.[0]?.category?.url,
       },
-      size: sizeObject == null ? null : JSON.stringify(sizeObject),
+      size: size ? JSON.stringify(sizeObject) : null,
       subtotal,
       tax,
       outOfStock,

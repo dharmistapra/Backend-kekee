@@ -4,30 +4,30 @@ import prisma from "../db/config.js";
 import slug from "slug";
 import sharp from "sharp";
 
-// const deleteFile = async (filePath) => {
-//   if (!filePath) return;
-//   filePath = "./" + filePath;
-//   if (fs.existsSync(filePath)) {
-//     await fs.unlinkSync(filePath);
-//     console.log(filePath);
-//   }
-// };
-
-const deleteFile = (filePath) => {
-  try {
-    if (!filePath) return;
-    filePath = path.resolve(filePath);
-
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log(`File deleted: ${filePath}`);
-    } else {
-      console.warn(`File not found: ${filePath}`);
-    }
-  } catch (error) {
-    console.error(`Error deleting file: ${error.message}`);
+const deleteFile = async (filePath) => {
+  if (!filePath) return;
+  filePath = "./" + filePath;
+  if (fs.existsSync(filePath)) {
+    await fs.unlinkSync(filePath);
+    console.log(filePath);
   }
 };
+
+// const deleteFile = (filePath) => {
+//   try {
+//     if (!filePath) return;
+//     filePath = path.resolve(filePath);
+
+//     if (fs.existsSync(filePath)) {
+//       fs.unlinkSync(filePath);
+//       console.log(`File deleted: ${filePath}`);
+//     } else {
+//       console.warn(`File not found: ${filePath}`);
+//     }
+//   } catch (error) {
+//     console.error(`Error deleting file: ${error.message}`);
+//   }
+// };
 
 const uniqueFilename = async (file) => {
   let uniqueName = "";

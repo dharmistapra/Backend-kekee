@@ -567,7 +567,7 @@ const calculateCartItemTotal = (cartItems) => {
           catalogue?.CatalogueCategory?.[0]?.category?.url ||
           product?.categories?.[0]?.category?.url,
       },
-      size: JSON.stringify(sizeObject),
+      size: size ? JSON.stringify(sizeObject) : null,
       subtotal,
       tax,
       outOfStock,

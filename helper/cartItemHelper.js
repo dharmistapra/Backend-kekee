@@ -513,7 +513,7 @@ const calculateCartItemTotal = (cartItems) => {
       tax = (subtotal * (catalogue.GST || 0)) / 100;
       itemWeight = (catalogue.weight || 0) * quantity;
     } else if (product) {
-      console.log(product.optionType);
+
       const sizeDetails = size
         ? product.sizes?.find((s) => s?.size?.id === JSON.parse(size)?.id)
         : null;
@@ -524,7 +524,7 @@ const calculateCartItemTotal = (cartItems) => {
 
       console.log(sizePriceAndQuantity.quantity);
 
-      if (sizePriceAndQuantity.quantity === 0 || product.quantity < quantity) {
+      if ((size && sizePriceAndQuantity.quantity === 0) || product.quantity < quantity) {
         outOfStock = true;
         sizeObject.price = sizePriceAndQuantity?.price;
       } else {
@@ -566,7 +566,7 @@ const calculateCartItemTotal = (cartItems) => {
           catalogue?.CatalogueCategory?.[0]?.category?.url ||
           product?.categories?.[0]?.category?.url,
       },
-      size: sizeObject == null ? null : JSON.stringify(sizeObject),
+      size: JSON.stringify(sizeObject),
       subtotal,
       tax,
       outOfStock,

@@ -19,6 +19,7 @@ import AdmZip from "adm-zip";
 import fs from "fs";
 import path from "path";
 import fastCsv from "fast-csv";
+import sharp from "sharp";
 
 // const importCatalogue = async (req, res, next) => {
 //   try {
@@ -764,7 +765,8 @@ const importCatalogues = async (req, res, next) => {
           const formattedAttributes = missingAttributes
             .map(
               (item) =>
-                `Category: "${item.category
+                `Category: "${
+                  item.category
                 }", Missing Attributes: [${item.attributes.join(", ")}]`
             )
             .join("; ");
@@ -885,9 +887,9 @@ const importCatalogues = async (req, res, next) => {
 
         let finalOfferPrice =
           parseFloat(catalogueItemMarketPrice) > 0 &&
-            parseFloat(catalogueItemDiscount) > 0
+          parseFloat(catalogueItemDiscount) > 0
             ? parseFloat(catalogueItemMarketPrice) *
-            (1 - parseFloat(catalogueItemDiscount) / 100)
+              (1 - parseFloat(catalogueItemDiscount) / 100)
             : parseFloat(catalogueItemMarketPrice);
 
         let cat_url = `${slug(productName)}-${catCode}`;
@@ -959,6 +961,14 @@ const importCatalogues = async (req, res, next) => {
         let product_image = image
           .split(",")
           .map((val) => `uploads/product/${val}`);
+
+        let thumbImage = image
+          .split(",")
+          .map((val) => `uploads/product/thumb/${val}`);
+
+        let mediumImage = image
+          .split(",")
+          .map((val) => `uploads/product/medium/${val}`);
         // image = product_image.map((val) => {
         //   return `uploads/product/${val}`;
         // });
@@ -1022,6 +1032,8 @@ const importCatalogues = async (req, res, next) => {
           //   .json({ isSuccess: false, message: error?.details[0].message });
         }
         product.image = product_image;
+        product.thumbImage = thumbImage;
+        product.mediumImage = mediumImage;
         // let images = await product_image.map((value) => {
         //   if (!fs.existsSync(value)) {
         //     return value;
@@ -1214,6 +1226,8 @@ const importCatalogues = async (req, res, next) => {
                     if (productData.length === 0) {
                       console.log(existingProduct, value);
                       await deleteFile(value);
+                      await deleteFile(`uploads/product/thumb/${value}`);
+                      await deleteFile(`uploads/product/medium/${value}`);
                     }
                   }
                 }
@@ -1263,6 +1277,34 @@ const importCatalogues = async (req, res, next) => {
             await tx.productSize.deleteMany({
               where: { product: { sku: product.sku } },
             });
+
+            const existingProduct = await tx.product.findFirst({
+              where: { sku: product.sku },
+              select: { id: true, image: true },
+            });
+
+            if (existingProduct) {
+              let productImage = existingProduct.image.filter(
+                (value) => !product.image.includes(value)
+              );
+
+              if (productImage.length > 0) {
+                for (const value of productImage) {
+                  const productData = await tx.product.findMany({
+                    where: {
+                      id: { not: existingProduct.id },
+                      image: { has: value },
+                    },
+                  });
+                  if (productData.length === 0) {
+                    console.log(existingProduct, value);
+                    await deleteFile(value);
+                    await deleteFile(`uploads/product/thumb/${value}`);
+                    await deleteFile(`uploads/product/medium/${value}`);
+                  }
+                }
+              }
+            }
 
             return tx.product.upsert({
               where: { sku: product.sku },
@@ -1428,6 +1470,17 @@ const zipImages = async (req, res, next) => {
           });
         } else {
           let productImage = `uploads/product/${file}`;
+          const thumbImage = `uploads/product/thumb/${file}`;
+          const mediumImage = `uploads/product/medium/${file}`;
+
+          await sharp(origionalImage)
+            .resize(200, 200, { fit: "inside" })
+            .toFile(thumbImage);
+
+          await sharp(origionalImage)
+            .resize(300, 300, { fit: "inside" })
+            .toFile(mediumImage);
+
           fs.rename(origionalImage, productImage, (err) => {
             if (err) {
               return res.status(400).json({ isSuccess: false, message: err });
@@ -1812,23 +1865,23 @@ const formatData = (item, isCatalogue = false) => {
     productName: item.name,
     ...(isCatalogue
       ? {
-        catCode: item.cat_code,
-        noOfProduct: item.no_of_product,
-        catalogueItemMarketPrice: item.price,
-        catalogueItemDiscount: item.catalogue_discount,
-        GST: item.GST,
-        cat_image: item.coverImage,
-      }
+          catCode: item.cat_code,
+          noOfProduct: item.no_of_product,
+          catalogueItemMarketPrice: item.price,
+          catalogueItemDiscount: item.catalogue_discount,
+          GST: item.GST,
+          cat_image: item.coverImage,
+        }
       : {
-        productCode: item.productCode || item.sku,
-        catalogueItemMarketPrice: item.average_price || 0,
-        catalogueItemDiscount: item.catalogue_discount || 0,
-        retailPrice: item.retail_price,
-        retailDiscount: item.retail_discount,
-        GST: item.retail_GST,
-        image: item.image.join(","),
-        showInSingle: item.showInSingle ? "Y" : "N",
-      }),
+          productCode: item.productCode || item.sku,
+          catalogueItemMarketPrice: item.average_price || 0,
+          catalogueItemDiscount: item.catalogue_discount || 0,
+          retailPrice: item.retail_price,
+          retailDiscount: item.retail_discount,
+          GST: item.retail_GST,
+          image: item.image.join(","),
+          showInSingle: item.showInSingle ? "Y" : "N",
+        }),
     description: item.description,
     quantity: item.quantity,
     metaTitle: item.meta_title,

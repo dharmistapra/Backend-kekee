@@ -500,8 +500,8 @@ const calculateCartItemTotal = (cartItems) => {
       outOfStock = availableProductCount === 0;
       const sizePrice = size
         ? catalogue.Product[0]?.sizes?.find(
-            (s) => s?.size?.id === JSON.parse(size)?.id
-          )?.price || 0
+          (s) => s?.size?.id === JSON.parse(size)?.id
+        )?.price || 0
         : 0;
       if (sizePrice) {
         sizeObject.price = sizePrice || 0;
@@ -566,19 +566,19 @@ const calculateCartItemTotal = (cartItems) => {
           catalogue?.CatalogueCategory?.[0]?.category?.url ||
           product?.categories?.[0]?.category?.url,
       },
-      size: JSON.stringify(sizeObject),
+      size: sizeObject == null ? null : JSON.stringify(sizeObject),
       subtotal,
       tax,
       outOfStock,
       products: isCatalogue
         ? catalogue.Product.map((prod) => ({
-            name: prod.name,
-            url: prod.url,
-            quantity: prod.quantity,
-            outOfStock: prod?.outOfStock,
-            code: prod.sku,
-            // price: prod.retail_price,
-          }))
+          name: prod.name,
+          url: prod.url,
+          quantity: prod.quantity,
+          outOfStock: prod?.outOfStock,
+          code: prod.sku,
+          // price: prod.retail_price,
+        }))
         : undefined,
     };
   });

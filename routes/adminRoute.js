@@ -330,6 +330,7 @@ import {
   updatePaymentMethod,
 } from "../controller/admin/paymentMethod.js";
 import { getOrderHistory } from "../controller/public/orderHistory.js";
+import { getAllSingleProductInventory } from "../controller/admin/inventory.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -769,5 +770,7 @@ adminRouter.get("/paymentmethod-image/:id", deletePaymentMethodImage);
 adminRouter.post("/customer/order/history", getOrderHistoryusers);
 adminRouter.post("/customer/order/details", getOrderdetailsUsers);
 adminRouter.post("/order/status", updateOrderStatus);
+
+adminRouter.post("/inventory/single/product", getAllSingleProductInventory);
 
 export default adminRouter;

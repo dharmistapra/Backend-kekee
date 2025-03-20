@@ -764,8 +764,7 @@ const importCatalogues = async (req, res, next) => {
           const formattedAttributes = missingAttributes
             .map(
               (item) =>
-                `Category: "${
-                  item.category
+                `Category: "${item.category
                 }", Missing Attributes: [${item.attributes.join(", ")}]`
             )
             .join("; ");
@@ -886,9 +885,9 @@ const importCatalogues = async (req, res, next) => {
 
         let finalOfferPrice =
           parseFloat(catalogueItemMarketPrice) > 0 &&
-          parseFloat(catalogueItemDiscount) > 0
+            parseFloat(catalogueItemDiscount) > 0
             ? parseFloat(catalogueItemMarketPrice) *
-              (1 - parseFloat(catalogueItemDiscount) / 100)
+            (1 - parseFloat(catalogueItemDiscount) / 100)
             : parseFloat(catalogueItemMarketPrice);
 
         let cat_url = `${slug(productName)}-${catCode}`;
@@ -1275,7 +1274,7 @@ const importCatalogues = async (req, res, next) => {
           await Promise.all(productUpserts);
         }
       },
-      { timeout: 20000 } // Increase transaction timeout to 20s
+      { timeout: 60000 } // Increase transaction timeout to 20s
     );
 
     // await prisma.$transaction(async (tx) => {
@@ -1813,23 +1812,23 @@ const formatData = (item, isCatalogue = false) => {
     productName: item.name,
     ...(isCatalogue
       ? {
-          catCode: item.cat_code,
-          noOfProduct: item.no_of_product,
-          catalogueItemMarketPrice: item.price,
-          catalogueItemDiscount: item.catalogue_discount,
-          GST: item.GST,
-          cat_image: item.coverImage,
-        }
+        catCode: item.cat_code,
+        noOfProduct: item.no_of_product,
+        catalogueItemMarketPrice: item.price,
+        catalogueItemDiscount: item.catalogue_discount,
+        GST: item.GST,
+        cat_image: item.coverImage,
+      }
       : {
-          productCode: item.productCode || item.sku,
-          catalogueItemMarketPrice: item.average_price || 0,
-          catalogueItemDiscount: item.catalogue_discount || 0,
-          retailPrice: item.retail_price,
-          retailDiscount: item.retail_discount,
-          GST: item.retail_GST,
-          image: item.image.join(","),
-          showInSingle: item.showInSingle ? "Y" : "N",
-        }),
+        productCode: item.productCode || item.sku,
+        catalogueItemMarketPrice: item.average_price || 0,
+        catalogueItemDiscount: item.catalogue_discount || 0,
+        retailPrice: item.retail_price,
+        retailDiscount: item.retail_discount,
+        GST: item.retail_GST,
+        image: item.image.join(","),
+        showInSingle: item.showInSingle ? "Y" : "N",
+      }),
     description: item.description,
     quantity: item.quantity,
     metaTitle: item.meta_title,

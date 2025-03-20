@@ -507,11 +507,10 @@ const calculateCartItemTotal = (cartItems) => {
         sizeObject.price = sizePrice || 0;
       }
 
-      subtotal =
-        availableProductCount *
-        (catalogue.average_price + sizePrice + totalStitchingPrice);
+      subtotal = availableProductCount * (catalogue.average_price + sizePrice + totalStitchingPrice) * quantity;
       tax = (subtotal * (catalogue.GST || 0)) / 100;
       itemWeight = (catalogue.weight || 0) * quantity;
+
     } else if (product) {
 
       const sizeDetails = size
@@ -524,9 +523,11 @@ const calculateCartItemTotal = (cartItems) => {
 
       console.log(sizePriceAndQuantity.quantity);
 
-      if ((size && sizePriceAndQuantity.quantity === 0) || product.quantity < quantity) {
+      if (sizePriceAndQuantity.quantity === 0 || product.quantity < quantity) {
         outOfStock = true;
-        sizeObject.price = sizePriceAndQuantity?.price;
+        if (sizeObject) {
+          sizeObject.price = sizePriceAndQuantity?.price;
+        }
       } else {
         subtotal =
           (product.offer_price +

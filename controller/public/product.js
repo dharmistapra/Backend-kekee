@@ -337,6 +337,9 @@ const getProductDetails = async (req, res, next) => {
         readyToShip: true,
         // stitching: true,
         // size: true,
+        meta_title: true,
+        meta_keyword: true,
+        meta_description: true,
         optionType: true,
         categories: {
           select: {

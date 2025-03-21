@@ -248,8 +248,6 @@ const getuserAddresspagiantion = async (req, res, next) => {
     const take = Number(perPage) || 4;
     const skip = (page - 1) * take;
 
-
-
     const [count, result] = await await prisma.$transaction([
       prisma.billing.count({ where: { userId: id } }),
       prisma.billing.findMany({

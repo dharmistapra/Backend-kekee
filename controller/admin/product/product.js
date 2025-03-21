@@ -84,9 +84,22 @@ const postRetailProduct = async (req, res, next) => {
     const findUniqueData = await prisma.product.findFirst({
       where: {
         sku: sku,
-        OR: [{ catalogue_id: null }, { catalogue: { deletedAt: null } }],
+        // OR: [{ catalogue_id: null }, { catalogue: { deletedAt: null } }],
+      },
+      select: {
+        id: true,
+        catalogue: { select: { cat_code: true, deletedAt: true } },
       },
     });
+
+    if (findUniqueData && findUniqueData.catalogue?.deletedAt === null) {
+      await removeProductImage(imagePaths);
+      // await fileValidation(req.files, true);
+      return res.status(409).json({
+        isSuccess: false,
+        message: `The product with SKU ${sku} matches a deleted ${findUniqueData.catalogue.cat_code} catalog item. Please update the SKU or restore the catalog entry.`,
+      });
+    }
 
     if (findUniqueData) {
       await removeProductImage(imagePaths);
@@ -1717,7 +1730,6 @@ const arrayProducts = async (req, res, next) => {
 
     if (findUniqueData) {
       await removeProductImage(imagePaths);
-
       return res
         .status(409)
         .json({ isSuccess: false, message: "Code Already Used" });

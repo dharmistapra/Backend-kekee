@@ -214,7 +214,7 @@ const getOrderHistory = async (req, res, next) => {
         orderId: order?.orderId,
         name: prdoduct?.name || catalogue?.name,
         url: prdoduct?.url || catalogue?.url,
-        type: catalogue ? "Catalogur" : "product",
+        type: catalogue ? "Catalogue" : "product",
         categoryURL:
           prdoduct?.categories?.[0]?.category?.url ||
           catalogue?.CatalogueCategory?.[0]?.category?.url,

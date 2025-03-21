@@ -8,7 +8,14 @@ import slug from "slug";
 
 const postCms = async (req, res, next) => {
   try {
-    const { title, description, url } = req.body;
+    const {
+      title,
+      description,
+      meta_title,
+      meta_keyword,
+      meta_description,
+      url,
+    } = req.body;
     const slugUrl = url ? slug(url) : slug(title);
 
     const [uniqueCode, count] = await prisma.$transaction([
@@ -29,6 +36,9 @@ const postCms = async (req, res, next) => {
         position: count + 1,
         title: title,
         description: description,
+        meta_title: meta_title,
+        meta_keyword: meta_keyword,
+        meta_description: meta_description,
         url: slugUrl,
       },
     });
@@ -75,6 +85,9 @@ const getCms = async (req, res, next) => {
         title: true,
         url: true,
         description: true,
+        meta_title: true,
+        meta_keyword: true,
+        meta_description: true,
         isActive: true,
       },
     });
@@ -133,7 +146,14 @@ const updateCms = async (req, res, next) => {
         .status(400)
         .json({ isSuccess: false, message: "Invalid ID format!" });
     }
-    const { title, description, url } = req.body;
+    const {
+      title,
+      description,
+      meta_title,
+      meta_keyword,
+      meta_description,
+      url,
+    } = req.body;
     const slugUrl = url ? slug(url) : slug(title);
     console.log("slugUrl", slugUrl);
 
@@ -145,7 +165,14 @@ const updateCms = async (req, res, next) => {
 
     const result = await prisma.cmsPage.update({
       where: { id: id },
-      data: { title: title, description: description, url: slugUrl },
+      data: {
+        title: title,
+        description: description,
+        meta_title: meta_title,
+        meta_keyword: meta_keyword,
+        meta_description: meta_description,
+        url: slugUrl,
+      },
     });
 
     return res.status(200).json({

@@ -203,6 +203,9 @@ const cmsSchema = async (req, res, next) => {
   const schema = Joi.object({
     title: Joi.string().required(),
     description: Joi.string().required(),
+    meta_title: Joi.string().required().allow(""),
+    meta_keyword: Joi.string().required().allow(""),
+    meta_description: Joi.string().required().allow(""),
     url: Joi.string().optional().allow(""),
     isActive: Joi.boolean().optional().default(true),
   });
@@ -1283,10 +1286,11 @@ const orderPlaceSchema = async (req, res, next) => {
       state: Joi.string().optional(),
       whatsapp: Joi.string().optional().allow(""),
       zipCode: Joi.string().optional(),
-    }).when('defaultAddressId', {
+    }).when("defaultAddressId", {
       is: Joi.exist(),
       then: Joi.forbidden().messages({
-        "any.unknown": "Billing form cannot be provided when defaultAddressId is present",
+        "any.unknown":
+          "Billing form cannot be provided when defaultAddressId is present",
       }),
     }),
 
@@ -1313,10 +1317,11 @@ const orderPlaceSchema = async (req, res, next) => {
         "any.required": "Zip Code is required",
         "string.empty": "Zip Code cannot be empty",
       }),
-    }).when('defaultAddressId', {
+    }).when("defaultAddressId", {
       is: Joi.exist(),
       then: Joi.forbidden().messages({
-        "any.unknown": "Shipping data cannot be provided when defaultAddressId is present",
+        "any.unknown":
+          "Shipping data cannot be provided when defaultAddressId is present",
       }),
     }),
 
@@ -1335,7 +1340,6 @@ const orderPlaceSchema = async (req, res, next) => {
 
   await JoiSchemaValidation(schema, req, next);
 };
-
 
 export {
   categorySchema,

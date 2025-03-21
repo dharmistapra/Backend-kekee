@@ -127,16 +127,19 @@ model AdminMaster {
 }
 
 model CmsPage {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  position    Int
-  title       String
-  url         String   @default("")
-  description String
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  position         Int
+  title            String
+  url              String   @default("")
+  description      String
+  meta_title       String?  @default("")
+  meta_keyword     String?  @default("")
+  meta_description String?  @default("")
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   // Menu        Menu[]   @relation("cms")
-  Menu        Menu[]
+  Menu             Menu[]
 }
 
 model HomeBanner {

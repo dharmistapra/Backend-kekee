@@ -214,7 +214,7 @@ const getOrderHistory = async (req, res, next) => {
         orderId: order?.orderId,
         name: prdoduct?.name || catalogue?.name,
         url: prdoduct?.url || catalogue?.url,
-        type: catalogue ? "Catalogur" : "product",
+        type: catalogue ? "Catalogue" : "product",
         categoryURL:
           prdoduct?.categories?.[0]?.category?.url ||
           catalogue?.CatalogueCategory?.[0]?.category?.url,
@@ -247,11 +247,6 @@ const getuserAddresspagiantion = async (req, res, next) => {
     const page = Number(pageNo) || 1;
     const take = Number(perPage) || 4;
     const skip = (page - 1) * take;
-
-
-    console.log(user_id)
-
-
     const [count, result] = await await prisma.$transaction([
       prisma.billing.count({ where: { userId: user_id } }),
       prisma.billing.findMany({

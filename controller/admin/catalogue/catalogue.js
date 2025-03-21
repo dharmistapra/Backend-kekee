@@ -82,10 +82,22 @@ const postCatlogProduct = async (req, res, next) => {
     const findUniqueData = await prisma.product.findFirst({
       where: {
         sku: sku,
-        OR: [{ catalogue_id: null }, { catalogue: { deletedAt: null } }],
+        // OR: [{ catalogue_id: null }, { catalogue: { deletedAt: null } }],
+      },
+      select: {
+        id: true,
+        catalogue: { select: { cat_code: true, deletedAt: true } },
       },
     });
-    if (findUniqueData) {
+
+    if (findUniqueData && findUniqueData?.catalogue?.deletedAt !== null) {
+      await removeProductImage(imagePaths);
+      return res.status(409).json({
+        isSuccess: false,
+        message: `The product with SKU ${sku} matches a deleted ${findUniqueData?.catalogue?.cat_code} catalog item. Please update the SKU or restore the catalog entry.`,
+      });
+    }
+    if (findUniqueData || findUniqueData?.catalogue?.deletedAt === null) {
       await removeProductImage(imagePaths);
       return res
         .status(409)
@@ -586,7 +598,12 @@ const updateCatalogueProduct = async (req, res, next) => {
       prisma.product.findFirst({
         where: {
           sku: sku,
-          OR: [{ catalogue_id: null }, { catalogue: { deletedAt: null } }],
+          id: { not: id },
+          // OR: [{ catalogue_id: null }, { catalogue: { deletedAt: null } }],
+        },
+        select: {
+          id: true,
+          catalogue: { select: { cat_code: true, deletedAt: true } },
         },
       }),
       prisma.product.findUnique({ where: { id: id } }),
@@ -598,12 +615,22 @@ const updateCatalogueProduct = async (req, res, next) => {
         .status(404)
         .json({ isSuccess: false, message: "Product not found!" });
     }
-    if (findUniqueData && findUniqueData.id !== id) {
+    if (findUniqueData && findUniqueData?.catalogue?.deletedAt !== null) {
       if (req.files && req.files?.length > 0)
         await removeProductImage(imagePaths);
-      return res
-        .status(400)
-        .json({ isSuccess: false, message: "SKU already in use!" });
+      return res.status(400).json({
+        isSuccess: false,
+        message: `The product with SKU ${sku} matches a deleted  ${findUniqueData.catalogue.cat_code} catalog item. Please update the SKU or restore the catalog entry.`,
+      });
+    }
+
+    if (findUniqueData || findUniqueData?.catalogue?.deletedAt === null) {
+      if (req.files && req.files?.length > 0)
+        await removeProductImage(imagePaths);
+      return res.status(400).json({
+        isSuccess: false,
+        message: `SKU ${sku} Already Used`,
+      });
     }
 
     if (findData.image.length === 0 && req.files.length === 0)

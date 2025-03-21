@@ -243,17 +243,19 @@ const getOrderHistory = async (req, res, next) => {
 
 const getuserAddresspagiantion = async (req, res, next) => {
   try {
-    const { id, pageNo, perPage } = req.body;
+    const { user_id, pageNo, perPage } = req.body;
     const page = Number(pageNo) || 1;
     const take = Number(perPage) || 4;
     const skip = (page - 1) * take;
 
 
+    console.log(user_id)
+
 
     const [count, result] = await await prisma.$transaction([
-      prisma.billing.count({ where: { userId: id } }),
+      prisma.billing.count({ where: { userId: user_id } }),
       prisma.billing.findMany({
-        where: { userId: id },
+        where: { userId: user_id },
         select: {
           id: true,
           fullName: true,

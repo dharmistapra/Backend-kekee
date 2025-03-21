@@ -41,6 +41,7 @@ const OrderPlace = async (req, res, next) => {
             return res.status(400).json({ isSuccess: false, message: "Data Not Found", data: null });
         }
         const shippingconst = await calculateShippingCost(totalWeight, shippingdata?.country);
+        console.log("shippingconst", shippingconst)
         let ordertotal = totalSubtotal + totalTax + shippingconst.shippingCost;
         const now = new Date();
         const date = now.toISOString().slice(0, 10).replace(/-/g, '');
@@ -175,8 +176,12 @@ const OrderPlace = async (req, res, next) => {
             amount: Math.round(convertAmount * 100),
         };
 
+        if (paymentMethod === "bank") {
+            const orderItems = await prisma.cartItem.deleteMany({ where: { cart_id: finduser.id } })
 
-        const orderItems=await prisma.cartItem.deleteMany({where:{cart_id:finduser.id}})
+        }
+
+
         return res.status(200).json({
             message: "Order generated successfully",
             data: response,
@@ -234,6 +239,8 @@ const verifyOrder = async (req, res, next) => {
                 data: { transactionId, status: "SUCCESS" },
             });
 
+            const orderItems = await prisma.cartItem.deleteMany({ where: { cart_id: finduser.id } })
+
             return res
                 .status(200)
                 .json({ isSuccess: true, message: "Order placed successfully" });
@@ -243,7 +250,6 @@ const verifyOrder = async (req, res, next) => {
                 .json({ isSuccess: false, message: "Payment failed" });
         }
     } catch (error) {
-        console.log(error)
         next(new Error("Something went wrong!"));
     }
 };

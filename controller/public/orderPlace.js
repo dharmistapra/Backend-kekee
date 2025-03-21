@@ -107,7 +107,6 @@ const OrderPlace = async (req, res, next) => {
                 }
             })
         } else {
-            console.log("billingform", billingform)
             const billingData = await prisma.billing.create({
                 data: {
                     orderId: order.id,
@@ -176,6 +175,8 @@ const OrderPlace = async (req, res, next) => {
             amount: Math.round(convertAmount * 100),
         };
 
+
+        const orderItems=await prisma.cartItem.deleteMany({where:{cart_id:finduser.id}})
         return res.status(200).json({
             message: "Order generated successfully",
             data: response,

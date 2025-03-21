@@ -241,37 +241,65 @@ const getOrderHistory = async (req, res, next) => {
   }
 };
 
-const getdefaultAddress = async (req, res, next) => {
+const getuserAddresspagiantion = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const { id, pageNo, perPage } = req.body;
+    const page = Number(pageNo) || 1;
+    const take = Number(perPage) || 4;
+    const skip = (page - 1) * take;
 
-    const result = await prisma.billing.findFirst({
-      where: {
-        userId: id,
-        isDefault: true,
-      },
-      select: {
-        id: true,
-        fullName: true,
-        address1: true,
-        address2: true,
-        city: true,
-        country: true,
-        state: true,
-        zipCode: true,
-        email: true,
-        mobile: true,
-        whatsapp: true,
-        companyname: true,
-        GstNumber: true,
-      },
-    });
+
+
+    const [count, result] = await await prisma.$transaction([
+      prisma.billing.count({ where: { userId: id } }),
+      prisma.billing.findMany({
+        where: { userId: id },
+        select: {
+          id: true,
+          fullName: true,
+          address1: true,
+          address2: true,
+          city: true,
+          country: true,
+          state: true,
+          zipCode: true,
+          email: true,
+          mobile: true,
+          whatsapp: true,
+          companyname: true,
+          GstNumber: true,
+        },
+        skip,
+        take,
+      }),
+    ]);
+    // const result = await prisma.billing.findMany({
+    //   where: { userId: id },
+    //   select: {
+    //     id: true,
+    //     fullName: true,
+    //     address1: true,
+    //     address2: true,
+    //     city: true,
+    //     country: true,
+    //     state: true,
+    //     zipCode: true,
+    //     email: true,
+    //     mobile: true,
+    //     whatsapp: true,
+    //     companyname: true,
+    //     GstNumber: true,
+    //   },
+    // });
 
     if (!result) {
-      return res.status(400).json({
+      return res.status(200).json({
         message: "Address not found",
         isSuccess: false,
-        data: null,
+        data: [],
+        otalCount: count,
+        currentPage: page,
+        pageSize: take,
       });
     }
 
@@ -279,6 +307,9 @@ const getdefaultAddress = async (req, res, next) => {
       message: "Default address successfully",
       isSuccess: true,
       data: result,
+      totalCount: count,
+      currentPage: page,
+      pageSize: take,
     });
   } catch (error) {
     console.log(error);
@@ -286,4 +317,4 @@ const getdefaultAddress = async (req, res, next) => {
     next(err);
   }
 };
-export { getOrderdetails, getOrderHistory, getdefaultAddress };
+export { getOrderdetails, getOrderHistory, getuserAddresspagiantion };

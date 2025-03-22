@@ -1341,6 +1341,18 @@ const orderPlaceSchema = async (req, res, next) => {
   await JoiSchemaValidation(schema, req, next);
 };
 
+const contactUsSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    name: Joi.string().required(),
+    email: Joi.string().email().required(),
+    mobile_number: Joi.number().required(),
+    subject: Joi.string().required(),
+    message: Joi.string().required(),
+  });
+
+  await JoiSchemaValidation(schema, req, next);
+};
+
 export {
   categorySchema,
   subCategorySchema,
@@ -1391,4 +1403,5 @@ export {
   shippingchargesSchema,
   paymentMethodsSchema,
   orderPlaceSchema,
+  contactUsSchema,
 };

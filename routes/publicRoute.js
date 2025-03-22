@@ -31,6 +31,7 @@ import {
   VerifyOtp,
 } from "../controller/public/user/register.js";
 import {
+  contactUsSchema,
   loginSchema,
   newsLetterSchema,
   registerSchema,
@@ -56,6 +57,11 @@ import {
   getPaymentMethodpublic,
 } from "../controller/admin/paymentMethod.js";
 import { getCategory } from "../controller/public/category.js";
+import {
+  deleteContactUs,
+  getAllContactUs,
+  postContactUs,
+} from "../controller/admin/contactUs.js";
 const router = express.Router();
 
 // MENU API
@@ -235,5 +241,7 @@ router.post("/shipping-charge", findShippingPrice);
 router.get("/payment/method", getPaymentMethodpublic);
 
 router.get("/categorycollection", getCategoryCollection);
+
+router.post("/contact-us", contactUsSchema, postContactUs);
 
 export default router;

@@ -2,48 +2,33 @@ import prisma from "../../db/config.js"
 
 const postshipAddress = async (req, res, next) => {
     try {
-        const { email, fullName, country, state, city, zipCode, address1, address2, companyname, GstNumber, mobile, whatsapp, user_id, id, isDefault } = req.body;
+        const { email, fullName, country, state, city, zipCode, address1, address2, companyname, GstNumber, mobile, whatsapp, user_id, id, isDefault, defaultBilling, defaultShipping } = req.body;
         const finduser = await prisma.users.findUnique({ where: { id: user_id } });
-        if (!finduser) {
-            return res.status(400).json({ isSuccess: false, message: "User not found", data: null });
-        }
+        if (!finduser) return res.status(400).json({ isSuccess: false, message: "User not found", data: null });
+
 
         let data;
         if (id) {
-            const existingAddress = await prisma.billing.findUnique({ where: { id } });
+            const existingAddress = await prisma.customerAddress.findUnique({ where: { id } });
             if (!existingAddress) return res.status(404).json({ isSuccess: false, message: "Billing address not found", data: null });
-            if (isDefault) {
 
-                const updateDefault = await prisma.billing.updateMany({
-                    where: {
-                        userId: user_id,
-                        isDefault: true,
-                    },
-                    data: {
-                        isDefault: false,
-                    },
-                });
-
-            }
-
-            data = await prisma.billing.update({
+            data = await prisma.customerAddress.update({
                 where: { id },
                 data: {
                     fullName,
                     email,
                     city,
                     country, state, zipCode, address1, address2, companyname, GstNumber, mobile, whatsapp,
-                    isDefault: true,
-                    isSame: true,
+                    defaultBilling: defaultBilling,
+                    defaultShipping: defaultShipping,
                 },
             });
-
-
             return res.status(200).json({ isSuccess: true, message: "Data updated successfully", data });
         } else {
-            data = await prisma.billing.create({
+            data = await prisma.customerAddress.create({
                 data: {
-                    fullName, userId: user_id, email, city, country, state, zipCode, address1, address2, companyname, GstNumber, mobile, whatsapp, isDefault: true, isSame: true,
+                    fullName, userId: user_id, email, city, country, state, zipCode, address1, address2, companyname, GstNumber, mobile, whatsapp, defaultBilling: defaultBilling,
+                    defaultShipping: defaultShipping,
                 },
             });
 
@@ -60,7 +45,7 @@ const postshipAddress = async (req, res, next) => {
 const getshipAddress = async (req, res, next) => {
     try {
         const user_id = req.params
-        const data = await prisma.billing.findMany({
+        const data = await prisma.customerAddress.findMany({
             where: {
                 userId: user_id
             },
@@ -78,7 +63,8 @@ const getshipAddress = async (req, res, next) => {
                 GstNumber: true,
                 mobile: true,
                 whatsapp: true,
-                isDefault: true,
+                defaultBilling: true,
+                defaultShipping: true,
             }
         })
 

@@ -495,11 +495,11 @@ model contactDetails {
 }
 
 model users {
-  id                String        @id @default(auto()) @map("_id") @db.ObjectId
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
   name              String?
-  email             String        @unique
+  email             String            @unique
   provider_id       String?
-  provider          String?       @default("default")
+  provider          String?           @default("default")
   mobile_number     Int?
   password          String?
   address           String?
@@ -510,17 +510,16 @@ model users {
   business_detail   String?
   image             String?
   verification_code String?
-  isActive          Boolean?      @default(true)
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  isActive          Boolean?          @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
   cart              cart[]
   WishList          WishList[]
   orders            Order[]
   // Order             Order[]
   // Address           Address[]
   BankAccount       BankAccount[]
-  Billing           Billing[]
-  Shipping          Shipping[]
+  CustomerAddress   CustomerAddress[]
 }
 
 model size {
@@ -770,8 +769,6 @@ model Order {
   updatedAt      DateTime    @updatedAt
   user           users?      @relation(fields: [userId], references: [id], onDelete: Cascade)
   orderItems     OrderItem[]
-  shipping       Shipping[]
-  billing        Billing[]
   payment        payment[]
 }
 
@@ -793,49 +790,44 @@ model OrderItem {
   order            Order?     @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
-model Shipping {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  orderId  String? @db.ObjectId
-  userId   String? @db.ObjectId
-  fullName String
-  address1 String
-  address2 String?
-  city     String
-  country  String
-  state    String
-  zipCode  String
-  mobile   String
+// model CustomerAddress {
+//   id            String         @id @default(auto()) @map("_id") @db.ObjectId
+//   userId        String?        @db.ObjectId
+//   fullName      String
+//   address1      String
+//   address2      String?
+//   city          String
+//   country       String
+//   state         String
+//   zipCode       String
+//   mobile        String
+//   shippingPrice Float?
+//   createdAt     DateTime       @default(now())
+//   updatedAt     DateTime       @updatedAt
+//   status        ShippingStatus
+//   user          users?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+// }
 
-  shippingPrice Float?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  status        ShippingStatus
-  order         Order?         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  user          users?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Billing {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  orderId     String?  @db.ObjectId
-  userId      String?  @db.ObjectId
-  fullName    String
-  address1    String
-  address2    String?
-  city        String
-  country     String
-  state       String
-  zipCode     String
-  email       String?
-  mobile      String
-  whatsapp    String?
-  companyname String?
-  GstNumber   String?
-  isSame      Boolean  @default(false)
-  isDefault   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  order       Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  user        users?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+model CustomerAddress {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String?  @db.ObjectId
+  fullName        String
+  address1        String
+  address2        String?
+  city            String
+  country         String
+  state           String
+  zipCode         String
+  email           String?
+  mobile          String
+  whatsapp        String?
+  companyname     String?
+  GstNumber       String?
+  defaultBilling  Boolean? @default(false)
+  defaultShipping Boolean? @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            users?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model payment {

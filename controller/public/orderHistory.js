@@ -265,6 +265,7 @@ const getuserAddresspagiantion = async (req, res, next) => {
           whatsapp: true,
           companyname: true,
           GstNumber: true,
+          isSame: true,
         },
         skip,
         take,

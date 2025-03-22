@@ -6,9 +6,10 @@ import { calculateShippingCost } from "../admin/shippingcharges.js";
 import { rozarpay } from "../../config/paymentConfig.js";
 import crypto from "crypto";
 import "dotenv/config";
+import { createBilling, createShipping } from "../../helper/addres.js";
 const OrderPlace = async (req, res, next) => {
     try {
-        const { user_id, billingform, shippingdata, paymentMethod, currency, bankdata, defaultAddressId } = req.body;
+        let { user_id, billingform, shippingdata, paymentMethod, currency, bankdata, defaultAddressId, isSame, billingId, shippingId } = req.body;
         const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
         if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
 
@@ -40,13 +41,19 @@ const OrderPlace = async (req, res, next) => {
         if (DataModified2?.length == 0 || totalSubtotal === 0) {
             return res.status(400).json({ isSuccess: false, message: "Data Not Found", data: null });
         }
-        const shippingconst = await calculateShippingCost(totalWeight, shippingdata?.country);
-        console.log("shippingconst", shippingconst)
+
+        const shippingCountry = isSame ? billingform.country : shippingdata.country;
+        const shippingconst = await calculateShippingCost(totalWeight, shippingCountry);
+
         let ordertotal = totalSubtotal + totalTax + shippingconst.shippingCost;
         const now = new Date();
         const date = now.toISOString().slice(0, 10).replace(/-/g, '');
         const time = now.toTimeString().slice(0, 8).replace(/:/g, '');
         const orderId = `ORD-${date}-${time}`;
+
+        billingId = await createBilling(billingId, billingform, user_id);
+        shippingId = await createShipping(shippingId, isSame, billingform, shippingdata);
+
 
 
         const order = await prisma.order.create({
@@ -56,13 +63,13 @@ const OrderPlace = async (req, res, next) => {
                 subtotal: totalSubtotal,
                 Tax: totalTax,
                 discount: 0,
+                billingId: billingId,
+                shippingId: shippingId,
                 shippingcharge: shippingconst.shippingCost,
                 totalAmount: ordertotal,
                 status: "PENDING",
             },
         });
-
-
         await prisma.orderItem.createMany({
             data: DataModified2?.map((item) => {
                 let availableProducts = [];
@@ -94,54 +101,6 @@ const OrderPlace = async (req, res, next) => {
             }) ?? []
         });
 
-
-
-
-
-        if (defaultAddressId) {
-            await prisma.billing.update({
-                where: {
-                    id: defaultAddressId
-                },
-                data: {
-                    orderId: order.id
-                }
-            })
-        } else {
-            const billingData = await prisma.billing.create({
-                data: {
-                    orderId: order.id,
-                    email: billingform.email,
-                    fullName: billingform.fullName,
-                    country: billingform.country,
-                    state: billingform.state,
-                    city: billingform.city,
-                    userId: user_id,
-                    zipCode: billingform.zipCode,
-                    address1: billingform.address1,
-                    address2: billingform.address2,
-                    companyname: billingform.companyname,
-                    GstNumber: billingform.GstNumber,
-                    mobile: billingform.mobile,
-                    whatsapp: billingform.whatsapp,
-                },
-            });
-            const shippingData = await prisma.shipping.create({
-                data: {
-                    orderId: order.id,
-                    fullName: shippingdata.fullName,
-                    country: shippingdata.country,
-                    state: shippingdata.state,
-                    city: shippingdata.city,
-                    zipCode: shippingdata.zipCode,
-                    address1: shippingdata.address1,
-                    address2: shippingdata.address2,
-                    mobile: shippingdata.mobile,
-                    status: "PENDING",
-                },
-            });
-
-        }
 
         const convertAmount = ordertotal / currency?.rate;
         let bankAccountId = null;
@@ -239,7 +198,7 @@ const verifyOrder = async (req, res, next) => {
                 data: { transactionId, status: "SUCCESS" },
             });
 
-            const orderItems = await prisma.cartItem.deleteMany({ where: { cart_id: finduser.id } })
+            // const orderItems = await prisma.cartItem.deleteMany({ where: { cart_id: finduser.id } })
 
             return res
                 .status(200)
@@ -250,6 +209,7 @@ const verifyOrder = async (req, res, next) => {
                 .json({ isSuccess: false, message: "Payment failed" });
         }
     } catch (error) {
+        console.log(error)
         next(new Error("Something went wrong!"));
     }
 };

@@ -1225,6 +1225,10 @@ const orderPlaceSchema = async (req, res, next) => {
       "any.required": "User ID is required",
       "string.empty": "User ID cannot be empty",
     }),
+    isSame: Joi.boolean().optional().messages({
+      "any.required": "isSame is required",
+      "string.empty": "isSame cannot be empty",
+    }),
     shippingPrice: Joi.number().required().messages({
       "any.required": "shippingPrice is required",
       "string.empty": "shippingPrice cannot be empty",

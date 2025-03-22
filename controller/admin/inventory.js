@@ -21,6 +21,18 @@ const getAllSingleProductInventory = async (req, res, next) => {
           offer_price: true,
           image: true,
           sku: true,
+          sizes: {
+            select: {
+              price: true,
+              quantity: true,
+              size: {
+                select: {
+                  id: true,
+                  value: true,
+                },
+              },
+            },
+          },
         },
         skip,
         take,

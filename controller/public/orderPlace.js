@@ -165,7 +165,7 @@ const verifyOrder = async (req, res, next) => {
             signature,
         } = req.body;
 
-        const order = await prisma.order.findUnique({ where: { orderId: orderId }, select: { id: true, } });
+        const order = await prisma.order.findUnique({ where: { orderId: orderId }, select: { id: true,userId:true } });
         if (!order)
             return res
                 .status(404)
@@ -197,8 +197,8 @@ const verifyOrder = async (req, res, next) => {
                 data: { transactionId, status: "SUCCESS" },
             });
 
-            const cartId = await prisma.cart.findFirst({ where: { user_id: order.userId }, select: { id: true } })
 
+            const cartId = await prisma.cart.findFirst({ where: { user_id: order.userId }, select: { id: true } })
             await prisma.cartItem.deleteMany({ where: { cart_id: cartId.id } })
 
             return res

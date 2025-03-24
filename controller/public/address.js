@@ -44,13 +44,17 @@ const postshipAddress = async (req, res, next) => {
 
 const getshipAddress = async (req, res, next) => {
     try {
-        const user_id = req.params
+        const {id} = req.params
+
+        if (!id) {
+            return res.status(400).json({ message: "User ID is required" });
+          }
         const data = await prisma.customerAddress.findMany({
             where: {
-                userId: user_id
+                userId:id
             },
             select: {
-                id: true,
+                id:true,
                 fullName: true,
                 email: true,
                 city: true,
@@ -68,12 +72,14 @@ const getshipAddress = async (req, res, next) => {
             }
         })
 
+        
         if (data && data?.length > 0) {
-            return res.status(200).json({ isSuccess: true, message: "Data inserted successfylly", data });
+            return res.status(200).json({ isSuccess: true, message: "Data get successfylly", data });
         } else {
-            return res.status(200).json({ isSuccess: false, message: "Data not found", data: [] });
+            return res.status(200).json({ isSuccess: false, message: "Address data not found", data: [] });
         }
     } catch (error) {
+        console.log(error)
         next(new Error("Something went wrong, Please try again!"))
     }
 }

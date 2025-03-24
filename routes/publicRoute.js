@@ -34,6 +34,7 @@ import {
   contactUsSchema,
   loginSchema,
   newsLetterSchema,
+  OtpSchema,
   registerSchema,
   resetPasswordUsersSchema,
   verifyOtpSchema,
@@ -220,7 +221,7 @@ router.get("/auth/failure", (req, res) => {
 
 router.post("/login", [loginSchema], userlogin);
 router.post("/register", [registerSchema], userRegister);
-router.post("/otp", SendOtp);
+router.post("/otp", [OtpSchema],SendOtp);
 router.post("/verify-otp", [verifyOtpSchema], VerifyOtp);
 router.post("/reset-password", resetPasswordUsersSchema, resetPassword);
 

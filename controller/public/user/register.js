@@ -19,7 +19,7 @@ const userRegister = async (req, res, next) => {
         name,
         email,
         password: hashpassword,
-        mobile_number,
+        mobile_number:Number(mobile_number),
       },
     });
     if (data)

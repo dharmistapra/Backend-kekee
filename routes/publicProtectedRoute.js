@@ -10,6 +10,7 @@ import {
   cartSchema,
   editCartSchema,
   orderPlaceSchema,
+  postaddressSchema,
   updateUserbasicInfoSchema,
   userchangePasswordSchema,
   wishListSchema,
@@ -61,7 +62,7 @@ publicProtected.post("/cancel/payment", orderFailed);
 publicProtected.post("/order/details", getOrderdetails);
 publicProtected.post("/order/history", getOrderHistory);
 
-publicProtected.post("/shipping/address", postshipAddress);
-publicProtected.get("/shipping/address", getshipAddress);
+publicProtected.post("/shipping/address",[postaddressSchema], postshipAddress);
+publicProtected.get("/shipping/address/:id", getshipAddress);
 publicProtected.post("/user/address", getuserAddresspagiantion)
 export default publicProtected;

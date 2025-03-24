@@ -7,6 +7,7 @@ import {
   getId,
   isNameRecordsExist,
   removeProductImage,
+  uniqueImage,
 } from "../../../helper/common.js";
 import slug from "slug";
 import _, { iteratee, size } from "underscore";
@@ -588,6 +589,9 @@ const importCatalogues = async (req, res, next) => {
     let catImage = [];
     let productImage = [];
     let additional_attr = [];
+    const imageNames = new Set();
+    const imagesToCheck = [];
+    let uniqueImages = [];
     let message;
     for (let [index, row] of jsonArray.entries()) {
       let {
@@ -957,7 +961,18 @@ const importCatalogues = async (req, res, next) => {
           //   message: `${productCode} Product Sku must be unique!`,
           // });
         }
+        for (const images of image.split(",")) {
+          if (imageNames.has(images)) {
+            await deleteFile(filePath);
+            errors.push(`Duplicate image found: ${images}`);
+            // return res
+            //   .status(400)
+            //   .json({ error: `Duplicate image found: ${product.image}` });
+          }
 
+          imageNames.add(images);
+          // imagesToCheck.push(image);
+        }
         let product_image = image
           .split(",")
           .map((val) => `uploads/product/${val}`);
@@ -1052,6 +1067,18 @@ const importCatalogues = async (req, res, next) => {
             })),
           });
         delete product["cat_code"];
+
+        const isProductExists = await prisma.product.findFirst({
+          where: { sku: product.sku },
+        });
+
+        let id = isProductExists?.id || null;
+        const { isSuccess, message } = await uniqueImage(product.image, id);
+        if (!isSuccess) {
+          await deleteFile(filePath);
+          let messages = `Row ${index} ${message}`;
+          uniqueImages.push(messages);
+        }
         if (catalog) {
           if (product.showInSingle !== true) {
             const sortSizes = (a, b) => a.size?.localeCompare(b.size);
@@ -1063,7 +1090,7 @@ const importCatalogues = async (req, res, next) => {
             const productJson = JSON.stringify(product?.size);
             if (catalogueJson !== productJson) {
               await deleteFile(filePath);
-              message = `Row ${index} catalogue size and product size not match!`;
+              let message = `Row ${index} catalogue size and product size not match!`;
               errors.push(message);
             }
           }
@@ -1093,9 +1120,14 @@ const importCatalogues = async (req, res, next) => {
       errors.push(`Row ${productImage} product image file not exist!`);
     if (additional_attr.length > 0) {
       errors.push(`${additional_attr} attributes not found!`);
-      return res.status(400).json({ isSuccess: false, message: errors });
+      // return res.status(400).json({ isSuccess: false, message: errors });
+    }
+    if (uniqueImages.length > 0) {
+      errors.push(uniqueImages);
+      // return res.status(400).json({ isSuccess: false, message: errors });
     }
     if (errors.length > 0) {
+      console.log(uniqueImages);
       return res.status(400).json({ isSuccess: false, message: errors });
     }
 
@@ -1193,10 +1225,22 @@ const importCatalogues = async (req, res, next) => {
                 create: attributeValueConnection,
               };
               delete product?.size;
-              const existingProduct = await tx.product.findFirst({
-                where: { sku: product.sku },
-                select: { id: true, image: true },
-              });
+
+              // const existingProduct = await tx.product.findFirst({
+              //   where: { sku: product.sku },
+              //   select: { id: true, image: true },
+              // });
+
+              // let id = existingProduct?.id || null;
+              // const { isSuccess, message } = await uniqueImage(
+              //   product.image,
+              //   id
+              // );
+              // if (!isSuccess) {
+              //   await deleteFile(filePath);
+              //   uniqueImages.push(message);
+              //   // return res.status(400).json({ isSuccess, message });
+              // }
 
               if (existingProduct) {
                 await tx.productCategory.deleteMany({

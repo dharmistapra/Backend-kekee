@@ -10,6 +10,7 @@ import {
   handleProductConnection,
   processProductImages,
   removeProductImage,
+  uniqueImage,
   updateStatus,
 } from "../../../helper/common.js";
 import { productSchema } from "../../../schema/joi_schema.js";
@@ -81,6 +82,13 @@ const postRetailProduct = async (req, res, next) => {
     }
 
     showInSingle = showInSingle == "true" ? true : false;
+
+    const { isSuccess, message } = await uniqueImage(imagePaths);
+    if (!isSuccess) {
+      await removeProductImage(imagePaths);
+      return res.status(400).json({ isSuccess, message });
+    }
+
     const findUniqueData = await prisma.product.findFirst({
       where: {
         sku: sku,
@@ -1444,6 +1452,8 @@ const deleteReatailProduct = async (req, res, next) => {
           where: { id: id },
         });
         await removeProductImage(result.image);
+        await deleteFile(result.thumbImage);
+        await deleteFile(result.mediumImage);
 
         return res.status(200).json({
           isSuccess: true,

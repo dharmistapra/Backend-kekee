@@ -724,6 +724,33 @@ const processProductImages = async (files) => {
   return productImages;
 };
 
+const uniqueImage = async (file, id = null) => {
+  try {
+    let filter = { image: { hasSome: file } };
+    if (id) filter.id = { not: id };
+    const uniqueData = await prisma.product.findMany({
+      where: filter,
+      select: { image: true },
+    });
+
+    if (uniqueData.length > 0) {
+      const usedImages = uniqueData.flatMap((product) => product.image);
+      const duplicateImages = file.filter((img) => usedImages.includes(img));
+      const duplicateImageNames = duplicateImages.map((img) =>
+        img.split("/").pop()
+      );
+      // await removeProductImage(file);
+      return {
+        isSuccess: false,
+        message: `${duplicateImageNames.join(",")} Images Already Used.`,
+      };
+    }
+    return { isSuccess: true };
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 const cataloguesProductFields = [
   "category",
   // "collection",
@@ -804,4 +831,5 @@ export {
   handleCatalogueConnection,
   cataloguesProductFields,
   processProductImages,
+  uniqueImage,
 };

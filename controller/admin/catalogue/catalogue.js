@@ -12,6 +12,7 @@ import {
   handleProductAttributeConnection,
   handleProductConnection,
   removeProductImage,
+  uniqueImage,
 } from "../../../helper/common.js";
 import { catalogueSchema, productSchema } from "../../../schema/joi_schema.js";
 import createSearchFilter from "../../../helper/searchFilter.js";
@@ -89,6 +90,12 @@ const postCatlogProduct = async (req, res, next) => {
         catalogue: { select: { cat_code: true, deletedAt: true } },
       },
     });
+
+    const { isSuccess, message } = await uniqueImage(imagePaths);
+    if (!isSuccess) {
+      await removeProductImage(imagePaths);
+      return res.status(400).json({ isSuccess, message });
+    }
 
     if (findUniqueData && findUniqueData?.catalogue?.deletedAt !== null) {
       await removeProductImage(imagePaths);
@@ -593,6 +600,14 @@ const updateCatalogueProduct = async (req, res, next) => {
     }
 
     showInSingle = showInSingle == "true" ? true : false;
+
+    if (req.files && req.files?.length > 0) {
+      const { isSuccess, message } = await uniqueImage(imagePaths, id);
+      if (!isSuccess) {
+        await removeProductImage(imagePaths);
+        return res.status(400).json({ isSuccess, message });
+      }
+    }
 
     const [findUniqueData, findData] = await prisma.$transaction([
       prisma.product.findFirst({

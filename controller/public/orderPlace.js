@@ -51,8 +51,8 @@ const OrderPlace = async (req, res, next) => {
         const time = now.toTimeString().slice(0, 8).replace(/:/g, '');
         const orderId = `ORD-${date}-${time}`;
 
-        // billingId = await createBilling(billingId, billingform, user_id);
-        // shippingId = await createShipping(shippingId, isSame, billingform, shippingdata);
+        billingId = await createBilling(billingdata, user_id);
+        // shippingId = await createShipping(isSame, billingdata, shippingdata,type);
 
 
 

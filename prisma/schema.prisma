@@ -825,6 +825,7 @@ model CustomerAddress {
   whatsapp        String?
   companyname     String?
   GstNumber       String?
+  customersnotes    String?
   defaultBilling  Boolean? @default(false)
   defaultShipping Boolean? @default(false)
   createdAt       DateTime @default(now())

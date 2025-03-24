@@ -49,7 +49,7 @@ const paginationusers = async (req, res, next) => {
       pagesize: take,
     });
   } catch (error) {
-    let err = new Error("Something went wrong, please try again!");
+      let err = new Error("Something went wrong, please try again!");
     next(err);
   }
 };

@@ -1304,7 +1304,7 @@ const orderPlaceSchema = async (req, res, next) => {
     shippingdata: Joi.object({
       id: Joi.string().optional(),
       GstNumber: Joi.string().optional().allow(""),
-
+      customersnotes: Joi.string().optional().allow(""),
       address1: Joi.string().optional().allow(""),
       address2: Joi.string().optional().allow(""),
       companyname: Joi.string().optional().allow(""),

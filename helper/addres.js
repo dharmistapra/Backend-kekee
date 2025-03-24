@@ -1,14 +1,32 @@
 import prisma from "../db/config.js";
 // ****************** this functuion is taking billingId as a parameter and checking if billingId is not present then it will create a new billing address and return the billingId ******************
 
-const createBilling = async (billingId, billingform, user_id) => {
-
+const createBilling = async (billingdata, user_id) => {
+    console.log(user_id);
+    const billingId = billingdata?.id ? billingdata.id : null;
     if (!billingId) {
-        const { customersnotes ,...billingdata } = billingform;
-        const billingData = await prisma.billing.create({
+        const { customersnotes, ...otherdata } = billingdata;
+        const billingData = await prisma.customerAddress.create({
             data: {
-                ...billingdata,
-                userId: user_id,
+
+                user: { connect: { id: user_id } },
+                fullName: otherdata.fullName,
+                country: otherdata.country,
+                state: otherdata.state,
+                city: otherdata.city,
+                zipCode: otherdata.zipCode,
+                address1: otherdata.address1,
+                address2: otherdata.address2,
+
+                mobile: otherdata.mobile,
+                // status: "PENDING",
+                email: otherdata.email,
+                whatsapp: otherdata.whatsapp,
+                companyname: otherdata.companyname,
+                GstNumber: otherdata.GstNumber,
+                customersnotes: customersnotes || '',
+                defaultBilling: true,
+                defaultShipping: true,
             },
         });
         return billingData.id;
@@ -17,9 +35,12 @@ const createBilling = async (billingId, billingform, user_id) => {
 };
 
 // ****************** this functuion is taking shippingId as a parameter and checking if shippingId is not present then it will create a new shipping address and return the shippingId ******************
-const createShipping = async (shippingId, isSame, billingform, shippingdata) => {
-    if (!shippingId) {
+const createShipping = async (isSame, billingform, shippingdata, type) => {
+    if (!billingform?.id) {
         const shippingInfo = isSame ? billingform : shippingdata;
+        if (type === "selected") return shippingInfo.id;
+
+
         const shippingData = await prisma.shipping.create({
             data: {
                 fullName: shippingInfo.fullName,

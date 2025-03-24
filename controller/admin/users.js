@@ -49,7 +49,6 @@ const paginationusers = async (req, res, next) => {
       pagesize: take,
     });
   } catch (error) {
-    console.log("error", error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
@@ -69,7 +68,6 @@ const updateUsersStatus = async (req, res, next) => {
       data: result.data,
     });
   } catch (error) {
-    console.log("users-status", err);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
@@ -138,7 +136,6 @@ const getOrderHistoryusers = async (req, res, next) => {
       pageSize: take,
     });
   } catch (error) {
-    console.error(error);
     const err = new Error("Something went wrong, Please try again!");
     next(err);
   }
@@ -158,6 +155,8 @@ const getOrderdetailsUsers = async (req, res, next) => {
         shippingcharge: true,
         totalAmount: true,
         status: true,
+        billingAddress: true,
+        shippingAddress: true,
         user: {
           select: {
             name: true,
@@ -187,31 +186,6 @@ const getOrderdetailsUsers = async (req, res, next) => {
                 quantity: true,
               },
             },
-          },
-        },
-        shipping: {
-          select: {
-            fullName: true,
-            address1: true,
-            address2: true,
-            city: true,
-            country: true,
-            state: true,
-            zipCode: true,
-            mobile: true,
-          },
-        },
-        billing: {
-          select: {
-            fullName: true,
-            address1: true,
-            address2: true,
-            city: true,
-            country: true,
-            state: true,
-            zipCode: true,
-            mobile: true,
-            isSame: true,
           },
         },
         payment: {
@@ -252,6 +226,8 @@ const getOrderdetailsUsers = async (req, res, next) => {
       };
     });
 
+
+
     const response = {
       message: "Order retrieved successfully",
       isSuccess: true,
@@ -275,10 +251,14 @@ const getOrderdetailsUsers = async (req, res, next) => {
         name: orderDetails?.user?.name,
         email: orderDetails?.user?.email,
         phone: orderDetails?.user?.mobile_number,
-        shippingDetails:
-          orderDetails.shipping.length > 0 ? orderDetails.shipping[0] : {},
-        billingDetails:
-          orderDetails.billing.length > 0 ? orderDetails.billing[0] : {},
+        shippingDetails: typeof orderDetails?.shippingAddress === "string"
+          ? JSON.parse(orderDetails.shippingAddress)
+          : {},
+
+        billingDetails: typeof orderDetails?.billingAddress === "string"
+          ? JSON.parse(orderDetails.billingAddress)
+          : {},
+
 
         paymentDetails: orderDetails.payment,
         orderItems: transformedOrderItems,
@@ -287,7 +267,6 @@ const getOrderdetailsUsers = async (req, res, next) => {
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error("Error fetching order details:", error);
     next(new Error("Something went wrong, Please try again!"));
   }
 };

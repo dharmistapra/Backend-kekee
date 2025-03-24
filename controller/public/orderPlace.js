@@ -9,7 +9,7 @@ import "dotenv/config";
 import { createBilling, createShipping } from "../../helper/addres.js";
 const OrderPlace = async (req, res, next) => {
     try {
-        let { user_id, billingform, shippingdata, paymentMethod, currency, bankdata, defaultAddressId, isSame, billingId, shippingId } = req.body;
+        let { user_id, billingdata, shippingdata, paymentMethod, currency, bankdata, defaultAddressId, isSame, billingId, shippingId, type } = req.body;
         const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
         if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
 
@@ -42,7 +42,7 @@ const OrderPlace = async (req, res, next) => {
             return res.status(400).json({ isSuccess: false, message: "Data Not Found", data: null });
         }
 
-        const shippingCountry = isSame ? billingform.country : shippingdata.country;
+        const shippingCountry = isSame ? billingdata.country : shippingdata.country;
         const shippingconst = await calculateShippingCost(totalWeight, shippingCountry);
 
         let ordertotal = totalSubtotal + totalTax + shippingconst.shippingCost;
@@ -51,8 +51,8 @@ const OrderPlace = async (req, res, next) => {
         const time = now.toTimeString().slice(0, 8).replace(/:/g, '');
         const orderId = `ORD-${date}-${time}`;
 
-        billingId = await createBilling(billingId, billingform, user_id);
-        shippingId = await createShipping(shippingId, isSame, billingform, shippingdata);
+        // billingId = await createBilling(billingId, billingform, user_id);
+        // shippingId = await createShipping(shippingId, isSame, billingform, shippingdata);
 
 
 
@@ -63,8 +63,8 @@ const OrderPlace = async (req, res, next) => {
                 subtotal: totalSubtotal,
                 Tax: totalTax,
                 discount: 0,
-                billingId: billingId,
-                shippingId: shippingId,
+                billingAddress: JSON.stringify(billingdata),
+                shippingAddress: JSON.stringify(shippingdata),
                 shippingcharge: shippingconst.shippingCost,
                 totalAmount: ordertotal,
                 status: "PENDING",
@@ -137,7 +137,6 @@ const OrderPlace = async (req, res, next) => {
 
         if (paymentMethod === "bank") {
             const orderItems = await prisma.cartItem.deleteMany({ where: { cart_id: finduser.id } })
-
         }
 
 
@@ -166,7 +165,7 @@ const verifyOrder = async (req, res, next) => {
             signature,
         } = req.body;
 
-        const order = await prisma.order.findUnique({ where: { orderId: orderId }, select: { id: true } });
+        const order = await prisma.order.findUnique({ where: { orderId: orderId }, select: { id: true, } });
         if (!order)
             return res
                 .status(404)
@@ -198,7 +197,9 @@ const verifyOrder = async (req, res, next) => {
                 data: { transactionId, status: "SUCCESS" },
             });
 
-            // const orderItems = await prisma.cartItem.deleteMany({ where: { cart_id: finduser.id } })
+            const cartId = await prisma.cart.findFirst({ where: { user_id: order.userId }, select: { id: true } })
+
+            await prisma.cartItem.deleteMany({ where: { cart_id: cartId.id } })
 
             return res
                 .status(200)

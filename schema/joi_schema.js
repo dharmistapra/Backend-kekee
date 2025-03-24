@@ -1265,9 +1265,12 @@ const orderPlaceSchema = async (req, res, next) => {
         ifscCode: Joi.string().optional(),
       }),
     }),
-    defaultAddressId: Joi.string().optional(),
+    // shippingId: Joi.string().optional(),
+    // billingId: Joi.string().optional(),
+    type: Joi.string().required(),
 
-    billingform: Joi.object({
+    billingdata: Joi.object({
+      id: Joi.string().optional(),
       GstNumber: Joi.string().optional().allow(""),
       address1: Joi.string().optional().allow(""),
       address2: Joi.string().optional().allow(""),
@@ -1276,7 +1279,7 @@ const orderPlaceSchema = async (req, res, next) => {
       country: Joi.string().optional().allow(""),
       customersnotes: Joi.string().optional().allow(""),
       email: Joi.string().email().required().messages({
-        "any.required": "Email is required",
+        "any.required": "billing Email is required",
         "string.email": "Invalid email address",
       }),
       fullName: Joi.string().required().messages({
@@ -1299,13 +1302,21 @@ const orderPlaceSchema = async (req, res, next) => {
     }),
 
     shippingdata: Joi.object({
+      id: Joi.string().optional(),
+      GstNumber: Joi.string().optional().allow(""),
+
       address1: Joi.string().optional().allow(""),
       address2: Joi.string().optional().allow(""),
+      companyname: Joi.string().optional().allow(""),
       city: Joi.string().required(),
       country: Joi.string().required().messages({
         "any.required": "Country is required",
         "string.empty": "Country cannot be empty",
       }),
+
+      email: Joi.string().email().optional(),
+      whatsapp: Joi.string().optional().allow(""),
+
       fullName: Joi.string().required().messages({
         "any.required": "Full Name is required",
         "string.empty": "Full Name cannot be empty",

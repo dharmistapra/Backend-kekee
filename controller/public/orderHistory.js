@@ -14,6 +14,8 @@ const getOrderdetails = async (req, res, next) => {
         discount: true,
         shippingcharge: true,
         totalAmount: true,
+        billingAddress: true,
+        shippingAddress: true,
         status: true,
         orderItems: {
           select: {
@@ -54,34 +56,6 @@ const getOrderdetails = async (req, res, next) => {
                 },
               },
             },
-          },
-        },
-        shipping: {
-          select: {
-            fullName: true,
-            address1: true,
-            address2: true,
-            city: true,
-            country: true,
-            state: true,
-            zipCode: true,
-            mobile: true,
-          },
-        },
-        billing: {
-          select: {
-            fullName: true,
-            address1: true,
-            address2: true,
-            city: true,
-            country: true,
-            state: true,
-            zipCode: true,
-            mobile: true,
-            GstNumber: true,
-            companyname: true,
-            whatsapp: true,
-            isSame: true,
           },
         },
         payment: {
@@ -243,13 +217,14 @@ const getOrderHistory = async (req, res, next) => {
 
 const getuserAddresspagiantion = async (req, res, next) => {
   try {
-    const { user_id, pageNo, perPage } = req.body;
+    const { user_id, pageNo, perPage, type } = req.body;
     const page = Number(pageNo) || 1;
     const take = Number(perPage) || 4;
     const skip = (page - 1) * take;
-    const [count, result] = await await prisma.$transaction([
-      prisma.billing.count({ where: { userId: user_id } }),
-      prisma.billing.findMany({
+    const isBilling = type === "billing";
+
+    if (isBilling) {
+      const result = await prisma.customerAddress.findMany({
         where: { userId: user_id },
         select: {
           id: true,
@@ -265,45 +240,50 @@ const getuserAddresspagiantion = async (req, res, next) => {
           whatsapp: true,
           companyname: true,
           GstNumber: true,
-          isSame: true,
+        },
+      });
+
+      return res.status(200).json({
+        message: "Billing addresses retrieved successfully",
+        isSuccess: true,
+        data: result,
+      });
+    }
+
+
+
+
+
+    const [count, result] = await await prisma.$transaction([
+      prisma.customerAddress.count({ where: { userId: user_id } }),
+      prisma.customerAddress.findMany({
+        where: {
+          userId: user_id,
+          defaultShipping: true
+        },
+        select: {
+          id: true,
+          fullName: true,
+          address1: true,
+          address2: true,
+          city: true,
+          country: true,
+          state: true,
+          zipCode: true,
+          email: true,
+          mobile: true,
+          whatsapp: true,
+          companyname: true,
+          GstNumber: true,
         },
         skip,
         take,
       }),
     ]);
-    // const result = await prisma.billing.findMany({
-    //   where: { userId: id },
-    //   select: {
-    //     id: true,
-    //     fullName: true,
-    //     address1: true,
-    //     address2: true,
-    //     city: true,
-    //     country: true,
-    //     state: true,
-    //     zipCode: true,
-    //     email: true,
-    //     mobile: true,
-    //     whatsapp: true,
-    //     companyname: true,
-    //     GstNumber: true,
-    //   },
-    // });
-
-    if (!result) {
-      return res.status(200).json({
-        message: "Address not found",
-        isSuccess: false,
-        data: [],
-        otalCount: count,
-        currentPage: page,
-        pageSize: take,
-      });
-    }
 
     return res.status(200).json({
-      message: "Default address successfully",
-      isSuccess: true,
+      message: result.length ? "Default address successfully retrieved" : "Address not found",
+      isSuccess: !!result.length,
       data: result,
       totalCount: count,
       currentPage: page,

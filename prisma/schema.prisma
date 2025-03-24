@@ -760,6 +760,8 @@ model Order {
   userId         String      @db.ObjectId
   orderId        String      @unique
   subtotal       Float
+  billingAddress Json?
+  shippingAddress Json?
   Tax            Float
   discount       Float?
   shippingcharge Float

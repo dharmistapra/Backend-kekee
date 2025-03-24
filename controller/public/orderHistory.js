@@ -132,7 +132,6 @@ const getOrderHistory = async (req, res, next) => {
       return res.status(400).json({ message: "User ID is required" });
     }
 
-
     const result = await prisma.order.findMany({
       where: {
         userId: userId,
@@ -187,11 +186,9 @@ const getOrderHistory = async (req, res, next) => {
       take,
     });
 
-
     if (result.length === 0) {
       return res.status(404).json({ message: "No orders found for this user" });
     }
-
 
     const formattedResult = result.map((order) => {
       const catalogue = order.orderItems?.[0]?.catalogue;
@@ -262,16 +259,12 @@ const getuserAddresspagiantion = async (req, res, next) => {
       });
     }
 
-
-
-
-
-    const [count, result] = await await prisma.$transaction([
+    const [count, result] = await prisma.$transaction([
       prisma.customerAddress.count({ where: { userId: user_id } }),
       prisma.customerAddress.findMany({
         where: {
           userId: user_id,
-          defaultShipping: true
+          defaultShipping: true,
         },
         select: {
           id: true,
@@ -294,7 +287,9 @@ const getuserAddresspagiantion = async (req, res, next) => {
     ]);
 
     return res.status(200).json({
-      message: result.length ? "Default address successfully retrieved" : "Address not found",
+      message: result.length
+        ? "Default address successfully retrieved"
+        : "Address not found",
       isSuccess: !!result.length,
       data: result,
       totalCount: count,

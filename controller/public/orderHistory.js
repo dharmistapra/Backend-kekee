@@ -127,6 +127,12 @@ const getOrderHistory = async (req, res, next) => {
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+
     const result = await prisma.order.findMany({
       where: {
         userId: userId,
@@ -180,6 +186,12 @@ const getOrderHistory = async (req, res, next) => {
       skip,
       take,
     });
+
+
+    if (result.length === 0) {
+      return res.status(404).json({ message: "No orders found for this user" });
+    }
+
 
     const formattedResult = result.map((order) => {
       const catalogue = order.orderItems?.[0]?.catalogue;

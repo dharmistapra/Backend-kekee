@@ -913,6 +913,27 @@ model ContactUs {
   updatedAt     DateTime @updatedAt
 }
 
+model WebSettings {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  headerLogo          String
+  footerLogo          String
+  favIcon             String
+  address             String
+  interNationalNumber String?  @default("")
+  domesticNumber      String?  @default("")
+  complaintNumber     String?  @default("")
+  email               String
+  skypeId             String?  @default("")
+  timing              String?  @default("")
+  mapUrl              String
+  notification        String?  @default("")
+  happyTOHelp         Json
+  showProductCount    Int      @default(10)
+  showPrice           Boolean? @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
 // ORDER RELATED DATE END HERE EXPLAINATION
 // ORDER TABLE RELATION WITH ==ORDERITEM==, ==SHIPPING==, ==BILLING==, ==PAYMENT==
 // ORDERITEMTABLE RELATION WITH ==PRODUCT==, ==CATALOGUE==, 

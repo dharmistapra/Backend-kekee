@@ -1477,6 +1477,8 @@ const deleteReatailProduct = async (req, res, next) => {
         where: { id: id },
       });
       await removeProductImage(result.image);
+      await deleteFile(result.thumbImage);
+      await deleteFile(result.mediumImage);
 
       return res.status(200).json({
         isSuccess: true,

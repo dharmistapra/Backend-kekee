@@ -756,22 +756,22 @@ enum ShippingChargestype {
 
 // ORDER RELATED MODELS
 model Order {
-  id             String      @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String      @db.ObjectId
-  orderId        String      @unique
-  subtotal       Float
-  billingAddress Json?
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String      @db.ObjectId
+  orderId         String      @unique
+  subtotal        Float
+  billingAddress  Json?
   shippingAddress Json?
-  Tax            Float
-  discount       Float?
-  shippingcharge Float
-  totalAmount    Float
-  status         OrderStatus
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  user           users?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orderItems     OrderItem[]
-  payment        payment[]
+  Tax             Float
+  discount        Float?
+  shippingcharge  Float
+  totalAmount     Float
+  status          OrderStatus
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  user            users?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems      OrderItem[]
+  payment         payment[]
 }
 
 model OrderItem {
@@ -825,7 +825,7 @@ model CustomerAddress {
   whatsapp        String?
   companyname     String?
   GstNumber       String?
-  customersnotes    String?
+  customersnotes  String?
   defaultBilling  Boolean? @default(false)
   defaultShipping Boolean? @default(false)
   createdAt       DateTime @default(now())

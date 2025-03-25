@@ -964,7 +964,7 @@ const importCatalogues = async (req, res, next) => {
         for (const images of image.split(",")) {
           if (imageNames.has(images)) {
             await deleteFile(filePath);
-            errors.push(`Duplicate image found: ${images}`);
+            imagesToCheck.push(images);
             // return res
             //   .status(400)
             //   .json({ error: `Duplicate image found: ${product.image}` });
@@ -1120,6 +1120,10 @@ const importCatalogues = async (req, res, next) => {
       errors.push(`Row ${productImage} product image file not exist!`);
     if (additional_attr.length > 0) {
       errors.push(`${additional_attr} attributes not found!`);
+      // return res.status(400).json({ isSuccess: false, message: errors });
+    }
+    if (imagesToCheck.length > 0) {
+      errors.push(`Duplicate image found: ${imagesToCheck}`);
       // return res.status(400).json({ isSuccess: false, message: errors });
     }
     if (uniqueImages.length > 0) {

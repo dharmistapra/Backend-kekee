@@ -213,13 +213,14 @@ const resetPassword = async (req, res, next) => {
         password: hashpassword,
         otp: null,
         otpVerified: false,
-        otpExpireIn: null,
+        otpExpiresIn: null,
       },
     });
     return res
       .status(200)
       .json({ isSuccess: true, message: "Password reset successfully." });
   } catch (error) {
+    console.log(error)
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }

@@ -517,32 +517,55 @@ const calculateCartItemTotal = (cartItems) => {
       itemWeight = (catalogue.weight || 0) * quantity;
 
     }
+
+
+
     else if (product) {
 
-      const sizeDetails = size
-        ? product.sizes?.find((s) => s?.size?.id === JSON.parse(size)?.id)
-        : null;
+      const sizeDetails = size ? product.sizes?.find((s) => s?.size?.id === JSON.parse(size)?.id) : null;
       availableQuantity = sizeDetails ? sizeDetails.quantity : product.quantity;
+
       const sizePriceAndQuantity = sizeDetails
         ? { price: sizeDetails.price || 0, quantity: sizeDetails.quantity || 0 }
         : { price: 0, quantity: 0 };
 
+      console.log("sizePriceAndQuantity", product.optionType);
 
-
-      if (sizePriceAndQuantity.quantity === 0 || product.quantity < quantity) {
-        outOfStock = true;
-        if (sizeObject) {
-          sizeObject.price = sizePriceAndQuantity?.price;
-        }
-      } else {
-        subtotal =
-          (product.offer_price +
-            sizePriceAndQuantity?.price +
-            totalStitchingPrice) *
-          quantity;
+      if (product.optionType === "Stitching") {
+        subtotal = (product.offer_price + totalStitchingPrice) * quantity;
         tax = (subtotal * (product.retail_GST || 0)) / 100;
         itemWeight = (product.weight || 0) * quantity;
       }
+      else if (product.optionType === "Size") {
+        if (sizePriceAndQuantity.quantity === 0 || product.quantity < quantity) {
+          console.log("if condition")
+          outOfStock = true;
+          if (sizeObject) {
+            sizeObject.price = sizePriceAndQuantity?.price;
+          }
+        } else {
+          console.log("else  condition")
+          subtotal = (product.offer_price + sizePriceAndQuantity?.price) * quantity;
+          tax = (subtotal * (product.retail_GST || 0)) / 100;
+          itemWeight = (product.weight || 0) * quantity;
+        }
+
+      }
+
+
+
+      // if (sizePriceAndQuantity.quantity === 0 || product.quantity < quantity) {
+      //   outOfStock = true;
+      //   if (sizeObject) {
+      //     sizeObject.price = sizePriceAndQuantity?.price;
+      //   }
+      // } else {
+      //   subtotal = (product.offer_price + sizePriceAndQuantity?.price + totalStitchingPrice) * quantity;
+      //   tax = (subtotal * (product.retail_GST || 0)) / 100;
+      //   itemWeight = (product.weight || 0) * quantity;
+      // }
+
+
     }
 
     totalSubtotal += subtotal;

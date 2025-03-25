@@ -33,9 +33,38 @@ const subCategorySchema = async (req, res, next) => {
 
 const currencySchema = async (req, res, next) => {
   const schema = Joi.object({
-    code: Joi.string().required(),
-    rate: Joi.number().required(),
-    symbol: Joi.string().required(),
+    code: Joi.string()
+      .length(3)
+      .uppercase()
+      .regex(/^[A-Z]{3}$/)
+      .required()
+      .messages({
+        "string.empty": "Code is required",
+        "string.length": "Code must be exactly three uppercase letters (e.g., USD, EUR)",
+        "string.pattern.base": "Code must contain only uppercase letters (A-Z)",
+        "any.required": "Code is required",
+      }),
+
+
+    rate: Joi.number()
+      .positive()
+      .required()
+      .messages({
+        "number.base": "Rate must be a valid number",
+        "number.positive": "Rate must be a positive number",
+        "any.required": "Rate is required",
+      }),
+
+
+    symbol: Joi.string()
+      .required()
+      .messages({
+        "string.empty": "Symbol is required",
+        "any.required": "Symbol is required",
+      }),
+
+
+
     flag: Joi.string().optional().allow(""),
   });
   await JoiSchemaValidation(schema, req, next);
@@ -263,7 +292,13 @@ const labelSchema = async (req, res, next) => {
 
 const sizeSchema = async (req, res, next) => {
   const schema = Joi.object({
-    value: Joi.string().required(),
+    value: Joi.string()
+      .pattern(/^(?=.*[a-zA-Z])[a-zA-Z0-9 ]+$/)
+      .required()
+      .messages({
+        "string.pattern.base": "Value must contain at least one letter and cannot have special characters.",
+        "string.empty": "Value is required.",
+      }),
   });
 
   await JoiSchemaValidation(schema, req, next);

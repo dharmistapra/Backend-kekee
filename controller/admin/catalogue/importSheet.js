@@ -1230,10 +1230,10 @@ const importCatalogues = async (req, res, next) => {
               };
               delete product?.size;
 
-              // const existingProduct = await tx.product.findFirst({
-              //   where: { sku: product.sku },
-              //   select: { id: true, image: true },
-              // });
+              const existingProduct = await tx.product.findFirst({
+                where: { sku: product.sku },
+                select: { id: true, image: true },
+              });
 
               // let id = existingProduct?.id || null;
               // const { isSuccess, message } = await uniqueImage(

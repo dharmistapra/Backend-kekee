@@ -22,6 +22,7 @@ import {
 } from "../controller/public/wishList.js";
 import {
   changePasswordusers,
+  getuserById,
   updateUserbasicInfo,
 } from "../controller/public/user/register.js";
 import OrderPlace, {
@@ -50,8 +51,8 @@ publicProtected.post(
   [userchangePasswordSchema],
   changePasswordusers
 );
-publicProtected.post(
-  "/user-update",
+publicProtected.put(
+  "/user-update/:id",
   [updateUserbasicInfoSchema],
   updateUserbasicInfo
 );
@@ -62,7 +63,9 @@ publicProtected.post("/cancel/payment", orderFailed);
 publicProtected.post("/order/details", getOrderdetails);
 publicProtected.post("/order/history", getOrderHistory);
 
-publicProtected.post("/shipping/address",[postaddressSchema], postshipAddress);
+publicProtected.post("/shipping/address", [postaddressSchema], postshipAddress);
 publicProtected.get("/shipping/address/:id", getshipAddress);
 publicProtected.post("/user/address", getuserAddresspagiantion)
+
+publicProtected.get("/user/profile/:id", getuserById);
 export default publicProtected;

@@ -954,7 +954,7 @@ const importCatalogues = async (req, res, next) => {
 
         if (isSkuExists) {
           await deleteFile(filePath);
-          message = `${productCode} Product Sku must be unique!`;
+          let message = `${productCode} Product Sku must be unique!`;
           errors.push(message);
           // return res.status(400).json({
           //   isSuccess: false,

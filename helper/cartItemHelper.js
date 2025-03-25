@@ -480,17 +480,25 @@ const calculateCartItemTotal = (cartItems) => {
     let tax = 0;
     let itemWeight = 0;
     let outOfStock = false;
+    let availableQuantity = 0;
 
     if (isCatalogue && catalogue) {
       let availableProductCount = catalogue.Product.reduce((count, data) => {
         if (size) {
           const selectedSize = JSON.parse(size);
-          const sizeData = data.sizes.find(
-            (s) => s?.size?.id === selectedSize?.id
-          );
-          if (sizeData && sizeData.quantity >= quantity) return count + 1;
+          const sizeData = data.sizes.find((s) => s?.size?.id === selectedSize?.id);
+
+          if (sizeData) {
+            availableQuantity = sizeData.quantity;
+            if (sizeData.quantity >= quantity) return count + 1;
+          }
           data.outOfStock = true;
+
+
+          // if (sizeData && sizeData.quantity >= quantity) return count + 1;
+          // data.outOfStock = true;
         } else {
+          availableQuantity = data.quantity;
           if (data.quantity >= quantity) return count + 1;
           data.outOfStock = true;
         }
@@ -498,11 +506,8 @@ const calculateCartItemTotal = (cartItems) => {
       }, 0);
 
       outOfStock = availableProductCount === 0;
-      const sizePrice = size
-        ? catalogue.Product[0]?.sizes?.find(
-          (s) => s?.size?.id === JSON.parse(size)?.id
-        )?.price || 0
-        : 0;
+      const sizePrice = size ? catalogue.Product[0]?.sizes?.find((s) => s?.size?.id === JSON.parse(size)?.id)?.price || 0 : 0;
+
       if (sizePrice) {
         sizeObject.price = sizePrice || 0;
       }
@@ -511,17 +516,18 @@ const calculateCartItemTotal = (cartItems) => {
       tax = (subtotal * (catalogue.GST || 0)) / 100;
       itemWeight = (catalogue.weight || 0) * quantity;
 
-    } else if (product) {
+    }
+    else if (product) {
 
       const sizeDetails = size
         ? product.sizes?.find((s) => s?.size?.id === JSON.parse(size)?.id)
         : null;
-
+      availableQuantity = sizeDetails ? sizeDetails.quantity : product.quantity;
       const sizePriceAndQuantity = sizeDetails
         ? { price: sizeDetails.price || 0, quantity: sizeDetails.quantity || 0 }
         : { price: 0, quantity: 0 };
 
-      console.log(sizePriceAndQuantity.quantity);
+
 
       if (sizePriceAndQuantity.quantity === 0 || product.quantity < quantity) {
         outOfStock = true;
@@ -534,7 +540,6 @@ const calculateCartItemTotal = (cartItems) => {
             sizePriceAndQuantity?.price +
             totalStitchingPrice) *
           quantity;
-        console.log("product.retail_GST", subtotal);
         tax = (subtotal * (product.retail_GST || 0)) / 100;
         itemWeight = (product.weight || 0) * quantity;
       }
@@ -554,6 +559,7 @@ const calculateCartItemTotal = (cartItems) => {
       average_price: catalogue?.average_price || product?.price,
       url: catalogue?.url || product?.url,
       name: catalogue?.name || product?.name,
+
       quantity,
       sku: catalogue?.cat_code || product?.sku,
       weight: catalogue?.weight || product?.weight,
@@ -571,6 +577,7 @@ const calculateCartItemTotal = (cartItems) => {
       subtotal,
       tax,
       outOfStock,
+      availableQuantity,
       products: isCatalogue
         ? catalogue.Product.map((prod) => ({
           name: prod.name,

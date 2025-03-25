@@ -19,7 +19,7 @@ const userRegister = async (req, res, next) => {
         name,
         email,
         password: hashpassword,
-        mobile_number:Number(mobile_number),
+        mobile_number: Number(mobile_number),
       },
     });
     if (data)
@@ -260,41 +260,65 @@ const changePasswordusers = async (req, res) => {
   }
 };
 
-const updateUserbasicInfo = async (req, res) => {
-  let { name, mobile_number, user_id } = req.body;
+const updateUserbasicInfo = async (req, res, next) => {
+  const { id } = req.params;
+  let { name, mobile_number } = req.body;
   try {
-    if (!/^[a-fA-F0-9]{24}$/.test(user_id)) {
+    if (!/^[a-fA-F0-9]{24}$/.test(id)) {
       return res
         .status(400)
         .json({ isSuccess: false, message: "Invalid ID format!" });
     }
 
-    const finduser = await prisma.users.findUnique({ where: { id: user_id } });
+    const finduser = await prisma.users.findUnique({ where: { id: id } });
     if (!finduser)
       return res
         .status(404)
         .json({ isSuccess: false, message: "user not found!" });
     const updateuser = await prisma.users.update({
-      where: {
-        id: user_id,
-      },
+      where: { id: id, },
       data: {
         name: name,
         mobile_number: mobile_number,
       },
     });
-    return res.status(409).send({
-      message: "info update successfully",
-      isSuccess: false,
+
+    return res.status(200).send({
+      message: "Data update successfully",
+      isSuccess: true,
     });
   } catch (error) {
-    return res.status(500).send({
-      error: error.message,
-      message: "Something went wrong, please try again!",
-      isSuccess: false,
-    });
+    let err = new Error("Something went wrong, please try again!");
+    next(err);
   }
 };
+
+
+
+const getuserById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.users.findUnique({
+      where: { id }, select: {
+        name: true,
+        email: true,
+        mobile_number: true,
+      }
+    });
+    console.log("user", user)
+    if (!user) {
+      res.status(404).json({ isSuccess: false, message: "User not found" });
+    }
+    res.status(200).json({ isSuccess: true, message: "User found", data: user });
+
+  } catch (error) {
+
+    let err = new Error("Something went wrong, please try again!");
+    next(err);
+  }
+}
+
+
 
 export {
   userRegister,
@@ -304,4 +328,5 @@ export {
   resetPassword,
   changePasswordusers,
   updateUserbasicInfo,
+  getuserById
 };

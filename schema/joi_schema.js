@@ -112,27 +112,27 @@ const attributeValuePageSchema = async (req, res, next) => {
 
 const registerSchema = async (req, res, next) => {
   const schema = Joi.object({
-   name: Joi.string()
+    name: Joi.string()
       .pattern(new RegExp("^[A-Za-z\\s]+$"))
       .required()
       .messages({
         "string.pattern.base": "Name must contain only letters and spaces",
         "any.required": "Name is required",
       }),
-   mobile_number: Joi.string()
+    mobile_number: Joi.string()
       .pattern(new RegExp("^[0-9]{10,15}$"))
       .required()
       .messages({
         "string.pattern.base": "Mobile number must be 10-15 digits long and contain only numbers",
         "any.required": "Mobile number is required",
       }),
-   email: Joi.string()
-    .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
-    .required()
-    .messages({
-      "string.pattern.base": "Enter a valid Gmail address",
-      "any.required": "Email is required",
-    }),
+    email: Joi.string()
+      .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
+      .required()
+      .messages({
+        "string.pattern.base": "Enter a valid Gmail address",
+        "any.required": "Email is required",
+      }),
     password: Joi.string().min(8).required().messages({
       "string.min": "Password atleast 8 character.",
     }),
@@ -150,12 +150,12 @@ const registerSchema = async (req, res, next) => {
 const OtpSchema = async (req, res, next) => {
   const schema = Joi.object({
     email: Joi.string()
-    .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
-    .required()
-    .messages({
-      "string.pattern.base": "Enter a valid Gmail address",
-      "any.required": "Email is required",
-    }),
+      .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
+      .required()
+      .messages({
+        "string.pattern.base": "Enter a valid Gmail address",
+        "any.required": "Email is required",
+      }),
   });
 
   await JoiSchemaValidation(schema, req, next);
@@ -164,13 +164,13 @@ const OtpSchema = async (req, res, next) => {
 const loginSchema = async (req, res, next) => {
   const schema = Joi.object({
     email: Joi.string()
-    .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
-    .required()
-    .messages({
-      "string.pattern.base": "Enter a valid Gmail address",
-      "any.required": "Email is required",
-    }),
- password: Joi.string().required().messages({
+      .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
+      .required()
+      .messages({
+        "string.pattern.base": "Enter a valid Gmail address",
+        "any.required": "Email is required",
+      }),
+    password: Joi.string().required().messages({
       "any.required": "Password is required",
     }),
   });
@@ -1191,9 +1191,6 @@ const updateUserbasicInfoSchema = async (req, res, next) => {
       "any.required": "Mobile number is required.",
       "number.min": "Mobile number must be at least 10 digits long.",
     }),
-    user_id: Joi.string().required().messages({
-      "any.required": "user id is required.",
-    }),
   });
   await JoiSchemaValidation(schema, req, next);
 };
@@ -1317,10 +1314,15 @@ const orderPlaceSchema = async (req, res, next) => {
       city: Joi.string().optional().allow(""),
       country: Joi.string().optional().allow(""),
       customersnotes: Joi.string().optional().allow(""),
-      email: Joi.string().email().required().messages({
-        "any.required": "billing Email is required",
-        "string.email": "Invalid email address",
-      }),
+      email: Joi.string()
+        .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
+        .required()
+        .messages({
+          "string.pattern.base": "Enter a valid Gmail address",
+          "any.required": "Email is required",
+        }),
+
+
       fullName: Joi.string().required().messages({
         "any.required": "Full Name is required",
         "string.empty": "Full Name cannot be empty",
@@ -1412,140 +1414,140 @@ const contactUsSchema = async (req, res, next) => {
 const postaddressSchema = async (req, res, next) => {
   const schema = Joi.object({
     email: Joi.string()
-    .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
-    .required()
-    .messages({
-      "string.pattern.base": "Enter a valid Gmail address",
-      "any.required": "Email is required",
-    }),
-fullName: Joi.string()
-        .pattern(/^[A-Za-z\s]+$/)
-        .required()
-        .messages({
-            "string.pattern.base": "Full name must contain only letters and spaces",
-            "any.required": "Full name is required"
-        }),
+      .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
+      .required()
+      .messages({
+        "string.pattern.base": "Enter a valid Gmail address",
+        "any.required": "Email is required",
+      }),
+    fullName: Joi.string()
+      .pattern(/^[A-Za-z\s]+$/)
+      .required()
+      .messages({
+        "string.pattern.base": "Full name must contain only letters and spaces",
+        "any.required": "Full name is required"
+      }),
 
-       country: Joi.string()
-    .pattern(/^[A-Za-z\s]+$/)
-    .required()
-    .messages({
+    country: Joi.string()
+      .pattern(/^[A-Za-z\s]+$/)
+      .required()
+      .messages({
         "string.pattern.base": "Country name must contain only letters",
         "any.required": "Country is required"
-    }),
+      }),
 
 
     state: Joi.string()
-    .pattern(/^[A-Za-z\s]+$/)
-    .required()
-    .messages({
+      .pattern(/^[A-Za-z\s]+$/)
+      .required()
+      .messages({
         "string.pattern.base": "state must contain only letters",
         "any.required": "state is required"
-    }),
+      }),
 
 
     city: Joi.string()
-    .pattern(/^[A-Za-z\s]+$/)
-    .required()
-    .messages({
+      .pattern(/^[A-Za-z\s]+$/)
+      .required()
+      .messages({
         "string.pattern.base": "city must contain only letters",
         "any.required": "city is required"
-    }),
+      }),
 
 
     zipCode: Joi.string()
-        .pattern(/^\d{6}$/)
-        .required()
-        .messages({
-            "string.pattern.base": "Zip code must be exactly 6 digits",
-            "any.required": "Zip code is required"
-        }),
+      .pattern(/^\d{6}$/)
+      .required()
+      .messages({
+        "string.pattern.base": "Zip code must be exactly 6 digits",
+        "any.required": "Zip code is required"
+      }),
 
 
-        address1: Joi.string()
-        .required()
-        .messages({
-            "any.required": "Address 1 is required"
-        }),
+    address1: Joi.string()
+      .required()
+      .messages({
+        "any.required": "Address 1 is required"
+      }),
 
 
-        address2: Joi.string()
-        .allow("")
-        .messages({
-            "string.empty": "Address 2 is optional"
-        }),
+    address2: Joi.string()
+      .allow("")
+      .messages({
+        "string.empty": "Address 2 is optional"
+      }),
 
-        companyname: Joi.string()
-        .pattern(/^[A-Za-z0-9\s]+$/)
-        .allow("")
-        .messages({
-            "string.pattern.base": "Company name must contain only letters",
-            "any.required": "Company name is required"
-        }),
-
-
-        GstNumber: Joi.string()
-        .pattern(/^\d{15}$/)
-        .allow("")
-        .messages({
-            "string.pattern.base": "GST Number must be exactly 15 digits and contain only numbers",
-            "any.required": "GST Number is required"
-        }),
+    companyname: Joi.string()
+      .pattern(/^[A-Za-z0-9\s]+$/)
+      .allow("")
+      .messages({
+        "string.pattern.base": "Company name must contain only letters",
+        "any.required": "Company name is required"
+      }),
 
 
-        mobile: Joi.string()
-        .pattern(/^\d{10}$/)
-        .required()
-        .messages({
-            "string.pattern.base": "Mobile number must be exactly 10 digits",
-            "any.required": "Mobile number is required"
-        }),
+    GstNumber: Joi.string()
+      .pattern(/^\d{15}$/)
+      .allow("")
+      .messages({
+        "string.pattern.base": "GST Number must be exactly 15 digits and contain only numbers",
+        "any.required": "GST Number is required"
+      }),
+
+
+    mobile: Joi.string()
+      .pattern(/^\d{10}$/)
+      .required()
+      .messages({
+        "string.pattern.base": "Mobile number must be exactly 10 digits",
+        "any.required": "Mobile number is required"
+      }),
 
 
 
-        whatsapp: Joi.string()
-        .pattern(/^\d{10}$/)
-        .allow("", null)
-        .messages({
-            "string.pattern.base": "WhatsApp number must be exactly 10 digits",
-            "any.required": "WhatsApp number is required"
-        }),
+    whatsapp: Joi.string()
+      .pattern(/^\d{10}$/)
+      .allow("", null)
+      .messages({
+        "string.pattern.base": "WhatsApp number must be exactly 10 digits",
+        "any.required": "WhatsApp number is required"
+      }),
 
 
-        user_id: Joi.string()
-        .required()
-        .messages({
-            "any.required": "User ID is required",
-            "number.base": "User ID must be a number"
-        }),
+    user_id: Joi.string()
+      .required()
+      .messages({
+        "any.required": "User ID is required",
+        "number.base": "User ID must be a number"
+      }),
 
 
-        id: Joi.string()
-        .optional()
-        .allow("",null)
-        .messages({
-            "any.required": " ID is option",
-        }),
+    id: Joi.string()
+      .optional()
+      .allow("", null)
+      .messages({
+        "any.required": " ID is option",
+      }),
 
 
-        isDefault: Joi.boolean()
-        .optional()
-        .messages({
-            "boolean.base": "isDefault must be a boolean value"
-        }),
+    isDefault: Joi.boolean()
+      .optional()
+      .messages({
+        "boolean.base": "isDefault must be a boolean value"
+      }),
 
 
-        defaultBilling: Joi.boolean()
-        .optional()
-        .messages({
-            "boolean.base": "defaultBilling must be a boolean value"
-        }),
+    defaultBilling: Joi.boolean()
+      .optional()
+      .messages({
+        "boolean.base": "defaultBilling must be a boolean value"
+      }),
 
-        defaultShipping: Joi.boolean()
-        .optional()
-        .messages({
-            "boolean.base": "defaultShipping must be a boolean value"
-        })
+    defaultShipping: Joi.boolean()
+      .optional()
+      .messages({
+        "boolean.base": "defaultShipping must be a boolean value"
+      })
 
 
 

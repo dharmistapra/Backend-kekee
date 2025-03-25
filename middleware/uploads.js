@@ -21,6 +21,11 @@ const folderPaths = {
   importcsv: "./uploads/importcsv",
   importZip: "./uploads/zip",
   paymentMethod: "./uploads/payment",
+  logo: {
+    headerLogo: "./uploads/logo/header",
+    footerLogo: "./uploads/logo/footer",
+    favIcon: "./uploads/logo/favIcon",
+  },
 };
 
 const storage = multer.diskStorage({
@@ -181,6 +186,16 @@ const uploadConfiguration = {
     fileFilter: filefilter,
     limits: { fileSize: 10000000 * 5 },
   }).single("image"),
+
+  logo: multer({
+    storage: dynamicStorage("logo"),
+    fileFilter: filefilter,
+    limits: { fileSize: 10000000 * 5 },
+  }).fields([
+    { name: "headerLogo", maxCount: 1 },
+    { name: "footerLogo", maxCount: 1 },
+    { name: "favIcon", maxCount: 1 },
+  ]),
 };
 
 const currencystorage = multer.diskStorage({
@@ -257,6 +272,7 @@ const data = {
   uploadCSV: uploadConfiguration.importcsv,
   uploadZip: uploadConfiguration.importZip,
   uploadPaymentMethod: uploadConfiguration.paymentMethod,
+  uploadLogo: uploadConfiguration.logo,
   // uploadCollectionImage:uploadConfiguration.co
 };
 

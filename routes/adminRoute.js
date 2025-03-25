@@ -45,6 +45,7 @@ import {
   collectionSchema,
   shippingchargesSchema,
   paymentMethodsSchema,
+  webSettingSchema,
 } from "../schema/joi_schema.js";
 import {
   getAllSubCategory,
@@ -335,6 +336,10 @@ import {
   deleteContactUs,
   getAllContactUs,
 } from "../controller/admin/contactUs.js";
+import {
+  getWebSetting,
+  postWebSetting,
+} from "../controller/admin/webSetting.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -779,5 +784,12 @@ adminRouter.post("/inventory/single/product", getAllSingleProductInventory);
 
 adminRouter.delete("/contact-us/:id", deleteContactUs);
 adminRouter.post("/contact-us-pagination", getAllContactUs);
+
+adminRouter.post(
+  "/websetting",
+  [data.uploadLogo, webSettingSchema],
+  postWebSetting
+);
+adminRouter.get("/websetting", getWebSetting);
 
 export default adminRouter;

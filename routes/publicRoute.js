@@ -63,6 +63,7 @@ import {
   getAllContactUs,
   postContactUs,
 } from "../controller/admin/contactUs.js";
+import { getWebSetting } from "../controller/admin/webSetting.js";
 const router = express.Router();
 
 // MENU API
@@ -221,7 +222,7 @@ router.get("/auth/failure", (req, res) => {
 
 router.post("/login", [loginSchema], userlogin);
 router.post("/register", [registerSchema], userRegister);
-router.post("/otp", [OtpSchema],SendOtp);
+router.post("/otp", [OtpSchema], SendOtp);
 router.post("/verify-otp", [verifyOtpSchema], VerifyOtp);
 router.post("/reset-password", resetPasswordUsersSchema, resetPassword);
 
@@ -244,5 +245,7 @@ router.get("/payment/method", getPaymentMethodpublic);
 router.get("/categorycollection", getCategoryCollection);
 
 router.post("/contact-us", contactUsSchema, postContactUs);
+
+router.get("/websetting", getWebSetting);
 
 export default router;

@@ -927,7 +927,7 @@ model WebSettings {
   timing              String?  @default("")
   mapUrl              String
   notification        String?  @default("")
-  happyTOHelp         Json
+  happyToHelp         Json
   showProductCount    Int      @default(10)
   showPrice           Boolean? @default(false)
   createdAt           DateTime @default(now())

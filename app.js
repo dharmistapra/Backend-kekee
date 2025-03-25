@@ -32,14 +32,14 @@ app.use("/uploads", express.static("uploads"));
 app.use(passport.initialize());
 app.use(requestIp.mw());
 app.use(logger("dev"));
-app.use(express.json({ limit: "1000mb" }));
-app.use(
-  express.urlencoded({
-    extended: true,
-    limit: "1000mb",
-    parameterLimit: 1000000,
-  })
-);
+// app.use(express.json({ limit: "100mb" }));
+// app.use(
+//   express.urlencoded({
+//     extended: true,
+//     limit: "100mb",
+//     parameterLimit: 1000000,
+//   })
+// );
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cors());

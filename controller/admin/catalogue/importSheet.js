@@ -954,7 +954,7 @@ const importCatalogues = async (req, res, next) => {
 
         if (isSkuExists) {
           await deleteFile(filePath);
-          message = `${productCode} Product Sku must be unique!`;
+          let message = `${productCode} Product Sku must be unique!`;
           errors.push(message);
           // return res.status(400).json({
           //   isSuccess: false,
@@ -964,7 +964,7 @@ const importCatalogues = async (req, res, next) => {
         for (const images of image.split(",")) {
           if (imageNames.has(images)) {
             await deleteFile(filePath);
-            errors.push(`Duplicate image found: ${images}`);
+            imagesToCheck.push(images);
             // return res
             //   .status(400)
             //   .json({ error: `Duplicate image found: ${product.image}` });
@@ -1122,6 +1122,10 @@ const importCatalogues = async (req, res, next) => {
       errors.push(`${additional_attr} attributes not found!`);
       // return res.status(400).json({ isSuccess: false, message: errors });
     }
+    if (imagesToCheck.length > 0) {
+      errors.push(`Duplicate image found: ${imagesToCheck}`);
+      // return res.status(400).json({ isSuccess: false, message: errors });
+    }
     if (uniqueImages.length > 0) {
       errors.push(uniqueImages);
       // return res.status(400).json({ isSuccess: false, message: errors });
@@ -1226,10 +1230,10 @@ const importCatalogues = async (req, res, next) => {
               };
               delete product?.size;
 
-              // const existingProduct = await tx.product.findFirst({
-              //   where: { sku: product.sku },
-              //   select: { id: true, image: true },
-              // });
+              const existingProduct = await tx.product.findFirst({
+                where: { sku: product.sku },
+                select: { id: true, image: true },
+              });
 
               // let id = existingProduct?.id || null;
               // const { isSuccess, message } = await uniqueImage(

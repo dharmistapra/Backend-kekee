@@ -81,6 +81,14 @@ const getCategories = async (req, res, next) => {
 
 const getCategoryCollection = async (req, res, next) => {
   try {
+    let count = 8;
+    const isWebSettings = await prisma.webSettings.findFirst({
+      select: { showProductCount: true },
+    });
+    if (isWebSettings.showProductCount) {
+      count = isWebSettings.showProductCount;
+    }
+
     const result = await prisma.categoryMaster.findMany({
       where: { parent_id: null, isActive: true, showInHome: true },
       select: {
@@ -138,8 +146,8 @@ const getCategoryCollection = async (req, res, next) => {
                     showInSingle: true,
                   },
                 },
+                updatedAt: true,
               },
-              take: 8,
               orderBy: { updatedAt: "desc" },
             });
 
@@ -164,7 +172,8 @@ const getCategoryCollection = async (req, res, next) => {
 
         const catalogueData = catalogueCollection
           .flat()
-          .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+          .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+          .slice(0, count);
 
         delete item.CatalogueCategory;
         return { ...item, catalogueCollection: catalogueData };

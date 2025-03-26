@@ -3,6 +3,7 @@ import path from "path";
 import prisma from "../db/config.js";
 import slug from "slug";
 import sharp from "sharp";
+import passport from "passport";
 
 const deleteFile = async (filePath) => {
   if (!filePath) return;
@@ -750,6 +751,22 @@ const uniqueImage = async (file, id = null) => {
     console.log(err);
   }
 };
+const tokenExists = async (req, res, next) => {
+  const isTokenExists = await new Promise((resolve, reject) => {
+    passport.authenticate("jwt", { session: false }, (err, user, info) => {
+      if (err) {
+        reject({
+          isSuccess: false,
+          message: "Something went wrong, please try again!",
+          error: err,
+        });
+      }
+      resolve(user ? true : false);
+    })(req, res, next);
+  });
+
+  return isTokenExists;
+};
 
 const cataloguesProductFields = [
   "category",
@@ -832,4 +849,5 @@ export {
   cataloguesProductFields,
   processProductImages,
   uniqueImage,
+  tokenExists,
 };

@@ -1,4 +1,5 @@
 import prisma from "../../db/config.js";
+import { tokenExists } from "../../helper/common.js";
 
 const getProductpublic = async (req, res, next) => {
   try {
@@ -81,6 +82,11 @@ const getProductpublic = async (req, res, next) => {
     const { perPage, pageNo, url, user_id, filter } = req.body;
     const { minPrice, maxPrice, ...dynamicFilters } = req.query;
 
+    const isTokenExists = await tokenExists(req);
+    const isWebSettings = await prisma.webSettings.findFirst({
+      select: { showPrice: true },
+    });
+    const shouldHidePrice = !isTokenExists && isWebSettings.showPrice === false;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
@@ -282,6 +288,13 @@ const getProductpublic = async (req, res, next) => {
       //   value.product.wishList = wishList.includes(value.product.id);
 
       value.product.outOfStock = value.product.quantity === 0;
+
+      if (shouldHidePrice) {
+        delete value.product.retail_price;
+        delete value.product.retail_GST;
+        delete value.product.retail_discount;
+        delete value.product.offer_price;
+      }
       return value;
     });
 
@@ -313,6 +326,12 @@ const getProductpublic = async (req, res, next) => {
 const getProductDetails = async (req, res, next) => {
   try {
     const { url } = req.params;
+
+    const isTokenExists = await tokenExists(req);
+    const isWebSettings = await prisma.webSettings.findFirst({
+      select: { showPrice: true },
+    });
+    const shouldHidePrice = !isTokenExists && isWebSettings.showPrice === false;
     const data = await prisma.product.findUnique({
       where: {
         url: url,
@@ -327,10 +346,12 @@ const getProductDetails = async (req, res, next) => {
         url: true,
         quantity: true,
         weight: true,
-        average_price: true,
-        retail_price: true,
-        retail_discount: true,
-        offer_price: true,
+        ...(shouldHidePrice === false && {
+          average_price: true,
+          retail_price: true,
+          retail_discount: true,
+          offer_price: true,
+        }),
         image: true,
         description: true,
         tag: true,

@@ -1,4 +1,5 @@
 import prisma from "../../db/config.js";
+import { tokenExists } from "../../helper/common.js";
 
 const getCatalogue = async (req, res, next) => {
   try {
@@ -7,6 +8,13 @@ const getCatalogue = async (req, res, next) => {
     const take = +perPage || 10;
     const skip = (page - 1) * take;
 
+    const isTokenExists = await tokenExists(req);
+
+    const isWebSettings = await prisma.webSettings.findFirst({
+      select: { showPrice: true },
+    });
+
+    const shouldHidePrice = !isTokenExists && isWebSettings.showPrice === false;
     if (!url)
       return res
         .status(400)
@@ -69,10 +77,12 @@ const getCatalogue = async (req, res, next) => {
         url: true,
         quantity: true,
         no_of_product: true,
-        price: true,
-        catalogue_discount: true,
-        average_price: true,
-        offer_price: true,
+        ...(shouldHidePrice === false && {
+          price: true,
+          catalogue_discount: true,
+          average_price: true,
+          offer_price: true,
+        }),
         weight: true,
         meta_title: true,
         meta_keyword: true,
@@ -154,7 +164,12 @@ const getCatalogue = async (req, res, next) => {
 const getCatalogueProduct = async (req, res, next) => {
   try {
     const url = req.params.url;
+    const isTokenExists = await tokenExists(req);
+    const isWebSettings = await prisma.webSettings.findFirst({
+      select: { showPrice: true },
+    });
 
+    const shouldHidePrice = !isTokenExists && isWebSettings.showPrice === false;
     const product = await prisma.catalogue.findUnique({
       where: { url: url },
       select: {
@@ -164,10 +179,12 @@ const getCatalogueProduct = async (req, res, next) => {
         no_of_product: true,
         url: true,
         quantity: true,
-        price: true,
-        catalogue_discount: true,
-        average_price: true,
-        offer_price: true,
+        ...(shouldHidePrice === false && {
+          price: true,
+          catalogue_discount: true,
+          average_price: true,
+          offer_price: true,
+        }),
         optionType: true,
         // stitching: true,
         // size: true,
@@ -256,7 +273,7 @@ const getCatalogueProduct = async (req, res, next) => {
             sku: true,
             url: true,
             quantity: true,
-            average_price: true,
+            ...(shouldHidePrice === false && { average_price: true }),
             image: true,
             description: true,
             isActive: true,
@@ -626,6 +643,11 @@ const searchCatalogueAndProduct = async (req, res, next) => {
 
 const relatedProduct = async (req, res, next) => {
   try {
+    const isTokenExists = await tokenExists(req);
+    const isWebSettings = await prisma.webSettings.findFirst({
+      select: { showPrice: true },
+    });
+    const shouldHidePrice = !isTokenExists && isWebSettings.showPrice === false;
     const id = req.params.id;
     const isCategoryExists = await prisma.categoryMaster.findUnique({
       where: { id: id },
@@ -650,10 +672,12 @@ const relatedProduct = async (req, res, next) => {
         sku: true,
         url: true,
         quantity: true,
-        retail_price: true,
-        retail_GST: true,
-        retail_discount: true,
-        offer_price: true,
+        ...(shouldHidePrice === false && {
+          retail_price: true,
+          retail_GST: true,
+          retail_discount: true,
+          offer_price: true,
+        }),
         image: true,
       },
       orderBy: { updatedAt: "desc" },

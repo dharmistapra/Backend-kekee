@@ -1,4 +1,6 @@
+import passport from "passport";
 import prisma from "../../db/config.js";
+import { tokenExists } from "../../helper/common.js";
 
 const getCategory = async (req, res, next) => {
   try {
@@ -81,14 +83,14 @@ const getCategories = async (req, res, next) => {
 
 const getCategoryCollection = async (req, res, next) => {
   try {
+    const isTokenExists = await tokenExists(req);
     let count = 8;
     const isWebSettings = await prisma.webSettings.findFirst({
-      select: { showProductCount: true },
+      select: { showProductCount: true, showPrice: true },
     });
     if (isWebSettings.showProductCount) {
       count = isWebSettings.showProductCount;
     }
-
     const result = await prisma.categoryMaster.findMany({
       where: { parent_id: null, isActive: true, showInHome: true },
       select: {
@@ -158,6 +160,13 @@ const getCategoryCollection = async (req, res, next) => {
               );
               catalogue.labels = labels;
               delete catalogue.attributeValues;
+              if (
+                isTokenExists === false &&
+                isWebSettings.showPrice === false
+              ) {
+                delete catalogue.average_price;
+                delete catalogue.offer_price;
+              }
               const hasSingle = catalogue.Product.some(
                 (product) => product.showInSingle
               );

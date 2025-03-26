@@ -644,6 +644,7 @@ const importCatalogues = async (req, res, next) => {
           attributes.push(value);
         }
       });
+      console.log(attributes, "attributes");
 
       const isAttributeExists = await prisma.attributeMaster.findMany({
         where: { name: { in: attributes } },
@@ -803,7 +804,7 @@ const importCatalogues = async (req, res, next) => {
           let valueIds = [];
           for (let val of [].concat(values)) {
             val = _.uniq(await arraySplit(val));
-
+            console.log(val, "value", index);
             for (const value of val) {
               if (value !== "") {
                 let existingValue = await prisma.attributeValue.findFirst({
@@ -812,7 +813,7 @@ const importCatalogues = async (req, res, next) => {
                     attr_id: attribute_id,
                   },
                 });
-
+                console.log(value, attribute_id);
                 if (!existingValue) {
                   await deleteFile(filePath);
                   message = `Row ${index} ${key} attribute have ${value} attributeValue are not exist!`;

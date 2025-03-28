@@ -226,10 +226,12 @@ const getOrderHistory = async (req, res, next) => {
 
 const getuserAddresspagiantion = async (req, res, next) => {
   try {
-    const { user_id, pageNo, perPage, type } = req.body;
-    const page = Number(pageNo) || 1;
-    const take = Number(perPage) || 4;
-    const skip = (page - 1) * take;
+
+    const {id}=req.params
+    // const { , pageNo, perPage, type } = req.body;
+    // const page = Number(pageNo) || 1;
+    // const take = Number(perPage) || 4;
+    // const skip = (page - 1) * take;
     // const isBilling = type === "billing";
 
     // if (isBilling) {
@@ -259,11 +261,10 @@ const getuserAddresspagiantion = async (req, res, next) => {
     //   });
     // }
 
-    const [count, result] = await prisma.$transaction([
-      prisma.customerAddress.count({ where: { userId: user_id } }),
+    const [ result] = await prisma.$transaction([
       prisma.customerAddress.findMany({
         where: {
-          userId: user_id,
+          userId: id,
         },
         select: {
           id: true,
@@ -279,6 +280,8 @@ const getuserAddresspagiantion = async (req, res, next) => {
           whatsapp: true,
           companyname: true,
           GstNumber: true,
+          isDefault:true,
+          
         },
         // skip,
         // take,
@@ -287,13 +290,10 @@ const getuserAddresspagiantion = async (req, res, next) => {
 
     return res.status(200).json({
       message: result.length
-        ? "Default address successfully retrieved"
+        ? "Address successfully retrieved"
         : "Address not found",
       isSuccess: !!result.length,
       data: result,
-      totalCount: count,
-      currentPage: page,
-      pageSize: take,
     });
   } catch (error) {
     console.log(error);

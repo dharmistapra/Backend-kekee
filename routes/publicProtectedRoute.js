@@ -66,7 +66,7 @@ publicProtected.post("/order/history", getOrderHistory);
 publicProtected.post("/shipping/address", [postaddressSchema], postshipAddress);
 publicProtected.get("/shipping/address/:id", getshipAddress);
 publicProtected.delete("/shipping/address/:id", deleteshipAddress);
-publicProtected.post("/user/address", getuserAddresspagiantion)
+publicProtected.get("/user/address/:id", getuserAddresspagiantion)
 
 publicProtected.get("/user/profile/:id", getuserById);
 export default publicProtected;

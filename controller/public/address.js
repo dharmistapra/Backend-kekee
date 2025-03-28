@@ -21,6 +21,7 @@ const postshipAddress = async (req, res, next) => {
                     country, state, zipCode, address1, address2, companyname, GstNumber, mobile, whatsapp,
                     defaultBilling: defaultBilling,
                     defaultShipping: defaultShipping,
+                    isDefault: isDefault
                 },
             });
             return res.status(200).json({ isSuccess: true, message: "Data updated successfully", data });
@@ -29,6 +30,7 @@ const postshipAddress = async (req, res, next) => {
                 data: {
                     fullName, userId: user_id, email, city, country, state, zipCode, address1, address2, companyname, GstNumber, mobile, whatsapp, defaultBilling: defaultBilling,
                     defaultShipping: defaultShipping,
+                    isDefault: isDefault
                 },
             });
 
@@ -44,17 +46,17 @@ const postshipAddress = async (req, res, next) => {
 
 const getshipAddress = async (req, res, next) => {
     try {
-        const {id} = req.params
+        const { id } = req.params
 
         if (!id) {
             return res.status(400).json({ message: "User ID is required" });
-          }
+        }
         const data = await prisma.customerAddress.findMany({
             where: {
-                userId:id
+                userId: id
             },
             select: {
-                id:true,
+                id: true,
                 fullName: true,
                 email: true,
                 city: true,
@@ -72,7 +74,7 @@ const getshipAddress = async (req, res, next) => {
             }
         })
 
-        
+
         if (data && data?.length > 0) {
             return res.status(200).json({ isSuccess: true, message: "Data get successfylly", data });
         } else {
@@ -84,4 +86,23 @@ const getshipAddress = async (req, res, next) => {
     }
 }
 
-export { postshipAddress, getshipAddress }
+
+
+const deleteshipAddress = async (req, res, next) => {
+    try {
+        const { id } = req.params
+        if (!id) {
+            return res.status(400).json({ isSuccess: false, message: "Address id required", });
+        }
+
+        const result = await prisma.customerAddress.delete({
+            where: { id: id }
+        })
+
+        return res.status(200).json({ isSuccess: true, message: "Data Delete Successfully", });
+
+    } catch (error) {
+        next(new Error("Something went wrong, Please try again!"))
+    }
+}
+export { postshipAddress, getshipAddress, deleteshipAddress }

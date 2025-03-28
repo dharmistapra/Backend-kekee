@@ -816,18 +816,19 @@ model CustomerAddress {
   fullName        String
   address1        String
   address2        String?
-  city            String
-  country         String
-  state           String
-  zipCode         String
-  email           String?
-  mobile          String
-  whatsapp        String?
-  companyname     String?
-  GstNumber       String?
-  customersnotes  String?
+  city            String 
+  country         String 
+  state           String 
+  zipCode         String 
+  email           String? 
+  mobile          String 
+  whatsapp        String? 
+  companyname     String? 
+  GstNumber       String? 
+  customersnotes  String? 
   defaultBilling  Boolean? @default(false)
   defaultShipping Boolean? @default(false)
+  isDefault       Boolean? @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   user            users?   @relation(fields: [userId], references: [id], onDelete: Cascade)

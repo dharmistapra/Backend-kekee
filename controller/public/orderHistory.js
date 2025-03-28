@@ -230,41 +230,40 @@ const getuserAddresspagiantion = async (req, res, next) => {
     const page = Number(pageNo) || 1;
     const take = Number(perPage) || 4;
     const skip = (page - 1) * take;
-    const isBilling = type === "billing";
+    // const isBilling = type === "billing";
 
-    if (isBilling) {
-      const result = await prisma.customerAddress.findMany({
-        where: { userId: user_id },
-        select: {
-          id: true,
-          fullName: true,
-          address1: true,
-          address2: true,
-          city: true,
-          country: true,
-          state: true,
-          zipCode: true,
-          email: true,
-          mobile: true,
-          whatsapp: true,
-          companyname: true,
-          GstNumber: true,
-        },
-      });
+    // if (isBilling) {
+    //   const result = await prisma.customerAddress.findMany({
+    //     where: { userId: user_id },
+    //     select: {
+    //       id: true,
+    //       fullName: true,
+    //       address1: true,
+    //       address2: true,
+    //       city: true,
+    //       country: true,
+    //       state: true,
+    //       zipCode: true,
+    //       email: true,
+    //       mobile: true,
+    //       whatsapp: true,
+    //       companyname: true,
+    //       GstNumber: true,
+    //     },
+    //   });
 
-      return res.status(200).json({
-        message: "Billing addresses retrieved successfully",
-        isSuccess: true,
-        data: result,
-      });
-    }
+    //   return res.status(200).json({
+    //     message: "Billing addresses retrieved successfully",
+    //     isSuccess: true,
+    //     data: result,
+    //   });
+    // }
 
     const [count, result] = await prisma.$transaction([
       prisma.customerAddress.count({ where: { userId: user_id } }),
       prisma.customerAddress.findMany({
         where: {
           userId: user_id,
-          defaultShipping: true,
         },
         select: {
           id: true,
@@ -281,8 +280,8 @@ const getuserAddresspagiantion = async (req, res, next) => {
           companyname: true,
           GstNumber: true,
         },
-        skip,
-        take,
+        // skip,
+        // take,
       }),
     ]);
 

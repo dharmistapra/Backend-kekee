@@ -2,7 +2,6 @@ import prisma from "../../../db/config.js";
 import csvtojson from "csvtojson";
 import {
   arraySplit,
-  cataloguesProductFields,
   deleteFile,
   getId,
   isNameRecordsExist,
@@ -574,6 +573,32 @@ import sharp from "sharp";
 
 const importCatalogues = async (req, res, next) => {
   try {
+    const cataloguesProductFields = [
+      "category",
+      "productCode",
+      "catCode",
+      "productName",
+      "noOfProduct",
+      "quantity",
+      "description",
+      "catalogueItemMarketPrice",
+      "catalogueItemDiscount",
+      "retailPrice",
+      "retailDiscount",
+      "GST",
+      "metaTitle",
+      "metaKeyword",
+      "metaDescription",
+      "weight",
+      "tag",
+      "cat_image",
+      "image",
+      "optionType",
+      "size",
+      "isActive",
+      "showInSingle",
+    ];
+
     if (!req.file)
       return res
         .status(400)
@@ -593,6 +618,7 @@ const importCatalogues = async (req, res, next) => {
     const imagesToCheck = [];
     let uniqueImages = [];
     let message;
+
     for (let [index, row] of jsonArray.entries()) {
       let {
         category,
@@ -637,13 +663,13 @@ const importCatalogues = async (req, res, next) => {
       let attributeValue = {};
 
       const keys = Object.keys(row);
+
       keys.forEach(async (value) => {
         if (!cataloguesProductFields.includes(value)) {
           attributeValue[value] = row[value];
           attributes.push(value);
         }
       });
-
       const isAttributeExists = await prisma.attributeMaster.findMany({
         where: { name: { in: attributes } },
         select: { id: true, name: true, isDefault: true },
@@ -1130,6 +1156,7 @@ const importCatalogues = async (req, res, next) => {
       // return res.status(400).json({ isSuccess: false, message: errors });
     }
     if (errors.length > 0) {
+      console.log(uniqueImages);
       return res.status(400).json({ isSuccess: false, message: errors });
     }
 
@@ -1270,6 +1297,7 @@ const importCatalogues = async (req, res, next) => {
                       },
                     });
                     if (productData.length === 0) {
+                      console.log(existingProduct, value);
                       await deleteFile(value);
                       await deleteFile(`uploads/product/thumb/${value}`);
                       await deleteFile(`uploads/product/medium/${value}`);
@@ -1342,6 +1370,7 @@ const importCatalogues = async (req, res, next) => {
                     },
                   });
                   if (productData.length === 0) {
+                    console.log(existingProduct, value);
                     await deleteFile(value);
                     await deleteFile(`uploads/product/thumb/${value}`);
                     await deleteFile(`uploads/product/medium/${value}`);

@@ -791,6 +791,7 @@ const importProductSchema = async (req, res, next) => {
     meta_title: Joi.string().optional().allow("").default(""),
     meta_keyword: Joi.string().optional().allow("").default(""),
     meta_description: Joi.string().optional().allow("").default(""),
+    relatedProduct: Joi.array().items(Joi.string()).optional(),
   });
 
   return schema;
@@ -967,6 +968,7 @@ const productSchema = async (req, res, next) => {
     meta_title: Joi.string().optional().allow("").default(""),
     meta_keyword: Joi.string().optional().allow("").default(""),
     meta_description: Joi.string().optional().allow("").default(""),
+    relatedProduct: Joi.array().items(Joi.string()).optional().default([]),
   });
   return schema;
   // await JoiSchemaValidation(schema, req, next);

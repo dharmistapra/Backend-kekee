@@ -751,6 +751,32 @@ const uniqueImage = async (file, id = null) => {
     console.log(err);
   }
 };
+
+const productsSku = async (sku) => {
+  try {
+    const isProductExist = await prisma.product.findMany({
+      where: {
+        sku: { in: sku },
+      },
+      select: { id: true, sku: true },
+    });
+
+    if (isProductExist.length !== sku.length) {
+      const productSkus = isProductExist.map((val) => val.sku);
+      let productSku = sku.filter((sku) => !productSkus.includes(sku));
+      // await removeProductImage(imagePaths);
+      return {
+        status: false,
+        message: ` ${productSku} Related product not found!`,
+      };
+    }
+
+    let data = isProductExist.map((val) => val.id);
+    return { status: true, data };
+  } catch (err) {
+    console.log(err);
+  }
+};
 const tokenExists = async (req, res, next) => {
   const isTokenExists = await new Promise((resolve, reject) => {
     passport.authenticate("jwt", { session: false }, (err, user, info) => {
@@ -849,5 +875,6 @@ export {
   cataloguesProductFields,
   processProductImages,
   uniqueImage,
+  productsSku,
   tokenExists,
 };

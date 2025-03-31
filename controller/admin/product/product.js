@@ -9,6 +9,7 @@ import {
   handleProductAttributeConnection,
   handleProductConnection,
   processProductImages,
+  productsSku,
   removeProductImage,
   uniqueImage,
   updateStatus,
@@ -54,6 +55,7 @@ const postRetailProduct = async (req, res, next) => {
       productlabels,
       optionType,
       size,
+      relatedProduct,
       // stitching,
     } = req.body;
 
@@ -220,6 +222,23 @@ const postRetailProduct = async (req, res, next) => {
       // }));
       productData["attributeValues"] = {
         create: data,
+      };
+    }
+
+    if (relatedProduct && relatedProduct.length > 0) {
+      const { status, message, data } = await productsSku(relatedProduct);
+      if (!status) {
+        await removeProductImage(imagePaths);
+        return res.status(400).json({
+          isSuccess: status,
+          message: message,
+        });
+      }
+
+      productData["RelatedProducts"] = {
+        create: data.map((productId) => ({
+          related: { connect: { id: productId } },
+        })),
       };
     }
     let colourConnection = [];
@@ -807,6 +826,17 @@ const paginationReatilProduct = async (req, res, next) => {
             quantity: true,
           },
         },
+        RelatedProducts: {
+          where: { related: { catalogue: { deletedAt: null } } },
+          select: {
+            related: {
+              select: {
+                id: true,
+                sku: true,
+              },
+            },
+          },
+        },
       },
       skip,
       take,
@@ -893,6 +923,11 @@ const paginationReatilProduct = async (req, res, next) => {
             }
           : null
       );
+
+      newProduct.relatedProducts = product.RelatedProducts.map((rel) => ({
+        id: rel.related.id,
+        sku: rel.related.sku,
+      }));
 
       newProduct.collection = product?.collection?.map((cat) =>
         cat.collection
@@ -981,6 +1016,7 @@ const updateRetailProduct = async (req, res, next) => {
       productlabels,
       size,
       stitching,
+      relatedProduct,
     } = req.body;
 
     quantity = parseInt(quantity) || 0;
@@ -1193,6 +1229,32 @@ const updateRetailProduct = async (req, res, next) => {
       productData["attributeValues"] = {
         deleteMany: {},
         create: data,
+      };
+    } else if (attributes && attributes.length === 0) {
+      productData["attributeValues"] = {
+        deleteMany: {},
+      };
+    }
+
+    if (relatedProduct && relatedProduct.length > 0) {
+      const { status, message, data } = await productsSku(relatedProduct);
+      if (!status) {
+        if (req.files && req.files.length > 0)
+          await removeProductImage(imagePaths);
+        return res.status(400).json({
+          isSuccess: status,
+          message: message,
+        });
+      }
+
+      productData["RelatedProducts"] = {
+        create: data.map((productId) => ({
+          related: { connect: { id: productId } },
+        })),
+      };
+    } else if (relatedProduct && relatedProduct.length === 0) {
+      productData["RelatedProducts"] = {
+        deleteMany: {},
       };
     }
 

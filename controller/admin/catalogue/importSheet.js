@@ -5,6 +5,7 @@ import {
   deleteFile,
   getId,
   isNameRecordsExist,
+  productsSku,
   removeProductImage,
   uniqueImage,
 } from "../../../helper/common.js";
@@ -20,6 +21,7 @@ import fs from "fs";
 import path from "path";
 import fastCsv from "fast-csv";
 import sharp from "sharp";
+import { connect } from "http2";
 
 // const importCatalogue = async (req, res, next) => {
 //   try {
@@ -571,34 +573,34 @@ import sharp from "sharp";
 //   }
 // };
 
+const cataloguesProductFields = [
+  "category",
+  "productCode",
+  "catCode",
+  "productName",
+  "noOfProduct",
+  "quantity",
+  "description",
+  "catalogueItemMarketPrice",
+  "catalogueItemDiscount",
+  "retailPrice",
+  "retailDiscount",
+  "GST",
+  "metaTitle",
+  "metaKeyword",
+  "metaDescription",
+  "weight",
+  "tag",
+  "cat_image",
+  "image",
+  "optionType",
+  "size",
+  "isActive",
+  "showInSingle",
+  "relatedProduct",
+];
 const importCatalogues = async (req, res, next) => {
   try {
-    const cataloguesProductFields = [
-      "category",
-      "productCode",
-      "catCode",
-      "productName",
-      "noOfProduct",
-      "quantity",
-      "description",
-      "catalogueItemMarketPrice",
-      "catalogueItemDiscount",
-      "retailPrice",
-      "retailDiscount",
-      "GST",
-      "metaTitle",
-      "metaKeyword",
-      "metaDescription",
-      "weight",
-      "tag",
-      "cat_image",
-      "image",
-      "optionType",
-      "size",
-      "isActive",
-      "showInSingle",
-    ];
-
     if (!req.file)
       return res
         .status(400)
@@ -647,6 +649,7 @@ const importCatalogues = async (req, res, next) => {
         catCode,
         cat_tag,
         showInSingle,
+        relatedProduct,
       } = row;
       index = index + 1;
       quantity = parseInt(quantity);
@@ -986,6 +989,17 @@ const importCatalogues = async (req, res, next) => {
           //   message: `${productCode} Product Sku must be unique!`,
           // });
         }
+        console.log(relatedProduct, index);
+        if (relatedProduct) {
+          let relatedProducts = _.uniq(await arraySplit(relatedProduct));
+          const { status, message, data } = await productsSku(relatedProducts);
+          if (!status) {
+            await deleteFile(filePath);
+            let messages = `Row ${index} ${message}`;
+            errors.push(messages);
+          }
+          relatedProduct = data;
+        }
         for (const images of image.split(",")) {
           if (imageNames.has(images)) {
             await deleteFile(filePath);
@@ -994,7 +1008,6 @@ const importCatalogues = async (req, res, next) => {
             //   .status(400)
             //   .json({ error: `Duplicate image found: ${product.image}` });
           }
-
           imageNames.add(images);
           // imagesToCheck.push(image);
         }
@@ -1052,6 +1065,8 @@ const importCatalogues = async (req, res, next) => {
           ...(size && sizeDataWithIds.length > 0 && { size: sizeDataWithIds }),
           // ...(isStitching && { stitching: isStitching !== "N" ? true : false }),
           ...(category.length > 0 && { category: category }),
+          ...(relatedProduct &&
+            relatedProduct.length > 0 && { relatedProduct: relatedProduct }),
         };
 
         let catalog = catalogues.find((cat) => cat.cat_code === catCode);
@@ -1063,10 +1078,10 @@ const importCatalogues = async (req, res, next) => {
         const { error } = productSchema.validate(product, option);
         if (error) {
           await deleteFile(filePath);
-          message = `Row ${index} ${error?.details.map(
+          let messages = `Row ${index} ${error?.details.map(
             (item) => item.message
           )}`;
-          errors.push(message);
+          errors.push(messages);
           // return res
           //   .status(400)
           //   .json({ isSuccess: false, message: error?.details[0].message });
@@ -1242,6 +1257,7 @@ const importCatalogues = async (req, res, next) => {
               delete product.attributes;
               delete product.category;
               let productSizeConnection = [];
+              let relatedProducts = [];
               if (product.optionType === "Size") {
                 productSizeConnection = product.size.map((size) => ({
                   size: { connect: { id: size.id } },
@@ -1253,7 +1269,11 @@ const importCatalogues = async (req, res, next) => {
               product["attributeValues"] = {
                 create: attributeValueConnection,
               };
+              if (product.relatedProduct && product.relatedProduct.length > 0) {
+                relatedProducts = product.relatedProduct;
+              }
               delete product?.size;
+              delete product?.relatedProduct;
 
               const existingProduct = await tx.product.findFirst({
                 where: { sku: product.sku },
@@ -1284,6 +1304,10 @@ const importCatalogues = async (req, res, next) => {
                   where: { product: { id: existingProduct.id } },
                 });
 
+                await tx.relatedProduct.deleteMany({
+                  where: { product: { id: existingProduct.id } },
+                });
+
                 let productImage = existingProduct.image.filter(
                   (value) => !product.image.includes(value)
                 );
@@ -1306,11 +1330,37 @@ const importCatalogues = async (req, res, next) => {
                 }
               }
 
-              return tx.product.upsert({
+              // return;
+              const savedProduct = await tx.product.upsert({
                 where: { sku: product.sku },
-                update: { ...product, catalogue_id: savedCatalogue.id },
-                create: { ...product, catalogue_id: savedCatalogue.id },
+                update: {
+                  ...product,
+                  // RelatedProduct:
+                  //   relatedProducts.length > 0
+                  //     ? { deleteMany: {}, create: relatedProducts }
+                  //     : { deleteMany: {} },
+                  catalogue_id: savedCatalogue.id,
+                },
+                create: {
+                  ...product,
+                  // ...(relatedProducts.length > 0 && {
+                  //   relatedProduct: {
+                  //     create: relatedProducts,
+                  //   },
+                  // }),
+                  catalogue_id: savedCatalogue.id,
+                },
               });
+
+              if (relatedProducts.length > 0) {
+                await tx.relatedProduct.createMany({
+                  data: relatedProducts.map((relatedProductId) => ({
+                    product_id: savedProduct.id, // Now we have the correct ID
+                    relatedProduct_id: relatedProductId,
+                  })),
+                });
+              }
+              return savedProduct;
             });
 
             await Promise.all(productUpserts);
@@ -1337,19 +1387,20 @@ const importCatalogues = async (req, res, next) => {
               product["sizes"] = { create: productSizeConnection };
             }
 
+            // if (product.relatedProduct && product.relatedProduct.length > 0) {
+            //   product["RelatedProducts"] = {
+            //     create: product.relatedProduct.map((productId) => ({
+            //       connect: {
+            //         relatedProduct: {
+            //           id: productId,
+            //         },
+            //       },
+            //     })),
+            //   };
+            // }
+            const relatedProducts = product?.relatedProduct || [];
             delete product?.size;
-
-            await tx.productCategory.deleteMany({
-              where: { product: { sku: product.sku } },
-            });
-
-            await tx.productAttributeValue.deleteMany({
-              where: { product: { sku: product.sku } },
-            });
-
-            await tx.productSize.deleteMany({
-              where: { product: { sku: product.sku } },
-            });
+            delete product?.relatedProduct;
 
             const existingProduct = await tx.product.findFirst({
               where: { sku: product.sku },
@@ -1357,6 +1408,21 @@ const importCatalogues = async (req, res, next) => {
             });
 
             if (existingProduct) {
+              await tx.productCategory.deleteMany({
+                where: { product: { sku: product.sku } },
+              });
+
+              await tx.productAttributeValue.deleteMany({
+                where: { product: { sku: product.sku } },
+              });
+
+              await tx.productSize.deleteMany({
+                where: { product: { sku: product.sku } },
+              });
+
+              await tx.relatedProduct.deleteMany({
+                where: { product: { sku: product.sku } },
+              });
               let productImage = existingProduct.image.filter(
                 (value) => !product.image.includes(value)
               );
@@ -1379,11 +1445,22 @@ const importCatalogues = async (req, res, next) => {
               }
             }
 
-            return tx.product.upsert({
+            const savedProduct = await tx.product.upsert({
               where: { sku: product.sku },
               update: { ...product, catalogue_id: null },
               create: { ...product, catalogue_id: null },
             });
+
+            if (relatedProducts?.length > 0) {
+              await tx.relatedProduct.createMany({
+                data: relatedProducts.map((relatedProductId) => ({
+                  product_id: savedProduct.id, // Now we have the correct ID
+                  relatedProduct_id: relatedProductId,
+                })),
+              });
+            }
+
+            return savedProduct;
           });
 
           await Promise.all(productUpserts);

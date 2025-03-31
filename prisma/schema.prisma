@@ -344,12 +344,26 @@ model Product {
   CartItem         CartItem[]
   WishList         WishList[]
   orderItems       OrderItem[]
+  RelatedProducts  RelatedProduct[]        @relation("relatedProduct")
+  RelatedProduct   RelatedProduct[]
 }
 
 enum ProductOptionType {
   Stitching
   Size
   Other
+}
+
+model RelatedProduct {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  product_id        String   @db.ObjectId
+  relatedProduct_id String   @db.ObjectId
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  product           Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  related           Product  @relation("relatedProduct", fields: [relatedProduct_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_id, relatedProduct_id])
 }
 
 model Labels {

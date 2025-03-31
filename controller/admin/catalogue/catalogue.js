@@ -11,6 +11,7 @@ import {
   handleLabelConnection,
   handleProductAttributeConnection,
   handleProductConnection,
+  productsSku,
   removeProductImage,
   uniqueImage,
 } from "../../../helper/common.js";
@@ -56,6 +57,7 @@ const postCatlogProduct = async (req, res, next) => {
       isSize,
       stitching,
       readyToShip,
+      relatedProduct,
     } = req.body;
 
     quantity = parseInt(quantity);
@@ -233,6 +235,24 @@ const postCatlogProduct = async (req, res, next) => {
         create: data,
       };
     }
+
+    if (relatedProduct && relatedProduct.length > 0) {
+      const { status, message, data } = await productsSku(relatedProduct);
+      if (!status) {
+        await removeProductImage(imagePaths);
+        return res.status(400).json({
+          isSuccess: status,
+          message: message,
+        });
+      }
+
+      // productData["RelatedProducts"] = {
+      //   create: data.map((productId) => ({
+      //     related: { connect: { id: productId } },
+      //   })),
+      // };
+      relatedProduct = data;
+    }
     let colourConnection = [];
     if (colour_id) {
       const { status, message } = await handleProductConnection(
@@ -327,6 +347,16 @@ const postCatlogProduct = async (req, res, next) => {
               catalogue_id: null,
               collection_id: collectionId,
               product_id: data.id,
+            })),
+          });
+        }
+        if (relatedProduct && relatedProduct.length > 0) {
+          await prisma.relatedProduct.createMany({
+            data: relatedProduct.map((id) => ({
+              product_id: data.id,
+              relatedProduct_id: id,
+              // product: { connect: { id: data.id } },
+              // related: { connect: { id: id } },
             })),
           });
         }
@@ -565,6 +595,7 @@ const updateCatalogueProduct = async (req, res, next) => {
       meta_keyword,
       meta_description,
       optionType,
+      relatedProduct,
       // stitching,
       // isSize,
     } = req.body;
@@ -833,6 +864,30 @@ const updateCatalogueProduct = async (req, res, next) => {
         deleteMany: {},
       };
     }
+
+    if (relatedProduct && relatedProduct.length > 0) {
+      const { status, message, data } = await productsSku(relatedProduct);
+      if (!status) {
+        if (req.files && req.files?.length > 0)
+          await removeProductImage(imagePaths);
+        return res.status(400).json({
+          isSuccess: status,
+          message: message,
+        });
+      }
+
+      // productData["RelatedProducts"] = {
+      //   create: data.map((productId) => ({
+      //     related: { connect: { id: productId } },
+      //   })),
+      // };
+      relatedProduct = data;
+    }
+    // else if (relatedProduct && relatedProduct.length === 0) {
+    //   productData["RelatedProducts"] = {
+    //     deleteMany: {},
+    //   };
+    // }
     let colourConnection = [];
     if (colour_id) {
       const { status, message } = await handleProductConnection(
@@ -940,6 +995,19 @@ const updateCatalogueProduct = async (req, res, next) => {
             catalogue_id: null,
             collection_id: collectionId,
             product_id: newProduct.id,
+          })),
+        });
+      }
+      await prisma.relatedProduct.deleteMany({
+        where: { product_id: newProduct.id },
+      });
+      if (relatedProduct && relatedProduct.length > 0) {
+        await prisma.relatedProduct.createMany({
+          data: relatedProduct.map((id) => ({
+            product_id: newProduct.id,
+            relatedProduct_id: id,
+            // product: { connect: { id: newProduct.id } },
+            // related: { connect: { id: id } },
           })),
         });
       }

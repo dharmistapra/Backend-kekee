@@ -134,6 +134,7 @@ const getshipAddress = async (req, res, next) => {
         whatsapp: true,
         defaultBilling: true,
         defaultShipping: true,
+        isDefault: true,
       },
     });
 

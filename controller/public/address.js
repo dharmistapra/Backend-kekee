@@ -110,10 +110,21 @@ const postshipAddress = async (req, res, next) => {
 const getshipAddress = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const { pageNo, perPage } = req.body;
+
+    const page = +pageNo || 1;
+    const take = +perPage || 10;
+    const skip = (page - 1) * take;
 
     if (!id) {
       return res.status(400).json({ message: "User ID is required" });
     }
+
+    const count = await prisma.customerAddress.count({ where: { userId: id } });
+    if (count === 0)
+      return res
+        .status(200)
+        .json({ isSuccess: true, message: "Address not found!", data: [] });
     const data = await prisma.customerAddress.findMany({
       where: {
         userId: id,
@@ -136,12 +147,20 @@ const getshipAddress = async (req, res, next) => {
         defaultShipping: true,
         isDefault: true,
       },
+      skip,
+      take,
+      orderBy: { updatedAt: "desc" },
     });
 
     if (data && data?.length > 0) {
-      return res
-        .status(200)
-        .json({ isSuccess: true, message: "Data get successfylly", data });
+      return res.status(200).json({
+        isSuccess: true,
+        message: "Data get successfylly",
+        data,
+        totalCount: count,
+        currentPage: page,
+        pagesize: take,
+      });
     } else {
       return res.status(200).json({
         isSuccess: false,

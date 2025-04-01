@@ -102,7 +102,7 @@ const postRetailProduct = async (req, res, next) => {
       },
     });
 
-    if (findUniqueData && findUniqueData.catalogue?.deletedAt === null) {
+    if (findUniqueData && findUniqueData.catalogue?.deletedAt !== null) {
       await removeProductImage(imagePaths);
       // await fileValidation(req.files, true);
       return res.status(409).json({

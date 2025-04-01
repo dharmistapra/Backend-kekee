@@ -670,7 +670,7 @@ const updateCatalogueProduct = async (req, res, next) => {
       });
     }
 
-    if (findUniqueData || findUniqueData?.catalogue?.deletedAt === null) {
+    if (findUniqueData) {
       if (req.files && req.files?.length > 0)
         await removeProductImage(imagePaths);
       return res.status(400).json({
@@ -688,7 +688,6 @@ const updateCatalogueProduct = async (req, res, next) => {
 
     // console.log("catalogue_id", catalogue_id);
     if (catalogue_id != null || catalogue_id) {
-      console.log("catalogue_id", typeof catalogue_id);
       const findCatalogue = await prisma.catalogue.findUnique({
         where: { id: catalogue_id },
       });

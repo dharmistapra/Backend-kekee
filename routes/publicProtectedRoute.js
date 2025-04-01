@@ -10,6 +10,7 @@ import {
   cartSchema,
   editCartSchema,
   orderPlaceSchema,
+  pageSchema,
   postaddressSchema,
   updateUserbasicInfoSchema,
   userchangePasswordSchema,
@@ -69,7 +70,7 @@ publicProtected.post("/order/details", getOrderdetails);
 publicProtected.post("/order/history", getOrderHistory);
 
 publicProtected.post("/shipping/address", [postaddressSchema], postshipAddress);
-publicProtected.get("/shipping/address/:id", getshipAddress);
+publicProtected.post("/shipping/address/:id", [pageSchema], getshipAddress);
 publicProtected.get("/user/default-status/:id", shippingDefaultStatus);
 publicProtected.delete("/shipping/address/:id", deleteshipAddress);
 publicProtected.get("/user/address/:id", getuserAddresspagiantion);

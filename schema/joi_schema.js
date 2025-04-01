@@ -149,10 +149,11 @@ const registerSchema = async (req, res, next) => {
         "any.required": "Mobile number is required",
       }),
     email: Joi.string()
-      .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
+      .email()
+      // .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
       .required()
       .messages({
-        "string.pattern.base": "Enter a valid Gmail address",
+        "string.pattern.base": "Enter a valid email address",
         "any.required": "Email is required",
       }),
     password: Joi.string().min(8).required().messages({
@@ -171,10 +172,11 @@ const registerSchema = async (req, res, next) => {
 const OtpSchema = async (req, res, next) => {
   const schema = Joi.object({
     email: Joi.string()
-      .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
+      .email()
+      // .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
       .required()
       .messages({
-        "string.pattern.base": "Enter a valid Gmail address",
+        "string.pattern.base": "Enter a valid email address",
         "any.required": "Email is required",
       }),
   });
@@ -185,10 +187,11 @@ const OtpSchema = async (req, res, next) => {
 const loginSchema = async (req, res, next) => {
   const schema = Joi.object({
     email: Joi.string()
-      .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
+      .email()
+      // .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
       .required()
       .messages({
-        "string.pattern.base": "Enter a valid Gmail address",
+        "string.pattern.base": "Enter a valid email address",
         "any.required": "Email is required",
       }),
     password: Joi.string().required().messages({
@@ -1345,10 +1348,11 @@ const orderPlaceSchema = async (req, res, next) => {
       country: Joi.string().optional().allow(""),
       customersnotes: Joi.string().optional().allow(""),
       email: Joi.string()
-        .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
+        .email()
+        // .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
         .required()
         .messages({
-          "string.pattern.base": "Enter a valid Gmail address",
+          "string.pattern.base": "Enter a valid email address",
           "any.required": "Email is required",
         }),
 
@@ -1441,10 +1445,11 @@ const contactUsSchema = async (req, res, next) => {
 const postaddressSchema = async (req, res, next) => {
   const schema = Joi.object({
     email: Joi.string()
-      .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
+      .email()
+      // .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
       .required()
       .messages({
-        "string.pattern.base": "Enter a valid Gmail address",
+        "string.pattern.base": "Enter a valid email address",
         "any.required": "Email is required",
       }),
     fullName: Joi.string()

@@ -10,7 +10,7 @@ import {
   uniqueImage,
 } from "../../../helper/common.js";
 import slug from "slug";
-import _, { iteratee, size } from "underscore";
+import _ from "underscore";
 import {
   importCatalogue,
   importCatalogueSchema,
@@ -989,9 +989,8 @@ const importCatalogues = async (req, res, next) => {
           //   message: `${productCode} Product Sku must be unique!`,
           // });
         }
-        console.log(relatedProduct, index);
         if (relatedProduct) {
-          let relatedProducts = _.uniq(await arraySplit(relatedProduct));
+          let relatedProducts = await arraySplit(relatedProduct);
           const { status, message, data } = await productsSku(relatedProducts);
           if (!status) {
             await deleteFile(filePath);

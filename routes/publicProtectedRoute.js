@@ -34,7 +34,12 @@ import {
   getOrderHistory,
   getuserAddresspagiantion,
 } from "../controller/public/orderHistory.js";
-import { deleteshipAddress, getshipAddress, postshipAddress, } from "../controller/public/address.js";
+import {
+  deleteshipAddress,
+  getshipAddress,
+  postshipAddress,
+  shippingDefaultStatus,
+} from "../controller/public/address.js";
 
 // publicProtected.post("/cart-item", cartSchema, postCartItem);
 publicProtected.post("/cart-item", cartSchema, postCartItemOptimizeCode);
@@ -65,8 +70,9 @@ publicProtected.post("/order/history", getOrderHistory);
 
 publicProtected.post("/shipping/address", [postaddressSchema], postshipAddress);
 publicProtected.get("/shipping/address/:id", getshipAddress);
+publicProtected.get("/user/default-status/:id", shippingDefaultStatus);
 publicProtected.delete("/shipping/address/:id", deleteshipAddress);
-publicProtected.get("/user/address/:id", getuserAddresspagiantion)
+publicProtected.get("/user/address/:id", getuserAddresspagiantion);
 
 publicProtected.get("/user/profile/:id", getuserById);
 export default publicProtected;

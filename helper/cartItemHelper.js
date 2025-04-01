@@ -481,19 +481,21 @@ const calculateCartItemTotal = (cartItems) => {
     let itemWeight = 0;
     let outOfStock = false;
     let availableQuantity = 0;
+    let taxPercentage = 0;
 
     if (isCatalogue && catalogue) {
       let availableProductCount = catalogue.Product.reduce((count, data) => {
         if (size) {
           const selectedSize = JSON.parse(size);
-          const sizeData = data.sizes.find((s) => s?.size?.id === selectedSize?.id);
+          const sizeData = data.sizes.find(
+            (s) => s?.size?.id === selectedSize?.id
+          );
 
           if (sizeData) {
             availableQuantity = sizeData.quantity;
             if (sizeData.quantity >= quantity) return count + 1;
           }
           data.outOfStock = true;
-
 
           // if (sizeData && sizeData.quantity >= quantity) return count + 1;
           // data.outOfStock = true;
@@ -506,23 +508,27 @@ const calculateCartItemTotal = (cartItems) => {
       }, 0);
 
       outOfStock = availableProductCount === 0;
-      const sizePrice = size ? catalogue.Product[0]?.sizes?.find((s) => s?.size?.id === JSON.parse(size)?.id)?.price || 0 : 0;
+      const sizePrice = size
+        ? catalogue.Product[0]?.sizes?.find(
+            (s) => s?.size?.id === JSON.parse(size)?.id
+          )?.price || 0
+        : 0;
 
       if (sizePrice) {
         sizeObject.price = sizePrice || 0;
       }
 
-      subtotal = availableProductCount * (catalogue.average_price + sizePrice + totalStitchingPrice) * quantity;
+      subtotal =
+        availableProductCount *
+        (catalogue.average_price + sizePrice + totalStitchingPrice) *
+        quantity;
       tax = (subtotal * (catalogue.GST || 0)) / 100;
+      taxPercentage = catalogue.GST;
       itemWeight = (catalogue.weight || 0) * quantity;
-
-    }
-
-
-
-    else if (product) {
-
-      const sizeDetails = size ? product.sizes?.find((s) => s?.size?.id === JSON.parse(size)?.id) : null;
+    } else if (product) {
+      const sizeDetails = size
+        ? product.sizes?.find((s) => s?.size?.id === JSON.parse(size)?.id)
+        : null;
       availableQuantity = sizeDetails ? sizeDetails.quantity : product.quantity;
 
       const sizePriceAndQuantity = sizeDetails
@@ -534,25 +540,27 @@ const calculateCartItemTotal = (cartItems) => {
       if (product.optionType === "Stitching") {
         subtotal = (product.offer_price + totalStitchingPrice) * quantity;
         tax = (subtotal * (product.retail_GST || 0)) / 100;
+        taxPercentage = product.retail_GST;
         itemWeight = (product.weight || 0) * quantity;
-      }
-      else if (product.optionType === "Size") {
-        if (sizePriceAndQuantity.quantity === 0 || product.quantity < quantity) {
-          console.log("if condition")
+      } else if (product.optionType === "Size") {
+        if (
+          sizePriceAndQuantity.quantity === 0 ||
+          product.quantity < quantity
+        ) {
+          console.log("if condition");
           outOfStock = true;
           if (sizeObject) {
             sizeObject.price = sizePriceAndQuantity?.price;
           }
         } else {
-          console.log("else  condition")
-          subtotal = (product.offer_price + sizePriceAndQuantity?.price) * quantity;
+          console.log("else  condition");
+          subtotal =
+            (product.offer_price + sizePriceAndQuantity?.price) * quantity;
           tax = (subtotal * (product.retail_GST || 0)) / 100;
+          taxPercentage = product.retail_GST;
           itemWeight = (product.weight || 0) * quantity;
         }
-
       }
-
-
 
       // if (sizePriceAndQuantity.quantity === 0 || product.quantity < quantity) {
       //   outOfStock = true;
@@ -564,8 +572,6 @@ const calculateCartItemTotal = (cartItems) => {
       //   tax = (subtotal * (product.retail_GST || 0)) / 100;
       //   itemWeight = (product.weight || 0) * quantity;
       // }
-
-
     }
 
     totalSubtotal += subtotal;
@@ -599,17 +605,18 @@ const calculateCartItemTotal = (cartItems) => {
       size: size ? JSON.stringify(sizeObject) : null,
       subtotal,
       tax,
+      taxPercentage,
       outOfStock,
       availableQuantity,
       products: isCatalogue
         ? catalogue.Product.map((prod) => ({
-          name: prod.name,
-          url: prod.url,
-          quantity: prod.quantity,
-          outOfStock: prod?.outOfStock,
-          code: prod.sku,
-          // price: prod.retail_price,
-        }))
+            name: prod.name,
+            url: prod.url,
+            quantity: prod.quantity,
+            outOfStock: prod?.outOfStock,
+            code: prod.sku,
+            // price: prod.retail_price,
+          }))
         : undefined,
     };
   });

@@ -4,6 +4,7 @@ import prisma from "../db/config.js";
 import slug from "slug";
 import sharp from "sharp";
 import passport from "passport";
+import _ from "underscore";
 
 const deleteFile = async (filePath) => {
   if (!filePath) return;
@@ -754,20 +755,21 @@ const uniqueImage = async (file, id = null) => {
 
 const productsSku = async (sku) => {
   try {
+    const skus = _.uniq(sku);
     const isProductExist = await prisma.product.findMany({
       where: {
-        sku: { in: sku },
+        sku: { in: skus },
       },
       select: { id: true, sku: true },
     });
 
-    if (isProductExist.length !== sku.length) {
+    if (isProductExist.length !== skus.length) {
       const productSkus = isProductExist.map((val) => val.sku);
-      let productSku = sku.filter((sku) => !productSkus.includes(sku));
+      let productSku = skus.filter((sku) => !productSkus.includes(sku));
       // await removeProductImage(imagePaths);
       return {
         status: false,
-        message: ` ${productSku} Related product not found!`,
+        message: `${productSku} Related product not found!`,
       };
     }
 

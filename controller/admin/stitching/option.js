@@ -151,6 +151,7 @@ const getOptionByGroupingId = async (req, res, next) => {
             type: true,
             isActive: true,
             isCustom: true,
+            isDefault: true,
             catalogue_price: true,
             price: true,
             dispatch_time: true,

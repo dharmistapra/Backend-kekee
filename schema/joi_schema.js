@@ -1049,6 +1049,7 @@ const stitchingOptionSchema = async (req, res, next) => {
           type: Joi.string().valid("Redio", "CheckBox").required(),
           dispatch_time: Joi.string().optional().allow(""),
           isCustom: Joi.boolean().optional().default(false),
+          isDefault: Joi.boolean().optional().default(false),
         })
       )
       .min(1)

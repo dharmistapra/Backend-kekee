@@ -580,6 +580,7 @@ model StitchingOption {
   // has_customization    Boolean                @default(false)
   isActive             Boolean?               @default(true)
   isCustom             Boolean?               @default(false)
+  isDefault            Boolean?               @default(false)
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   stitchingValues      StitchingValue[]

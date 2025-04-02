@@ -2207,6 +2207,17 @@ const getCatalogueProduct = async (req, res, next) => {
                 quantity: true,
               },
             },
+            RelatedProduct: {
+              where: { related: { catalogue: { deletedAt: null } } },
+              select: {
+                related: {
+                  select: {
+                    id: true,
+                    sku: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -2420,6 +2431,10 @@ const getCatalogueProduct = async (req, res, next) => {
             price: item.price,
             quantity: item.quantity,
           };
+        });
+
+        newProduct.RelatedProduct = product.RelatedProduct.map((item) => {
+          return item.related.sku;
         });
 
         return newProduct;

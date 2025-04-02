@@ -64,6 +64,7 @@ import {
   postContactUs,
 } from "../controller/admin/contactUs.js";
 import { getWebSetting } from "../controller/admin/webSetting.js";
+import { getShippingMethod } from "../controller/public/shippingMethod.js";
 const router = express.Router();
 
 // MENU API
@@ -247,5 +248,7 @@ router.get("/categorycollection", getCategoryCollection);
 router.post("/contact-us", contactUsSchema, postContactUs);
 
 router.get("/websetting", getWebSetting);
+
+router.get("/shippingmethod", getShippingMethod);
 
 export default router;

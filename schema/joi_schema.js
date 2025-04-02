@@ -1581,6 +1581,16 @@ const webSettingSchema = async (req, res, next) => {
   await JoiSchemaValidation(schema, req, next);
 };
 
+const shippingMethodSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    name: Joi.string().required(),
+    price: Joi.number().required().default(0),
+    description: Joi.string().required().default(""),
+    isActive: Joi.boolean().optional().default(true),
+  });
+  await JoiSchemaValidation(schema, req, next);
+};
+
 export {
   categorySchema,
   subCategorySchema,
@@ -1635,4 +1645,5 @@ export {
   OtpSchema,
   postaddressSchema,
   webSettingSchema,
+  shippingMethodSchema,
 };

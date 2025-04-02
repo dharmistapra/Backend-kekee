@@ -949,6 +949,16 @@ model WebSettings {
   updatedAt           DateTime @updatedAt
 }
 
+model ShippingMethod {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  price       Int
+  description String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // ORDER RELATED DATE END HERE EXPLAINATION
 // ORDER TABLE RELATION WITH ==ORDERITEM==, ==SHIPPING==, ==BILLING==, ==PAYMENT==
 // ORDERITEMTABLE RELATION WITH ==PRODUCT==, ==CATALOGUE==, 

@@ -146,7 +146,7 @@ const postRetailProduct = async (req, res, next) => {
     const productImages = await processProductImages(req.files);
     console.log(productImages);
 
-    url = `${slug(name)}-${sku}`;
+    url = `${slug(name)}-${slug(sku)}`;
 
     const productData = {
       name,
@@ -467,7 +467,7 @@ const postCatalogueProduct = async (req, res, next) => {
         //     `At least one image is required for product ${index + 1}.`
         //   );
         // }
-        const url = `${slug(name)}-${sku}`;
+        const url = `${slug(name)}-${slug(sku)}`;
         const productData = {
           name,
           catalogue_id,
@@ -1098,7 +1098,7 @@ const updateRetailProduct = async (req, res, next) => {
         ];
     }
 
-    url = `${slug(name)}-${sku}`;
+    url = `${slug(name)}-${slug(sku)}`;
 
     const productData = {
       name,
@@ -1813,7 +1813,7 @@ const arrayProducts = async (req, res, next) => {
       ? parseFloat(offer_price)
       : parseFloat(price) * (1 - parseFloat(discount) / 100);
 
-    url = `${slug(name)}-${sku}`;
+    url = `${slug(name)}-${slug(sku)}`;
 
     const productData = {
       name,

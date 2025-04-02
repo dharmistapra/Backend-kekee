@@ -159,7 +159,7 @@ const postCatlogProduct = async (req, res, next) => {
         mediumImage,
       });
     }
-    url = `${slug(name)}-${sku}`;
+    url = `${slug(name)}-${slug(sku)}`;
     let products = [];
     const productData = {
       name,
@@ -731,7 +731,7 @@ const updateCatalogueProduct = async (req, res, next) => {
       }
     }
 
-    url = `${slug(name)}-${sku}`;
+    url = `${slug(name)}-${slug(sku)}`;
 
     const processedImages = imagePaths
       ? [...imagePaths, ...(findData?.image || [])]
@@ -1806,7 +1806,7 @@ const addCatalogue = async (req, res, next) => {
     //   ? parseFloat(price) * (1 - parseFloat(catalogue_discount) / 100)
     //   : price;
 
-    url = `${slug(name)}-${cat_code}`;
+    url = `${slug(name)}-${slug(cat_code)}`;
     // Process catalogue updates
     let result;
     await prisma.$transaction(
@@ -1945,7 +1945,7 @@ const addCatalogue = async (req, res, next) => {
               discount > 0
                 ? parseInt(retailPrice) * (1 - parseInt(discount) / 100)
                 : retailPrice;
-            const url = `${slug(name)}-${existingProduct.sku}`;
+            const url = `${slug(name)}-${slug(existingProduct.sku)}`;
             let productSizeConnection;
             let sizeConnection = {};
             let productQuantity = existingProduct.quantity;

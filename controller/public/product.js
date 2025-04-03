@@ -383,6 +383,7 @@ const getProductDetails = async (req, res, next) => {
                             dispatch_time: true,
                             isActive: true,
                             isCustom: true,
+                            isDefault: true,
                             stitchingValues: {
                               select: {
                                 id: true,
@@ -446,6 +447,21 @@ const getProductDetails = async (req, res, next) => {
                 id: true,
                 value: true,
                 position: true,
+              },
+            },
+          },
+        },
+        RelatedProduct: {
+          where: {
+            related: { catalogue: { deletedAt: null }, isActive: true },
+          },
+          select: {
+            related: {
+              select: {
+                id: true,
+                sku: true,
+                url: true,
+                image: true,
               },
             },
           },
@@ -550,6 +566,11 @@ const getProductDetails = async (req, res, next) => {
           return item.size;
         })
         .flat();
+    }
+    if (data && data.RelatedProduct) {
+      data.RelatedProduct = data.RelatedProduct?.map((item) => {
+        return item.related;
+      }).flat();
     }
     console.log("dataata => ", data.stitchingOption);
     // delete data.categories;

@@ -217,6 +217,7 @@ const getCatalogueProduct = async (req, res, next) => {
                             dispatch_time: true,
                             isActive: true,
                             isCustom: true,
+                            isDefault: true,
                             stitchingValues: {
                               select: {
                                 id: true,

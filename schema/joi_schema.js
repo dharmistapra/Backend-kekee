@@ -1049,6 +1049,7 @@ const stitchingOptionSchema = async (req, res, next) => {
           type: Joi.string().valid("Redio", "CheckBox").required(),
           dispatch_time: Joi.string().optional().allow(""),
           isCustom: Joi.boolean().optional().default(false),
+          isDefault: Joi.boolean().optional().default(false),
         })
       )
       .min(1)
@@ -1581,6 +1582,16 @@ const webSettingSchema = async (req, res, next) => {
   await JoiSchemaValidation(schema, req, next);
 };
 
+const shippingMethodSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    name: Joi.string().required(),
+    price: Joi.number().required().default(0),
+    description: Joi.string().required().default(""),
+    isActive: Joi.boolean().optional().default(true),
+  });
+  await JoiSchemaValidation(schema, req, next);
+};
+
 export {
   categorySchema,
   subCategorySchema,
@@ -1635,4 +1646,5 @@ export {
   OtpSchema,
   postaddressSchema,
   webSettingSchema,
+  shippingMethodSchema,
 };

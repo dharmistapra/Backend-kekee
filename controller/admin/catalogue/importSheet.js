@@ -924,7 +924,7 @@ const importCatalogues = async (req, res, next) => {
               (1 - parseFloat(catalogueItemDiscount) / 100)
             : parseFloat(catalogueItemMarketPrice);
 
-        let cat_url = `${slug(productName)}-${catCode}`;
+        let cat_url = `${slug(productName)}-${slug(catCode)}`;
 
         let average_price = parseFloat(finalOfferPrice) / parseInt(noOfProduct);
 
@@ -1035,7 +1035,7 @@ const importCatalogues = async (req, res, next) => {
         } else if (catalogue) {
           finalOfferPrice = catalogue.average_price;
         }
-        let url = `${slug(productName)}-${productCode}`;
+        let url = `${slug(productName)}-${slug(productCode)}`;
 
         let product = {
           name: productName,

@@ -46,6 +46,7 @@ import {
   shippingchargesSchema,
   paymentMethodsSchema,
   webSettingSchema,
+  shippingMethodSchema,
 } from "../schema/joi_schema.js";
 import {
   getAllSubCategory,
@@ -340,6 +341,13 @@ import {
   getWebSetting,
   postWebSetting,
 } from "../controller/admin/webSetting.js";
+import {
+  deleteShippingMethod,
+  getShippingMethod,
+  postShippingMethod,
+  shippingMethodStatus,
+  updateShippingMethod,
+} from "../controller/admin/shippingMethod.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -791,5 +799,15 @@ adminRouter.post(
   postWebSetting
 );
 adminRouter.get("/websetting", getWebSetting);
+
+adminRouter.post("/shippingmethod", shippingMethodSchema, postShippingMethod);
+adminRouter.put(
+  "/shippingmethod/:id",
+  shippingMethodSchema,
+  updateShippingMethod
+);
+adminRouter.get("/shippingmethod", getShippingMethod);
+adminRouter.delete("/shippingmethod/:id", deleteShippingMethod);
+adminRouter.get("/shippingmethod-status/:id", shippingMethodStatus);
 
 export default adminRouter;

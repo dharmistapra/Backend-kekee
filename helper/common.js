@@ -177,6 +177,7 @@ const models = {
   shippingCharges: prisma.shippingCharges,
   collectionAll: prisma.collectionAll,
   paymentMethods: prisma.paymentMethods,
+  shippingMethod: prisma.shippingMethod,
 };
 
 const updatePosition = async (model, data) => {

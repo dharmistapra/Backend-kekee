@@ -53,7 +53,26 @@ const postShippingZone = async (req, res, next) => {
 
 const getShippingZone = async (req, res, next) => {
   try {
-    const result = await prisma.shippingZone.findMany({});
+    const result = await prisma.shippingZone.findMany({
+      select: {
+        id: true,
+        name: true,
+        countries: true,
+        ShippingZoneAddRate: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            type: true,
+            selectedOption: true,
+            minWeight: true,
+            maxWeight: true,
+            minprice:true,
+            maxprice:true,
+          }
+        }
+      }
+    });
     return res.status(200).json({
       isSuccess: true,
       message: "Shipping zone get successfully.",

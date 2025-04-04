@@ -10,7 +10,7 @@ import {
   uniqueImage,
 } from "../../../helper/common.js";
 import slug from "slug";
-import _ from "underscore";
+import _, { select } from "underscore";
 import {
   importCatalogue,
   importCatalogueSchema,
@@ -1691,6 +1691,17 @@ const exportCatalogue = async (req, res, next) => {
                 },
               },
             },
+            RelatedProduct: {
+              where: { related: { catalogue: { deletedAt: null } } },
+              select: {
+                related: {
+                  select: {
+                    id: true,
+                    sku: true,
+                  },
+                },
+              },
+            },
           },
         },
         CatalogueCategory: {
@@ -1711,7 +1722,6 @@ const exportCatalogue = async (req, res, next) => {
         },
       },
     });
-
     const productData = await prisma.product.findMany({
       where: {
         CatalogueCategory: {
@@ -1750,8 +1760,20 @@ const exportCatalogue = async (req, res, next) => {
             },
           },
         },
+        RelatedProduct: {
+          where: { related: { catalogue: { deletedAt: null } } },
+          select: {
+            related: {
+              select: {
+                id: true,
+                sku: true,
+              },
+            },
+          },
+        },
       },
     });
+
     let products = [];
     let allAttributes = new Set();
     for (let catalogue of catalogueData) {
@@ -1805,8 +1827,10 @@ const exportCatalogue = async (req, res, next) => {
         tag: catalogue.tag.join(","),
         cat_image: catImage,
         image: "",
-        isStitching: catalogue.stitching === true ? "Y" : "N",
-        isSize: catalogue.size === true ? "Y" : "N",
+        relatedProduct: "",
+        optionType: catalogue.optionType,
+        // isStitching: catalogue.stitching === true ? "Y" : "N",
+        // isSize: catalogue.size === true ? "Y" : "N",
         isActive: catalogue.isActive === true ? "Y" : "N",
         showInSingle: "",
       };
@@ -1845,6 +1869,10 @@ const exportCatalogue = async (req, res, next) => {
               !isAttribute && allAttributes.add(value.attribute.name);
             }
           });
+
+          const relatedProduct = product?.RelatedProduct.map(
+            (item) => item.related.sku
+          );
           const productImage = product.image.map((val) => path.basename(val));
           let data = {
             category: category.join(","),
@@ -1866,8 +1894,13 @@ const exportCatalogue = async (req, res, next) => {
             tag: product.tag.join(","),
             cat_image: "",
             image: productImage.join(","),
-            isStitching: product.stitching === true ? "Y" : "N",
-            isSize: product.size === true ? "Y" : "N",
+            // isStitching: product.stitching === true ? "Y" : "N",
+            // isSize: product.size === true ? "Y" : "N",
+            relatedProduct:
+              relatedProduct && relatedProduct.length > 0
+                ? relatedProduct.join(",")
+                : "",
+            optionType: product.optionType,
             isActive: product.isActive === true ? "Y" : "N",
             showInSingle: product.showInSingle === true ? "Y" : "N",
           };
@@ -1910,6 +1943,10 @@ const exportCatalogue = async (req, res, next) => {
             !isAttribute && allAttributes.add(value.attribute.name);
           }
         });
+
+        const relatedProduct = product?.RelatedProduct.map(
+          (item) => item.related.sku
+        );
         const productImage = product.image.map((val) => path.basename(val));
         let data = {
           category: category.join(","),
@@ -1931,8 +1968,13 @@ const exportCatalogue = async (req, res, next) => {
           tag: product.tag.join(","),
           cat_image: "",
           image: productImage.join(","),
-          isStitching: product.stitching === true ? "Y" : "N",
-          isSize: product.size === true ? "Y" : "N",
+          relatedProduct:
+            relatedProduct && relatedProduct.length > 0
+              ? relatedProduct.join(",")
+              : "",
+          optionType: product.optionType,
+          // isStitching: product.stitching === true ? "Y" : "N",
+          // isSize: product.size === true ? "Y" : "N",
           isActive: product.isActive === true ? "Y" : "N",
           showInSingle: product.showInSingle === true ? "Y" : "N",
         };

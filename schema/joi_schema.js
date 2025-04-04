@@ -1578,6 +1578,8 @@ const webSettingSchema = async (req, res, next) => {
     }).required(),
     showProductCount: Joi.number().required(),
     showPrice: Joi.boolean().required(),
+    wholesale_min_buy_qty: Joi.number().optional().default(0),
+    wholesale_min_buy_amount: Joi.number().optional().default(0),
   });
   await JoiSchemaValidation(schema, req, next);
 };
@@ -1588,6 +1590,14 @@ const shippingMethodSchema = async (req, res, next) => {
     price: Joi.number().required().default(0),
     description: Joi.string().required().default(""),
     isActive: Joi.boolean().optional().default(true),
+  });
+  await JoiSchemaValidation(schema, req, next);
+};
+
+const shippingZoneSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    name: Joi.string().required(),
+    countries: Joi.array().items(Joi.string().required()).required(),
   });
   await JoiSchemaValidation(schema, req, next);
 };
@@ -1647,4 +1657,5 @@ export {
   postaddressSchema,
   webSettingSchema,
   shippingMethodSchema,
+  shippingZoneSchema,
 };

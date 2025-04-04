@@ -930,24 +930,26 @@ model ContactUs {
 }
 
 model WebSettings {
-  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
-  headerLogo          String
-  footerLogo          String
-  favIcon             String
-  address             String
-  interNationalNumber String?  @default("")
-  domesticNumber      String?  @default("")
-  complaintNumber     String?  @default("")
-  email               String
-  skypeId             String?  @default("")
-  timing              String?  @default("")
-  mapUrl              String
-  notification        String?  @default("")
-  happyToHelp         Json
-  showProductCount    Int      @default(10)
-  showPrice           Boolean? @default(false)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                       String   @id @default(auto()) @map("_id") @db.ObjectId
+  headerLogo               String
+  footerLogo               String
+  favIcon                  String
+  address                  String
+  interNationalNumber      String?  @default("")
+  domesticNumber           String?  @default("")
+  complaintNumber          String?  @default("")
+  email                    String
+  skypeId                  String?  @default("")
+  timing                   String?  @default("")
+  mapUrl                   String
+  notification             String?  @default("")
+  happyToHelp              Json
+  showProductCount         Int      @default(10)
+  showPrice                Boolean? @default(false)
+  wholesale_min_buy_qty    Int?     @default(0)
+  wholesale_min_buy_amount Int?     @default(0)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 }
 
 model ShippingMethod {
@@ -958,6 +960,14 @@ model ShippingMethod {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model ShippingZone {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  countries String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ORDER RELATED DATE END HERE EXPLAINATION

@@ -47,6 +47,7 @@ import {
   paymentMethodsSchema,
   webSettingSchema,
   shippingMethodSchema,
+  shippingZoneSchema,
 } from "../schema/joi_schema.js";
 import {
   getAllSubCategory,
@@ -348,6 +349,12 @@ import {
   shippingMethodStatus,
   updateShippingMethod,
 } from "../controller/admin/shippingMethod.js";
+import {
+  deleteShippingZone,
+  getShippingZone,
+  postShippingZone,
+  updateShippingZone,
+} from "../controller/admin/shippingZone.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -809,5 +816,10 @@ adminRouter.put(
 adminRouter.get("/shippingmethod", getShippingMethod);
 adminRouter.delete("/shippingmethod/:id", deleteShippingMethod);
 adminRouter.get("/shippingmethod-status/:id", shippingMethodStatus);
+
+adminRouter.post("/shipping/zone", shippingZoneSchema, postShippingZone);
+adminRouter.put("/shipping/zone/:id", shippingZoneSchema, updateShippingZone);
+adminRouter.get("/shipping/zone", getShippingZone);
+adminRouter.delete("/shipping/zone/:id", deleteShippingZone);
 
 export default adminRouter;

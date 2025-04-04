@@ -261,6 +261,36 @@ const cmsPosition = async (req, res, next) => {
   }
 };
 
+
+const getBankdetails = async (req, res, next) => {
+  try {
+
+    const result = await prisma.cmsPage.findFirst({
+      where: {
+        title: {
+          contains: "Bank",
+          mode: "insensitive",
+        },
+      },
+      select: {
+        description: true,
+        title: true,
+      }
+    })
+
+
+    return res.status(200).json({
+      isSuccess: true,
+      data: result,
+      message: "Bank detail get successfully.",
+    });
+
+  } catch (err) {
+    const error = new Error("Something went wrong, please try again!");
+    next(error);
+  }
+}
+
 export {
   postCms,
   getAllCms,
@@ -270,4 +300,5 @@ export {
   cmsStatus,
   cmsPosition,
   getCms,
+  getBankdetails
 };

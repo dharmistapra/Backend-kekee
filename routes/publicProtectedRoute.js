@@ -76,4 +76,5 @@ publicProtected.delete("/shipping/address/:id", deleteshipAddress);
 publicProtected.get("/user/address/:id", getuserAddresspagiantion);
 
 publicProtected.get("/user/profile/:id", getuserById);
+
 export default publicProtected;

@@ -972,19 +972,20 @@ model ShippingZone {
 }
 
 model ShippingZoneAddRate {
-  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
   type           RateType
   name           String
   price          Float
-  selectedOption RateCondition
+  selectedOption RateCondition?
   minprice       Float?
   maxprice       Float?
   minWeight      Float?
   maxWeight      Float?
-  zone_id        String        @db.ObjectId
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  ShippingZone   ShippingZone  @relation(fields: [zone_id], references: [id], onDelete: Cascade)
+  description    String?
+  zone_id        String         @db.ObjectId
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  ShippingZone   ShippingZone   @relation(fields: [zone_id], references: [id], onDelete: Cascade)
 }
 
 enum RateType {

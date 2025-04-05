@@ -356,7 +356,7 @@ import {
   postShippingZone,
   updateShippingZone,
 } from "../controller/admin/shippingZone.js";
-import { postShippingRate } from "../controller/admin/shippingRate.js";
+import { deleteShippingRate, postShippingRate, puttShippingRate } from "../controller/admin/shippingRate.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -825,5 +825,7 @@ adminRouter.get("/shipping/zone", getShippingZone);
 adminRouter.delete("/shipping/zone/:id", deleteShippingZone);
 
 adminRouter.post("/shipping/rate", [shippingRateSchema], postShippingRate);
+adminRouter.put("/shipping/rate/:id", [shippingRateSchema], puttShippingRate);
+adminRouter.delete("/shipping/rate/:id", deleteShippingRate);
 
 export default adminRouter;

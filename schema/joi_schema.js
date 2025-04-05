@@ -1613,6 +1613,10 @@ const shippingRateSchema = async (req, res, next) => {
         "any.required": "Name is required",
       }),
 
+
+    description: Joi.string()
+      .optional()
+      .allow(null),
     price: Joi.number()
       .min(0)
       .precision(2)
@@ -1633,8 +1637,8 @@ const shippingRateSchema = async (req, res, next) => {
       }),
 
     selectedOption: Joi.string()
-      .valid("WEIGHT", "TOTAL_PRICE")
-      .required()
+      .optional()
+      .allow(null)
       .messages({
         "any.only": "selectedOption must be either 'WEIGHT' or 'TOTAL_PRICE'",
         "any.required": "selectedOption is required",
@@ -1642,7 +1646,7 @@ const shippingRateSchema = async (req, res, next) => {
 
     minWeight: Joi.when("selectedOption", {
       is: "WEIGHT",
-      then: Joi.number().min(0).required().messages({
+      then: Joi.number().min(0).optional().allow(null).messages({
         "number.base": "Min Weight must be a valid number",
         "number.min": "Min Weight must be at least 0",
         "any.required": "Min Weight is required when selectedOption is WEIGHT",
@@ -1652,7 +1656,7 @@ const shippingRateSchema = async (req, res, next) => {
 
     maxWeight: Joi.when("selectedOption", {
       is: "WEIGHT",
-      then: Joi.number().greater(Joi.ref("minWeight")).required().messages({
+      then: Joi.number().greater(Joi.ref("minWeight")).optional().allow(null).messages({
         "number.base": "Max Weight must be a valid number",
         "number.greater": "Max Weight must be greater than Min Weight",
         "any.required": "Max Weight is required when selectedOption is WEIGHT",

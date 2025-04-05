@@ -1602,6 +1602,93 @@ const shippingZoneSchema = async (req, res, next) => {
   await JoiSchemaValidation(schema, req, next);
 };
 
+
+const shippingRateSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    name: Joi.string()
+      .pattern(/^[A-Za-z\s]+$/)
+      .required()
+      .messages({
+        "string.pattern.base": "Name must contain only letters and spaces",
+        "any.required": "Name is required",
+      }),
+
+    price: Joi.number()
+      .min(0)
+      .precision(2)
+      .required()
+      .messages({
+        "number.base": "Price must be a valid number",
+        "number.min": "Price must be at least 0",
+        "number.precision": "Price must have up to 2 decimal places",
+        "any.required": "Price is required",
+      }),
+
+    type: Joi.string()
+      .valid("FLAT_RATE", "EXCEL_SHEET")
+      .required()
+      .messages({
+        "any.only": "Type must be either 'FLAT_RATE' or 'EXCEL_SHEET'",
+        "any.required": "Type is required",
+      }),
+
+    selectedOption: Joi.string()
+      .valid("WEIGHT", "TOTAL_PRICE")
+      .required()
+      .messages({
+        "any.only": "selectedOption must be either 'WEIGHT' or 'TOTAL_PRICE'",
+        "any.required": "selectedOption is required",
+      }),
+
+    minWeight: Joi.when("selectedOption", {
+      is: "WEIGHT",
+      then: Joi.number().min(0).required().messages({
+        "number.base": "Min Weight must be a valid number",
+        "number.min": "Min Weight must be at least 0",
+        "any.required": "Min Weight is required when selectedOption is WEIGHT",
+      }),
+      // otherwise: Joi.forbidden(),
+    }),
+
+    maxWeight: Joi.when("selectedOption", {
+      is: "WEIGHT",
+      then: Joi.number().greater(Joi.ref("minWeight")).required().messages({
+        "number.base": "Max Weight must be a valid number",
+        "number.greater": "Max Weight must be greater than Min Weight",
+        "any.required": "Max Weight is required when selectedOption is WEIGHT",
+      }),
+      // otherwise: Joi.forbidden(),
+    }),
+
+    minprice: Joi.when("selectedOption", {
+      is: "TOTAL_PRICE",
+      then: Joi.number().min(0).required().messages({
+        "number.base": "Min Order Price must be a valid number",
+        "number.min": "Min Order Price must be at least 0",
+        "any.required": "Min Order Price is required when selectedOption is TOTAL_PRICE",
+      }),
+      // otherwise: Joi.forbidden(),
+    }),
+
+    maxprice: Joi.when("selectedOption", {
+      is: "TOTAL_PRICE",
+      then: Joi.number().greater(Joi.ref("minprice")).required().messages({
+        "number.base": "Max Order Price must be a valid number",
+        "number.greater": "Max Order Price must be greater than Min Order Price",
+        "any.required": "Max Order Price is required when selectedOption is TOTAL_PRICE",
+      }),
+      // otherwise: Joi.forbidden(),
+    }),
+
+    zone_id: Joi.string().required().messages({
+      "any.required": "Zone ID is required",
+    }),
+  });
+
+  await JoiSchemaValidation(schema, req, next);
+};
+
+
 export {
   categorySchema,
   subCategorySchema,
@@ -1658,4 +1745,5 @@ export {
   webSettingSchema,
   shippingMethodSchema,
   shippingZoneSchema,
+  shippingRateSchema
 };

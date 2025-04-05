@@ -48,6 +48,7 @@ import {
   webSettingSchema,
   shippingMethodSchema,
   shippingZoneSchema,
+  shippingRateSchema,
 } from "../schema/joi_schema.js";
 import {
   getAllSubCategory,
@@ -355,6 +356,7 @@ import {
   postShippingZone,
   updateShippingZone,
 } from "../controller/admin/shippingZone.js";
+import { postShippingRate } from "../controller/admin/shippingRate.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -821,5 +823,7 @@ adminRouter.post("/shipping/zone", shippingZoneSchema, postShippingZone);
 adminRouter.put("/shipping/zone/:id", shippingZoneSchema, updateShippingZone);
 adminRouter.get("/shipping/zone", getShippingZone);
 adminRouter.delete("/shipping/zone/:id", deleteShippingZone);
+
+adminRouter.post("/shipping/rate", [shippingRateSchema], postShippingRate);
 
 export default adminRouter;

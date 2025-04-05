@@ -75,6 +75,6 @@ publicProtected.get("/user/default-status/:id", shippingDefaultStatus);
 publicProtected.delete("/shipping/address/:id", deleteshipAddress);
 publicProtected.get("/user/address/:id", getuserAddresspagiantion);
 
-publicProtected.get("/user/profile/:id", getuserById);
+publicProtected.get("/user/profile/:id", getuserById);  
 
 export default publicProtected;

@@ -1,7 +1,7 @@
 import prisma from "../../../db/config.js";
 import { updateStatus } from "../../../helper/common.js";
 
-// HANDELE ADD ATTRIBUTE API
+// HANDLE ADD ATTRIBUTE API
 const postAttribute = async (req, res, next) => {
   try {
     const {
@@ -127,11 +127,10 @@ const getDefaultAttributes = async (req, res, next) => {
     });
 
     return res.status(200).json({
-      isSuccess: true,  // Changed this to true
+      isSuccess: true,
       message: "Attributes fetched successfully.",
       data,
     });
-
   } catch (error) {
     console.log(error);
     let err = new Error("Something went wrong, please try again!");
@@ -293,16 +292,14 @@ const deleteAttribute = async (req, res, next) => {
 const updateAttributeStatus = async (req, res, next) => {
   try {
     let id = req.params.id.trim();
-    const result = await updateStatus("attributeMaster", id);
-    if (result.status === false)
-      return res
-        .status(400)
-        .json({ isSuccess: false, message: result.message });
+    const { status, message, data } = await updateStatus("attributeMaster", id);
+    if (!status)
+      return res.status(400).json({ isSuccess: status, message: message });
 
     return res.status(200).json({
       isSuccess: true,
-      message: result.message,
-      data: result.data,
+      message: message,
+      data: data,
     });
   } catch (error) {
     let err = new Error("Something went wrong, please try again!");

@@ -179,7 +179,7 @@ const paginationSize = async (req, res, next) => {
 
     return res.status(200).json({
       isSuccess: true,
-      message: "CMS pages get successfully.",
+      message: "Size pages get successfully.",
       data: result,
     });
   } catch (error) {

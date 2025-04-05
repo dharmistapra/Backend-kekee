@@ -768,7 +768,6 @@ const productsSku = async (sku) => {
     if (isProductExist.length !== skus.length) {
       const productSkus = isProductExist.map((val) => val.sku);
       let productSku = skus.filter((sku) => !productSkus.includes(sku));
-      // await removeProductImage(imagePaths);
       return {
         status: false,
         message: `${productSku} Related product not found!`,

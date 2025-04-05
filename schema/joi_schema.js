@@ -1602,7 +1602,6 @@ const shippingZoneSchema = async (req, res, next) => {
   await JoiSchemaValidation(schema, req, next);
 };
 
-
 const shippingRateSchema = async (req, res, next) => {
   const schema = Joi.object({
     name: Joi.string()
@@ -1613,24 +1612,17 @@ const shippingRateSchema = async (req, res, next) => {
         "any.required": "Name is required",
       }),
 
-    price: Joi.number()
-      .min(0)
-      .precision(2)
-      .required()
-      .messages({
-        "number.base": "Price must be a valid number",
-        "number.min": "Price must be at least 0",
-        "number.precision": "Price must have up to 2 decimal places",
-        "any.required": "Price is required",
-      }),
+    price: Joi.number().min(0).precision(2).required().messages({
+      "number.base": "Price must be a valid number",
+      "number.min": "Price must be at least 0",
+      "number.precision": "Price must have up to 2 decimal places",
+      "any.required": "Price is required",
+    }),
 
-    type: Joi.string()
-      .valid("FLAT_RATE", "EXCEL_SHEET")
-      .required()
-      .messages({
-        "any.only": "Type must be either 'FLAT_RATE' or 'EXCEL_SHEET'",
-        "any.required": "Type is required",
-      }),
+    type: Joi.string().valid("FLAT_RATE", "EXCEL_SHEET").required().messages({
+      "any.only": "Type must be either 'FLAT_RATE' or 'EXCEL_SHEET'",
+      "any.required": "Type is required",
+    }),
 
     selectedOption: Joi.string()
       .valid("WEIGHT", "TOTAL_PRICE")
@@ -1665,7 +1657,8 @@ const shippingRateSchema = async (req, res, next) => {
       then: Joi.number().min(0).required().messages({
         "number.base": "Min Order Price must be a valid number",
         "number.min": "Min Order Price must be at least 0",
-        "any.required": "Min Order Price is required when selectedOption is TOTAL_PRICE",
+        "any.required":
+          "Min Order Price is required when selectedOption is TOTAL_PRICE",
       }),
       // otherwise: Joi.forbidden(),
     }),
@@ -1674,8 +1667,10 @@ const shippingRateSchema = async (req, res, next) => {
       is: "TOTAL_PRICE",
       then: Joi.number().greater(Joi.ref("minprice")).required().messages({
         "number.base": "Max Order Price must be a valid number",
-        "number.greater": "Max Order Price must be greater than Min Order Price",
-        "any.required": "Max Order Price is required when selectedOption is TOTAL_PRICE",
+        "number.greater":
+          "Max Order Price must be greater than Min Order Price",
+        "any.required":
+          "Max Order Price is required when selectedOption is TOTAL_PRICE",
       }),
       // otherwise: Joi.forbidden(),
     }),
@@ -1688,6 +1683,35 @@ const shippingRateSchema = async (req, res, next) => {
   await JoiSchemaValidation(schema, req, next);
 };
 
+const importShippingRateSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    name: Joi.string().required(),
+    price: Joi.number().required(),
+    selectedOption: Joi.string().valid("WEIGHT", "TOTAL_PRICE").required(),
+    minWeight: Joi.when("selectedOption", {
+      is: "WEIGHT",
+      then: Joi.number().required(),
+      otherwise: Joi.number().optional(),
+    }),
+    maxWeight: Joi.when("selectedOption", {
+      is: "WEIGHT",
+      then: Joi.number().required(),
+      otherwise: Joi.number().optional(),
+    }),
+    minPrice: Joi.when("selectedOption", {
+      is: "TOTAL_PRICE",
+      then: Joi.number().required(),
+      otherwise: Joi.forbidden(),
+    }),
+    maxPrice: Joi.when("selectedOption", {
+      is: "TOTAL_PRICE",
+      then: Joi.number().required(),
+      otherwise: Joi.forbidden(),
+    }),
+    zone_id: Joi.string().optional().allow(""),
+  });
+  return schema;
+};
 
 export {
   categorySchema,
@@ -1745,5 +1769,6 @@ export {
   webSettingSchema,
   shippingMethodSchema,
   shippingZoneSchema,
-  shippingRateSchema
+  shippingRateSchema,
+  importShippingRateSchema,
 };

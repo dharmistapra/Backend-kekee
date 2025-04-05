@@ -357,8 +357,10 @@ import {
   updateShippingZone,
 } from "../controller/admin/shippingZone.js";
 import {
+  deleteShippingRate,
   importShippingRate,
   postShippingRate,
+  puttShippingRate,
 } from "../controller/admin/shippingRate.js";
 
 /* GET home page. */
@@ -833,5 +835,7 @@ adminRouter.post(
   data.uploadShippingRate,
   importShippingRate
 );
+adminRouter.put("/shipping/rate/:id", [shippingRateSchema], puttShippingRate);
+adminRouter.delete("/shipping/rate/:id", deleteShippingRate);
 
 export default adminRouter;

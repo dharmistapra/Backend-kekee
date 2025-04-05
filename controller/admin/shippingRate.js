@@ -16,6 +16,7 @@ const postShippingRate = async (req, res, next) => {
       zone_id,
       minprice,
       maxprice,
+      description,
     } = req.body;
     const result = await prisma.shippingZoneAddRate.create({
       data: {
@@ -27,6 +28,7 @@ const postShippingRate = async (req, res, next) => {
         maxWeight,
         zone_id,
         minprice,
+        description,
         maxprice,
       },
     });
@@ -39,6 +41,78 @@ const postShippingRate = async (req, res, next) => {
   } catch (err) {
     console.log(err);
     const error = new Error("Something went wrong, please try again!");
+    next(error);
+  }
+};
+
+const puttShippingRate = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const {
+      maxWeight,
+      minWeight,
+      name,
+      price,
+      selectedOption,
+      type,
+      zone_id,
+      minprice,
+      maxprice,
+      description,
+    } = req.body;
+    const result = await prisma.shippingZoneAddRate.update({
+      where: {
+        id: id,
+      },
+      data: {
+        name,
+        price,
+        type,
+        selectedOption,
+        minWeight,
+        maxWeight,
+        zone_id,
+        minprice,
+        description,
+        maxprice,
+      },
+    });
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "Shipping rate update successfully.",
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+    const error = new Error("Something went wrong, please try again!");
+    next(error);
+  }
+};
+
+const deleteShippingRate = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+
+    if (!/^[a-fA-F0-9]{24}$/.test(id))
+      return res
+        .status(400)
+        .json({ isSuccess: false, message: "Invalid ID format!" });
+
+    const { status, message, data } = await deleteData(
+      "shippingZoneAddRate",
+      id
+    );
+    if (!status)
+      return res.status(404).json({ isSuccess: status, message: message });
+
+    return res.status(200).json({
+      isSuccess: status,
+      message: message,
+      data: data,
+    });
+  } catch (err) {
+    const error = new Error("Something went wrong,please try again!");
     next(error);
   }
 };
@@ -59,20 +133,27 @@ const importShippingRate = async (req, res, next) => {
       let {
         name,
         price,
+        description,
         selectedOption,
         minWeight,
         maxWeight,
-        minPrice,
-        maxPrice,
+        minprice,
+        maxprice,
         zoneName,
       } = row;
       index = index + 1;
-      if (selectedOption === "Weight") {
-        minPrice = 0;
-        maxPrice = 0;
-      } else if (selectedOption === "Price") {
+      console.log(selectedOption == "WEIGHT");
+      if (selectedOption === "WEIGHT") {
+        minprice = 0;
+        maxprice = 0;
+      } else if (selectedOption === "TOTAL_PRICE") {
         minWeight = 0;
         maxWeight = 0;
+      } else if (selectedOption === "") {
+        minWeight = 0;
+        maxWeight = 0;
+        minprice = 0;
+        maxprice = 0;
       }
       let zoneId;
       //   if (!zoneName) {
@@ -102,14 +183,17 @@ const importShippingRate = async (req, res, next) => {
 
       let shippingZoneRate = {
         name,
-        price,
-        selectedOption,
-        minWeight,
-        maxWeight,
-        minPrice,
-        maxPrice,
+        type: "EXCEL_SHEET",
+        price: parseFloat(price),
+        description,
+        selectedOption: selectedOption || null,
+        minWeight: parseFloat(minWeight),
+        maxWeight: parseFloat(maxWeight),
+        minprice: parseFloat(minprice),
+        maxprice: parseFloat(maxprice),
         zone_id: zoneId || "",
       };
+
       const shippingRateSchema = await importShippingRateSchema();
       const { error } = shippingRateSchema.validate(shippingZoneRate, {
         abortEarly: false,
@@ -153,4 +237,9 @@ const importShippingRate = async (req, res, next) => {
   }
 };
 
-export { postShippingRate, importShippingRate };
+export {
+  postShippingRate,
+  puttShippingRate,
+  deleteShippingRate,
+  importShippingRate,
+};

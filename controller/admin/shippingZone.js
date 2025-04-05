@@ -69,6 +69,8 @@ const getShippingZone = async (req, res, next) => {
             maxWeight: true,
             minprice:true,
             maxprice:true,
+            description:true,
+            zone_id: true,
           }
         }
       }

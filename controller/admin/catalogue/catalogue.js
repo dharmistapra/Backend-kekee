@@ -35,27 +35,19 @@ const postCatlogProduct = async (req, res, next) => {
       url,
       quantity,
       weight,
-      // price,
       average_price,
       retail_price,
       retail_GST,
       retail_discount,
-      // offer_price,
-      // discount,
       offer_price,
       description,
       label,
       tag,
       showInSingle,
       category_id,
-      collection_id,
       attributes,
-      colour_id,
-      productlabels,
       optionType,
       size,
-      isSize,
-      stitching,
       readyToShip,
       relatedProduct,
     } = req.body;
@@ -65,9 +57,6 @@ const postCatlogProduct = async (req, res, next) => {
 
     attributes = attributes?.map((jsonString) => JSON.parse(jsonString));
     req.body.attributes = attributes;
-
-    productlabels = productlabels?.map((jsonString) => JSON.parse(jsonString));
-    req.body.productlabels = productlabels;
 
     size = size?.map((jsonString) => JSON.parse(jsonString));
     req.body.size = size;
@@ -110,7 +99,7 @@ const postCatlogProduct = async (req, res, next) => {
       await removeProductImage(imagePaths);
       return res
         .status(409)
-        .json({ isSuccess: false, message: "Code Already Used" });
+        .json({ isSuccess: false, message: "Product SKU already exists!" });
     }
     catalogue_id = null;
     if (catalogue_id) {
@@ -125,11 +114,6 @@ const postCatlogProduct = async (req, res, next) => {
           .json({ isSuccess: false, message: "Catalogue not found!" });
       }
     }
-
-    // const finalOfferPrice = offer_price
-    //   ? parseFloat(offer_price)
-    //   : parseFloat(price) * (1 - parseFloat(discount) / 100);
-
     let finalOfferPrice = 0;
     if (showInSingle === true) {
       if (retail_price > 0 && retail_discount > 0) {
@@ -168,13 +152,11 @@ const postCatlogProduct = async (req, res, next) => {
       url,
       quantity,
       weight,
-      // price: parseFloat(price),
       average_price: parseFloat(average_price),
       retail_price: parseFloat(retail_price),
       retail_GST: parseFloat(retail_GST),
       retail_discount: parseFloat(retail_discount),
       offer_price: finalOfferPrice,
-      // discount: parseFloat(discount),
       description,
       label,
       tag,
@@ -186,8 +168,6 @@ const postCatlogProduct = async (req, res, next) => {
       isActive: false,
       isDraft: catalogue_id ? false : true,
       optionType,
-      // stitching: stitching,
-      // size: isSize,
     };
 
     let categoryConnection = [];
@@ -208,18 +188,6 @@ const postCatlogProduct = async (req, res, next) => {
       productData["categories"] = {
         create: categoryConnection,
       };
-    }
-    if (collection_id && collection_id.length > 0) {
-      const { status, message } = await handleProductConnection(
-        "collection",
-        collection_id,
-        imagePaths
-      );
-      if (!status)
-        return res.status(400).json({
-          isSuccess: status,
-          message: message,
-        });
     }
     if (attributes && attributes.length > 0) {
       const { status, message, data } = await handleProductAttributeConnection(
@@ -245,55 +213,7 @@ const postCatlogProduct = async (req, res, next) => {
           message: message,
         });
       }
-
-      // productData["RelatedProducts"] = {
-      //   create: data.map((productId) => ({
-      //     related: { connect: { id: productId } },
-      //   })),
-      // };
       relatedProduct = data;
-    }
-    let colourConnection = [];
-    if (colour_id) {
-      const { status, message } = await handleProductConnection(
-        "colour",
-        colour_id,
-        imagePaths
-      );
-      if (!status)
-        return res.status(400).json({
-          isSuccess: status,
-          message: message,
-        });
-
-      colourConnection = colour_id.map((colourId) => ({
-        colour: { connect: { id: colourId } },
-      }));
-      productData["colours"] = {
-        create: colourConnection,
-      };
-    }
-
-    let productLabelConnection = [];
-    if (productlabels) {
-      const { status, message } = await handleLabelConnection(
-        productlabels,
-        "labels",
-        imagePaths
-      );
-      if (!status)
-        return res.status(400).json({
-          isSuccess: status,
-          message: message,
-        });
-
-      productLabelConnection = productlabels.map((label) => ({
-        label: { connect: { id: label.id } },
-        expiryTime: new Date(label.date) || null,
-      }));
-      productData["labels"] = {
-        create: productLabelConnection,
-      };
     }
     let productSizeConnection = [];
     if (optionType === "Size" && size.length > 0) {
@@ -328,35 +248,20 @@ const postCatlogProduct = async (req, res, next) => {
     }
     products = [...products, productData];
 
-    //  console.log("Product==========>",products)
-
     if (products) {
-      const updatedata = products[0];
-      // console.log("updatedata",updatedata);
-      // return
+      const updateData = products[0];
       const data = await prisma.product.create({
-        data: updatedata,
+        data: updateData,
         select: {
           id: true,
         },
       });
       if (data) {
-        if (collection_id && collection_id.length > 0) {
-          await prisma.catalogueCollection.createMany({
-            data: collection_id.map((collectionId) => ({
-              catalogue_id: null,
-              collection_id: collectionId,
-              product_id: data.id,
-            })),
-          });
-        }
         if (relatedProduct && relatedProduct.length > 0) {
           await prisma.relatedProduct.createMany({
             data: relatedProduct.map((id) => ({
               product_id: data.id,
               relatedProduct_id: id,
-              // product: { connect: { id: data.id } },
-              // related: { connect: { id: id } },
             })),
           });
         }
@@ -370,7 +275,6 @@ const postCatlogProduct = async (req, res, next) => {
         });
       }
     }
-    let err = new Error("Something went wrong, please try again!");
   } catch (error) {
     console.log(error);
     let err = new Error("Something went wrong, please try again!");
@@ -585,10 +489,7 @@ const updateCatalogueProduct = async (req, res, next) => {
       showInSingle,
       readyToShip,
       category_id,
-      collection_id,
       attributes,
-      colour_id,
-      productlabels,
       size,
       images,
       meta_title,
@@ -596,12 +497,8 @@ const updateCatalogueProduct = async (req, res, next) => {
       meta_description,
       optionType,
       relatedProduct,
-      // stitching,
-      // isSize,
     } = req.body;
 
-    // stitching = stitching === "true" ? true : false;
-    // isSize = isSize === "true" ? true : false;
     quantity = parseInt(quantity);
     weight = parseFloat(weight);
     retail_price = parseFloat(retail_price);
@@ -613,9 +510,6 @@ const updateCatalogueProduct = async (req, res, next) => {
 
     attributes = attributes?.map((jsonString) => JSON.parse(jsonString));
     req.body.attributes = attributes;
-
-    productlabels = productlabels?.map((jsonString) => JSON.parse(jsonString));
-    req.body.productlabels = productlabels;
 
     size = size?.map((jsonString) => JSON.parse(jsonString));
     req.body.size = size;
@@ -675,7 +569,7 @@ const updateCatalogueProduct = async (req, res, next) => {
         await removeProductImage(imagePaths);
       return res.status(400).json({
         isSuccess: false,
-        message: `SKU ${sku} Already Used`,
+        message: `Product SKU ${sku} already exists!`,
       });
     }
 
@@ -685,8 +579,6 @@ const updateCatalogueProduct = async (req, res, next) => {
         .json({ isSuccess: false, message: "Please upload image!" });
 
     catalogue_id = catalogue_id || null;
-
-    // console.log("catalogue_id", catalogue_id);
     if (catalogue_id != null || catalogue_id) {
       const findCatalogue = await prisma.catalogue.findUnique({
         where: { id: catalogue_id },
@@ -708,14 +600,6 @@ const updateCatalogueProduct = async (req, res, next) => {
           message: `You don't change ${optionType} option`,
         });
       }
-
-      // if (isSize && findCatalogue.size !== isSize) {
-      //   if (req.files & (req.files.length > 0))
-      //     await removeProductImage(imagePaths);
-      //   return res
-      //     .status(400)
-      //     .json({ isSuccess: false, message: "You don't change size option" });
-      // }
     } else {
       catalogue_id = null;
     }
@@ -741,7 +625,6 @@ const updateCatalogueProduct = async (req, res, next) => {
     let productImages = [];
     if (req.files) {
       for (const images of req.files) {
-        // const originalImage = req.files.image[i];
         const thumbImage = `uploads/product/thumb/${images.filename}`;
         const mediumImage = `uploads/product/medium/${images.filename}`;
 
@@ -794,13 +677,10 @@ const updateCatalogueProduct = async (req, res, next) => {
       image: processedImages,
       ...(processedThumbs.length > 0 && { thumbImage: processedThumbs }),
       ...(processedMediums.length > 0 && { mediumImage: processedMediums }),
-      // isActive: false,
       meta_title,
       meta_keyword,
       meta_description,
       optionType,
-      // stitching: stitching,
-      // isSize: isSize,
     };
     let categoryId = [];
     if (category_id) {
@@ -825,19 +705,6 @@ const updateCatalogueProduct = async (req, res, next) => {
       productData["categories"] = {
         deleteMany: {},
       };
-    }
-
-    if (collection_id && collection_id.length > 0) {
-      const { status, message } = await handleProductConnection(
-        "collection",
-        collection_id,
-        imagePaths
-      );
-      if (!status)
-        return res.status(400).json({
-          isSuccess: status,
-          message: message,
-        });
     }
 
     let attributeValueConnection = [];
@@ -874,70 +741,7 @@ const updateCatalogueProduct = async (req, res, next) => {
           message: message,
         });
       }
-
-      // productData["RelatedProducts"] = {
-      //   create: data.map((productId) => ({
-      //     related: { connect: { id: productId } },
-      //   })),
-      // };
       relatedProduct = data;
-    }
-    // else if (relatedProduct && relatedProduct.length === 0) {
-    //   productData["RelatedProducts"] = {
-    //     deleteMany: {},
-    //   };
-    // }
-    let colourConnection = [];
-    if (colour_id) {
-      const { status, message } = await handleProductConnection(
-        "colour",
-        colour_id,
-        imagePaths
-      );
-      if (!status)
-        return res.status(400).json({
-          isSuccess: status,
-          message: message,
-        });
-
-      colourConnection = colour_id.map((colourId) => ({
-        colour: { connect: { id: colourId } },
-      }));
-      productData["colours"] = {
-        deleteMany: {},
-        create: colourConnection,
-      };
-    } else {
-      productData["colours"] = {
-        deleteMany: {},
-      };
-    }
-
-    let productLabelConnection = [];
-    if (productlabels) {
-      const { status, message } = await handleLabelConnection(
-        productlabels,
-        "labels",
-        imagePaths
-      );
-      if (!status)
-        return res.status(400).json({
-          isSuccess: status,
-          message: message,
-        });
-
-      productLabelConnection = productlabels.map((label) => ({
-        label: { connect: { id: label.id } },
-        expiryTime: label.date ? new Date(label.date) : null,
-      }));
-      productData["labels"] = {
-        deleteMany: {},
-        create: productLabelConnection,
-      };
-    } else if (productlabels?.length === 0) {
-      productData["labels"] = {
-        deleteMany: {},
-      };
     }
 
     let productSizeConnection = [];
@@ -985,18 +789,6 @@ const updateCatalogueProduct = async (req, res, next) => {
       select: { id: true },
     });
     if (newProduct) {
-      await prisma.catalogueCollection.deleteMany({
-        where: { product_id: newProduct.id },
-      });
-      if (collection_id && collection_id.length > 0) {
-        await prisma.catalogueCollection.createMany({
-          data: collection_id.map((collectionId) => ({
-            catalogue_id: null,
-            collection_id: collectionId,
-            product_id: newProduct.id,
-          })),
-        });
-      }
       await prisma.relatedProduct.deleteMany({
         where: { product_id: newProduct.id },
       });
@@ -1005,8 +797,6 @@ const updateCatalogueProduct = async (req, res, next) => {
           data: relatedProduct.map((id) => ({
             product_id: newProduct.id,
             relatedProduct_id: id,
-            // product: { connect: { id: newProduct.id } },
-            // related: { connect: { id: id } },
           })),
         });
       }
@@ -1026,8 +816,6 @@ const updateCatalogueProduct = async (req, res, next) => {
 const catlogtGetSingleProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-
-    console.log("id", id);
 
     if (!/^[a-fA-F0-9]{24}$/.test(id)) {
       return res
@@ -2120,12 +1908,26 @@ const getCatalogueProducts = async (req, res, next) => {
         ...searchFilter,
       },
       orderBy: { updatedAt: "desc" },
-      include: {
-        attributeValues: true,
-        categories: true,
-        collection: true,
-        catalogue: true,
-        colours: true,
+      select: {
+        id: true,
+        name: true,
+        catalogue_id: true,
+        sku: true,
+        url: true,
+        quantity: true,
+        average_price: true,
+        retail_price: true,
+        retail_GST: true,
+        retail_discount: true,
+        offer_price: true,
+        image: true,
+        isActive: true,
+        showInSingle: true,
+        // attributeValues: true,
+        // categories: true,
+        // collection: true,
+        // catalogue: true,
+        // colours: true,
       },
       skip,
       take,
@@ -2166,7 +1968,28 @@ const getCatalogueProduct = async (req, res, next) => {
     const getProducts = await prisma.catalogue.findMany({
       where: { id: catalogue_id },
       orderBy: { updatedAt: "asc" },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        cat_code: true,
+        no_of_product: true,
+        url: true,
+        quantity: true,
+        price: true,
+        catalogue_discount: true,
+        average_price: true,
+        GST: true,
+        offer_price: true,
+        optionType: true,
+        weight: true,
+        meta_title: true,
+        meta_keyword: true,
+        meta_description: true,
+        coverImage: true,
+        description: true,
+        tag: true,
+        isActive: true,
+        deletedAt: true,
         attributeValues: true,
         CatalogueCategory: {
           include: { category: true },
@@ -2178,7 +2001,31 @@ const getCatalogueProduct = async (req, res, next) => {
           include: { size: true },
         },
         Product: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            catalogue_id: true,
+            sku: true,
+            url: true,
+            quantity: true,
+            weight: true,
+            average_price: true,
+            retail_price: true,
+            retail_GST: true,
+            retail_discount: true,
+            offer_price: true,
+            image: true,
+            description: true,
+            tag: true,
+            optionType: true,
+            isActive: true,
+            showInSingle: true,
+            isDraft: true,
+            readyToShip: true,
+            outofStock: true,
+            meta_title: true,
+            meta_keyword: true,
+            meta_description: true,
             attributeValues: true,
             categories: {
               include: {

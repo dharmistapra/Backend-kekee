@@ -1,5 +1,5 @@
 import prisma from "../../db/config.js";
-import { deleteData, updateStatus } from "../../helper/common.js";
+import { deleteData } from "../../helper/common.js";
 
 const postShippingZone = async (req, res, next) => {
   try {

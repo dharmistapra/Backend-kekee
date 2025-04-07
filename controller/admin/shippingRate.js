@@ -1,6 +1,5 @@
 import _ from "underscore";
 import prisma from "../../db/config.js";
-import { deleteData } from "../../helper/common.js";
 import { deleteData, deleteFile, updateStatus } from "../../helper/common.js";
 import csvtojson from "csvtojson";
 import { importShippingRateSchema } from "../../schema/joi_schema.js";
@@ -120,88 +119,88 @@ const deleteShippingRate = async (req, res, next) => {
 
 
 const getShippingMethod = async (req, res, next) => {
-    try {
-        const { country, weight, totalOrder } = req.query;
-        const normalizedCountry = country.charAt(0).toUpperCase() + country.slice(1).toLowerCase();
-        const shippingZones = await prisma.shippingZone.findMany({
-            where: {
-                countries: {
-                    has: normalizedCountry,
-                },
-            },
-            select: {
-                id: true,
-                name: true,
-                ShippingZoneAddRate: {
-                    where: {
-                        AND: [
-                            {
-                                OR: [
-                                    {
-                                        minWeight: { lte: parseFloat(weight) },
-                                        maxWeight: { gte: parseFloat(weight) }
-                                    },
-                                    {
-                                        minWeight: null,
-                                        maxWeight: null
-                                    }
-                                ]
-                            },
-                            {
-                                OR: [
-                                    {
-                                        minprice: { lte: parseFloat(totalOrder) },
-                                        maxprice: { gte: parseFloat(totalOrder) }
-                                    },
-                                    {
-                                        minprice: null,
-                                        maxprice: null
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    select: {
-                        id: true,
-                        name: true,
-                        price: true,
-                        description: true,
-                        type: true,
-                        selectedOption: true,
-                        minWeight: true,
-                        maxWeight: true,
-                        minprice: true,
-                        maxprice: true
-                    }
-                }
-            }
-        });
-
-        const availableRates = shippingZones.flatMap(zone =>
-            zone.ShippingZoneAddRate.map(rate => ({
-                zoneId: zone.id,
-                zoneName: zone.name,
-                ...rate
-            }))
-        );
-
-        if (availableRates.length === 0) {
-            return res.status(404).json({ message: "No shipping method found for the given criteria." });
+  try {
+    const { country, weight, totalOrder } = req.query;
+    const normalizedCountry = country.charAt(0).toUpperCase() + country.slice(1).toLowerCase();
+    const shippingZones = await prisma.shippingZone.findMany({
+      where: {
+        countries: {
+          has: normalizedCountry,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        ShippingZoneAddRate: {
+          where: {
+            AND: [
+              {
+                OR: [
+                  {
+                    minWeight: { lte: parseFloat(weight) },
+                    maxWeight: { gte: parseFloat(weight) }
+                  },
+                  {
+                    minWeight: null,
+                    maxWeight: null
+                  }
+                ]
+              },
+              {
+                OR: [
+                  {
+                    minprice: { lte: parseFloat(totalOrder) },
+                    maxprice: { gte: parseFloat(totalOrder) }
+                  },
+                  {
+                    minprice: null,
+                    maxprice: null
+                  }
+                ]
+              }
+            ]
+          },
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            description: true,
+            type: true,
+            selectedOption: true,
+            minWeight: true,
+            maxWeight: true,
+            minprice: true,
+            maxprice: true
+          }
         }
+      }
+    });
 
-        return res.status(200).json({
-            isSuccess: true,
-            "message": "Shipping method get successfully",
-            shippingMethods: availableRates
-        });
+    const availableRates = shippingZones.flatMap(zone =>
+      zone.ShippingZoneAddRate.map(rate => ({
+        zoneId: zone.id,
+        zoneName: zone.name,
+        ...rate
+      }))
+    );
 
-    } catch (err) {
-        const error = new Error("Something went wrong, please try again!");
-        next(error);
+    if (availableRates.length === 0) {
+      return res.status(404).json({ message: "No shipping method found for the given criteria." });
     }
+
+    return res.status(200).json({
+      isSuccess: true,
+      "message": "Shipping method get successfully",
+      shippingMethods: availableRates
+    });
+
+  } catch (err) {
+    const error = new Error("Something went wrong, please try again!");
+    next(error);
+  }
 };
 
-export { postShippingRate, puttShippingRate, deleteShippingRate, getShippingMethod }
+
 const importShippingRate = async (req, res, next) => {
   try {
     if (!req.file)
@@ -327,4 +326,5 @@ export {
   puttShippingRate,
   deleteShippingRate,
   importShippingRate,
+  getShippingMethod
 };

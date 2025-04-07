@@ -777,6 +777,7 @@ model Order {
   subtotal        Float
   billingAddress  Json?
   shippingAddress Json?
+  shippingMethod  Json?
   Tax             Float
   discount        Float?
   shippingcharge  Float

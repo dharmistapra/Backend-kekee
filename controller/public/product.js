@@ -343,6 +343,9 @@ const getProductDetails = async (req, res, next) => {
         sku: true,
         showInSingle: true,
         catalogue_id: true,
+        catalogue: {
+          select: { id: true, name: true, url: true },
+        },
         url: true,
         quantity: true,
         weight: true,
@@ -474,6 +477,7 @@ const getProductDetails = async (req, res, next) => {
         .status(404)
         .json({ isSuccess: false, message: "Product not found!" });
 
+    data.catalogueUrl = data.catalogue?.url || null;
     if (data?.attributeValues?.length > 0) {
       let labels = [];
       let colours = [];

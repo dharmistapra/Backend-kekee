@@ -1724,6 +1724,102 @@ const importShippingRateSchema = async (req, res, next) => {
   return schema;
 };
 
+
+const orderId_generate_Validation_Schema = async (req, res, next) => {
+  const schema = Joi.object({
+    user_id: Joi.string().required().messages({
+      "any.required": "User ID is required",
+      "string.empty": "User ID cannot be empty",
+    }),
+
+    shippingMethodId: Joi.string().required().messages({
+      "any.required": "shipping method is required",
+      "string.empty": "select shipping method",
+    }),
+    isSame: Joi.boolean().optional(),
+    billingAddress: Joi.object().optional(),
+    shippingAddress: Joi.object({
+      id: Joi.string().optional(),
+      GstNumber: Joi.string().optional().allow(""),
+      customersnotes: Joi.string().optional().allow(""),
+      address1: Joi.string().optional().allow(""),
+      address2: Joi.string().optional().allow(""),
+      companyname: Joi.string().optional().allow(""),
+      city: Joi.string().required(),
+      isDefault: Joi.boolean().optional(),
+      country: Joi.string().required().messages({
+        "any.required": "Country is required",
+        "string.empty": "Country cannot be empty",
+      }),
+      email: Joi.string().email().optional(),
+      whatsapp: Joi.string().optional().allow(""),
+      fullName: Joi.string().required().messages({
+        "any.required": "Full Name is required",
+        "string.empty": "Full Name cannot be empty",
+      }),
+      mobile: Joi.string().required().messages({
+        "any.required": "Mobile number is required",
+      }),
+      state: Joi.string().required().messages({
+        "any.required": "State is required",
+        "string.empty": "State cannot be empty",
+      }),
+      zipCode: Joi.string().required().messages({
+        "any.required": "Zip Code is required",
+        "string.empty": "Zip Code cannot be empty",
+      }),
+    })
+  });
+
+  await JoiSchemaValidation(schema, req, next);
+};
+
+const razorpayOrderSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    user_id: Joi.string()
+      .required()
+      .messages({
+        "string.base": "User ID must be a string.",
+        "any.required": "User ID is required.",
+      }),
+
+    currency: Joi.object().optional(),
+
+    amount: Joi.number()
+      .positive()
+      .required()
+      .messages({
+        "number.base": "Amount must be a number.",
+        "number.positive": "Amount must be a positive value.",
+        "any.required": "Amount is required.",
+      }),
+
+    receipt: Joi.string()
+      .required()
+      .messages({
+        "string.base": "Receipt must be a string.",
+        "any.required": "Receipt is required.",
+      }),
+
+    orderId: Joi.string()
+      .required()
+      .messages({
+        "string.base": "Order ID must be a string.",
+        "any.required": "Order ID is required.",
+      }),
+
+    paymentMethod: Joi.string()
+      .valid("razorpay", "bank_transfer")
+      .required()
+      .messages({
+        "any.only": "Payment method must be either 'razorpay' or 'bank_transfer'.",
+        "any.required": "Payment method is required.",
+      }),
+  });
+  await JoiSchemaValidation(schema, req, next);
+
+};
+
 export {
   categorySchema,
   subCategorySchema,
@@ -1781,5 +1877,7 @@ export {
   shippingMethodSchema,
   shippingZoneSchema,
   shippingRateSchema,
+  orderId_generate_Validation_Schema,
+  razorpayOrderSchema,
   importShippingRateSchema,
 };

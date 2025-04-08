@@ -9,9 +9,11 @@ import {
 import {
   cartSchema,
   editCartSchema,
+  orderId_generate_Validation_Schema,
   orderPlaceSchema,
   pageSchema,
   postaddressSchema,
+  razorpayOrderSchema,
   updateUserbasicInfoSchema,
   userchangePasswordSchema,
   wishListSchema,
@@ -27,7 +29,9 @@ import {
   updateUserbasicInfo,
 } from "../controller/public/user/register.js";
 import OrderPlace, {
+  generateOrderId,
   orderFailed,
+  razorpayOrderCreate,
   verifyOrder,
 } from "../controller/public/orderPlace.js";
 import {
@@ -41,6 +45,7 @@ import {
   postshipAddress,
   shippingDefaultStatus,
 } from "../controller/public/address.js";
+import { getShippingMethod } from "../controller/admin/shippingRate.js";
 
 // publicProtected.post("/cart-item", cartSchema, postCartItem);
 publicProtected.post("/cart-item", cartSchema, postCartItemOptimizeCode);
@@ -63,6 +68,8 @@ publicProtected.put(
   updateUserbasicInfo
 );
 
+publicProtected.post("/generate/orderId", [orderId_generate_Validation_Schema], generateOrderId);
+publicProtected.post("/razorpay/create-order", [razorpayOrderSchema], razorpayOrderCreate);
 publicProtected.post("/order/place", [orderPlaceSchema], OrderPlace);
 publicProtected.post("/verify/order", verifyOrder);
 publicProtected.post("/cancel/payment", orderFailed);
@@ -75,6 +82,8 @@ publicProtected.get("/user/default-status/:id", shippingDefaultStatus);
 publicProtected.delete("/shipping/address/:id", deleteshipAddress);
 publicProtected.get("/user/address/:id", getuserAddresspagiantion);
 
-publicProtected.get("/user/profile/:id", getuserById);  
+publicProtected.get("/user/profile/:id", getuserById);
+
+publicProtected.get("/get/shippingmethod", getShippingMethod);
 
 export default publicProtected;

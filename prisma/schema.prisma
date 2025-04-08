@@ -949,6 +949,7 @@ model WebSettings {
   showPrice                Boolean? @default(false)
   wholesale_min_buy_qty    Int?     @default(0)
   wholesale_min_buy_amount Int?     @default(0)
+  orderExpireyTime         Int?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }

@@ -801,6 +801,7 @@ const generateOrderId = async (req, res, next) => {
                 status: "PENDING",
             },
             select: {
+                id: true,
                 orderId: true
 
             }
@@ -863,15 +864,43 @@ const generateOrderId = async (req, res, next) => {
 const razorpayOrderCreate = async (req, res, next) => {
     try {
         const { user_id, amount, receipt, orderId, currency, paymentMethod, id } = req.body
+
         const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
         if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
 
+        const getOrderExpTime = await prisma.webSettings.findFirst({
+            select: {
+                orderExpireyTime: true
+            }
+        })
+
+        const ExpireTimeAdjust = getOrderExpTime?.orderExpireyTime || 3
         const checkOrderId = await prisma.order.findUnique({
             where: {
                 orderId: orderId
             }
         })
+
+
         if (!checkOrderId) res.status(400).json({ isSuccess: false, message: "order not found", });
+
+
+
+        const orderCreatedAt = new Date(checkOrderId.createdAt);
+        const currentTime = new Date();
+
+        const diffMs = currentTime - orderCreatedAt;
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+        if (diffDays > ExpireTimeAdjust) {
+            return res.status(400).json({
+                isSuccess: false,
+                message: "Order has expired",
+                data: null
+            });
+        }
+
+
         const razorpayOrder = await rozarpay.orders.create({
             amount: Math.round(amount * 100),
             currency: currency?.code,
@@ -896,7 +925,7 @@ const razorpayOrderCreate = async (req, res, next) => {
             amount: Math.round(amount * 100),
         };
 
-        return res.status(200).json({ isSuccess: false, mesage: "Razorpay order create Successfully", data: response })
+        return res.status(200).json({ isSuccess: false, mesage: "Razorpay order created successfully", data: response })
 
 
     } catch (error) {

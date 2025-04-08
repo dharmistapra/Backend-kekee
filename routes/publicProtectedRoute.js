@@ -37,6 +37,7 @@ import OrderPlace, {
 import {
   getOrderdetails,
   getOrderHistory,
+  getOrderPendingPayment,
   getuserAddresspagiantion,
 } from "../controller/public/orderHistory.js";
 import {
@@ -73,7 +74,7 @@ publicProtected.post("/razorpay/create-order", [razorpayOrderSchema], razorpayOr
 publicProtected.post("/order/place", [orderPlaceSchema], OrderPlace);
 publicProtected.post("/verify/order", verifyOrder);
 publicProtected.post("/cancel/payment", orderFailed);
-publicProtected.post("/order/details", getOrderdetails);
+publicProtected.get("/order/details/:orderId", getOrderdetails);
 publicProtected.post("/order/history", getOrderHistory);
 
 publicProtected.post("/shipping/address", [postaddressSchema], postshipAddress);
@@ -85,5 +86,6 @@ publicProtected.get("/user/address/:id", getuserAddresspagiantion);
 publicProtected.get("/user/profile/:id", getuserById);
 
 publicProtected.get("/get/shippingmethod", getShippingMethod);
+publicProtected.get("/order-details/pending-payment/:orderId", getOrderPendingPayment);
 
 export default publicProtected;

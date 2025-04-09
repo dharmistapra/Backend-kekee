@@ -325,6 +325,25 @@ let uploadShippingChagresCSV = multer({
   fileFilter: fileFilterCSV,
 }).single("files");
 
+
+
+const BankPaymentUploadFile = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads/Bank_receipt");
+  },
+  filename: async (req, file, cb) => {
+    let filename = await uniqueFilename(file);
+    cb(null, filename);
+  },
+});
+
+let uploadBankPaymentReceipt = multer({
+  storage: BankPaymentUploadFile,
+  limits: { fileSize: 10000000 * 5 },
+  fileFilter: filefilter,
+}).single("receipt");
+
+
 export {
   uploadcurrencyImg,
   uploadtestimonialImg,
@@ -332,5 +351,6 @@ export {
   uploadCategorystorageImg,
   collectionImages,
   uploadShippingChagresCSV,
+  uploadBankPaymentReceipt,
   data,
 };

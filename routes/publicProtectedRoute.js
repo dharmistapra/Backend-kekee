@@ -7,6 +7,7 @@ import {
   getAllcartitemOptimizecode,
 } from "../controller/public/cartItem.js";
 import {
+  bankPaymentSchema,
   cartSchema,
   editCartSchema,
   orderId_generate_Validation_Schema,
@@ -29,6 +30,7 @@ import {
   updateUserbasicInfo,
 } from "../controller/public/user/register.js";
 import OrderPlace, {
+  bankPayment,
   generateOrderId,
   orderFailed,
   razorpayOrderCreate,
@@ -47,6 +49,7 @@ import {
   shippingDefaultStatus,
 } from "../controller/public/address.js";
 import { getShippingMethod } from "../controller/admin/shippingRate.js";
+import { uploadBankPaymentReceipt } from "../middleware/uploads.js";
 
 // publicProtected.post("/cart-item", cartSchema, postCartItem);
 publicProtected.post("/cart-item", cartSchema, postCartItemOptimizeCode);
@@ -71,6 +74,7 @@ publicProtected.put(
 
 publicProtected.post("/generate/orderId", [orderId_generate_Validation_Schema], generateOrderId);
 publicProtected.post("/razorpay/create-order", [razorpayOrderSchema], razorpayOrderCreate);
+publicProtected.post("/bank/payent", [uploadBankPaymentReceipt, bankPaymentSchema], bankPayment); // Wotjking This Modduleu
 publicProtected.post("/order/place", [orderPlaceSchema], OrderPlace);
 publicProtected.post("/verify/order", verifyOrder);
 publicProtected.post("/cancel/payment", orderFailed);

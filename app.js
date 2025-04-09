@@ -24,9 +24,10 @@ const __dirname = dirname(__filename);
 // var usersRouter = require('./routes/users');
 
 var app = express();
-
+app.use(cors());
 app.set("views", path.join(__dirname, "views"));
-app.use("/uploads", express.static("uploads"));
+// app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // app.set("view engine", "jade");
 
 app.use(passport.initialize());
@@ -42,7 +43,7 @@ app.use(
 );
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-app.use(cors());
+
 app.use("/api", isAuthenticated, adminRouter);
 app.use("/admin", adminAuthRouter);
 app.use("/", publicRouter);

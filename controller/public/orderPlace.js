@@ -7,6 +7,7 @@ import { rozarpay } from "../../config/paymentConfig.js";
 import crypto from "crypto";
 import "dotenv/config";
 import { createBilling, createShipping } from "../../helper/addres.js";
+import { convertFilePathSlashes } from "../../helper/common.js";
 const OrderPlace = async (req, res, next) => {
     try {
         let { user_id, billingdata, shippingdata, paymentMethod, currency, bankdata, defaultAddressId, isSame, billingId, shippingId, type } = req.body;
@@ -929,10 +930,83 @@ const razorpayOrderCreate = async (req, res, next) => {
 
 
     } catch (error) {
+        let err = new Error("Something went wrong, please try again!")
+        next(err);
+    }
+}
+
+
+
+const bankPayment = async (req, res, next) => {
+    try {
+        const { user_id, orderId, transactionId } = req.body
+        let receipt = req.file;
+
+        if (receipt) {
+            receipt = await convertFilePathSlashes(receipt.path);
+        }
+
+
+        const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
+        if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
+
+        const getOrderExpTime = await prisma.webSettings.findFirst({
+            select: {
+                orderExpireyTime: true
+            }
+        })
+
+        const ExpireTimeAdjust = getOrderExpTime?.orderExpireyTime || 3
+        const checkOrderId = await prisma.order.findUnique({
+            where: {
+                orderId: orderId
+            }
+        })
+
+
+        if (!checkOrderId) res.status(400).json({ isSuccess: false, message: "order not found", });
+
+
+
+        const orderCreatedAt = new Date(checkOrderId.createdAt);
+        const currentTime = new Date();
+
+        const diffMs = currentTime - orderCreatedAt;
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+        if (diffDays > ExpireTimeAdjust) {
+            return res.status(400).json({
+                isSuccess: false,
+                message: "Order has expired",
+                data: null
+            });
+        }
+
+
+
+        const paymentData = {
+            orderId: checkOrderId.id,
+            paymentMethod: "bank",
+            status: "PROCESSING",
+            receiptImage: receipt,
+            transactionId: transactionId
+        };
+
+        const payment = await prisma.payment.create({ data: paymentData });
+
+        const response = {
+            orderId: orderId,
+            transactionId: paymentData.transactionId,
+        };
+
+        return res.status(200).json({ isSuccess: false, mesage: "Payment paid successfylly", data: response })
+
+
+    } catch (error) {
         console.log(error)
         let err = new Error("Something went wrong, please try again!")
         next(err);
     }
 }
 export default OrderPlace;
-export { verifyOrder, orderFailed, generateOrderId, razorpayOrderCreate };
+export { verifyOrder, orderFailed, generateOrderId, razorpayOrderCreate, bankPayment };

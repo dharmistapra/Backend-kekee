@@ -1820,6 +1820,33 @@ const razorpayOrderSchema = async (req, res, next) => {
 
 };
 
+const bankPaymentSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    user_id: Joi.string()
+      .required()
+      .messages({
+        "string.base": "User ID must be a string.",
+        "any.required": "User ID is required.",
+      }),
+
+    orderId: Joi.string()
+      .required()
+      .messages({
+        "string.base": "Order ID must be a string.",
+        "any.required": "Order ID is required.",
+      }),
+
+    transactionId: Joi.string()
+      .required()
+      .messages({
+        "string.base": "Order ID must be a string.",
+        "any.required": "Order ID is required.",
+      }),
+  });
+  await JoiSchemaValidation(schema, req, next);
+
+};
+
 export {
   categorySchema,
   subCategorySchema,
@@ -1880,4 +1907,5 @@ export {
   orderId_generate_Validation_Schema,
   razorpayOrderSchema,
   importShippingRateSchema,
+  bankPaymentSchema
 };

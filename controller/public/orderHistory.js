@@ -63,15 +63,6 @@ const getOrderdetails = async (req, res, next) => {
             paymentMethod: true,
             transactionId: true,
             status: true,
-            bankAccountId: true,
-            bankaccount: {
-              select: {
-                bankName: true,
-                accountHolderName: true,
-                accountNumber: true,
-                ifscCode: true,
-              },
-            },
           },
         },
       },
@@ -176,7 +167,7 @@ const getOrderHistory = async (req, res, next) => {
         amount: order?.totalAmount.toFixed(2),
       };
 
-      if (paymentStatus !== "SUCCESS") {
+      if (!["SUCCESS", "PROCESSING", "CANCELLED"].includes(paymentStatus)) {
         const expiresAt = new Date(createdAt.getTime() + ExpireTimeAdjust * 24 * 60 * 60 * 1000);
         const now = new Date();
         const timeLeftMs = Math.max(0, expiresAt - now);
@@ -347,15 +338,7 @@ const getOrderPendingPayment = async (req, res, next) => {
             paymentMethod: true,
             transactionId: true,
             status: true,
-            bankAccountId: true,
-            bankaccount: {
-              select: {
-                bankName: true,
-                accountHolderName: true,
-                accountNumber: true,
-                ifscCode: true,
-              },
-            },
+
           },
         },
       },

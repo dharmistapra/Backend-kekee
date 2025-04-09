@@ -913,7 +913,6 @@ const razorpayOrderCreate = async (req, res, next) => {
             orderId: checkOrderId.id,
             paymentMethod,
             status: "PROCESSING",
-            bankAccountId: null,
             transactionId: razorpayOrder.id
         };
 
@@ -930,6 +929,7 @@ const razorpayOrderCreate = async (req, res, next) => {
 
 
     } catch (error) {
+        console.log(error)
         let err = new Error("Something went wrong, please try again!")
         next(err);
     }

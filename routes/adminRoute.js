@@ -61,6 +61,7 @@ import {
   updateCurrencyStatus,
   deleteCurrency,
   paginationCurrency,
+  deleteMultipleCurrency,
   getAllCurrency,
 } from "../controller/admin/currency.js";
 import {
@@ -412,6 +413,7 @@ adminRouter.put(
 );
 adminRouter.get("/currency-status/:id", updateCurrencyStatus);
 adminRouter.delete("/currency/:id", deleteCurrency);
+adminRouter.post("/bulk/currency", deleteMultipleCurrency);
 adminRouter.post("/currency-pagination", [pageSchema], paginationCurrency);
 adminRouter.get("/currency", getAllCurrency);
 

@@ -78,7 +78,7 @@ const paginationCurrency = async (req, res, next) => {
     const page = Number(pageNo) || 1;
     const take = Number(perPage) || 10;
     const skip = (page - 1) * take;
-    
+
     const searchFilter = search
       ? {
         OR: [
@@ -213,6 +213,45 @@ const updateCurrencyStatus = async (req, res, next) => {
   }
 };
 
+
+const deleteMultipleCurrency = async (req, res, next) => {
+  try {
+    const { ids } = req.body;
+    const existingCurrencies = await prisma.currencyMaster.findMany({
+      where: {
+        id: { in: ids },
+      },
+      select: { id: true },
+    });
+
+    const existingIds = existingCurrencies.map((currency) => currency.id);
+    const missingIds = ids.filter((id) => !existingIds.includes(id));
+    if (missingIds.length > 0) {
+      return res.status(404).json({
+        isSuccess: false,
+        message: "Some currency IDs were not found.",
+        missingIds,
+      });
+    }
+
+    const deleted = await prisma.currencyMaster.deleteMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "Currencies deleted successfully.",
+      data: deleted,
+    });
+  } catch (error) {
+    console.error("Error in deleteMultipleCurrency:", error);
+    let err = new Error("Something went wrong, please try again!");
+    next(err);
+  }
+};
+
 export {
   postCurrency,
   getAllCurrency,
@@ -220,4 +259,5 @@ export {
   updateCurrency,
   deleteCurrency,
   updateCurrencyStatus,
+  deleteMultipleCurrency
 };

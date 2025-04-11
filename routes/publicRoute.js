@@ -22,6 +22,7 @@ import {
   getCatalogueProduct,
   relatedProduct,
   searchCatalogueAndProduct,
+  shareProduct,
 } from "../controller/public/catalogue.js";
 import passport from "../middleware/passport.js";
 import {
@@ -248,8 +249,10 @@ router.get("/categorycollection", getCategoryCollection);
 router.post("/contact-us", contactUsSchema, postContactUs);
 
 router.get("/websetting", getWebSetting);
-router.get("/bank/details", getBankdetails)
+router.get("/bank/details", getBankdetails);
 
 router.get("/shippingmethod", getShippingMethod);
+
+router.post("/shareproduct/:id", shareProduct);
 
 export default router;

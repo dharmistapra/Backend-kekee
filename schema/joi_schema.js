@@ -1546,6 +1546,7 @@ const postaddressSchema = async (req, res, next) => {
     isDefault: Joi.boolean().optional().messages({
       "boolean.base": "isDefault must be a boolean value",
     }),
+    index: Joi.optional(),
 
     defaultBilling: Joi.boolean().optional().messages({
       "boolean.base": "defaultBilling must be a boolean value",
@@ -1785,21 +1786,8 @@ const razorpayOrderSchema = async (req, res, next) => {
 
     currency: Joi.object().optional(),
 
-    amount: Joi.number()
-      .positive()
-      .required()
-      .messages({
-        "number.base": "Amount must be a number.",
-        "number.positive": "Amount must be a positive value.",
-        "any.required": "Amount is required.",
-      }),
 
-    receipt: Joi.string()
-      .required()
-      .messages({
-        "string.base": "Receipt must be a string.",
-        "any.required": "Receipt is required.",
-      }),
+
 
     orderId: Joi.string()
       .required()
@@ -1808,13 +1796,7 @@ const razorpayOrderSchema = async (req, res, next) => {
         "any.required": "Order ID is required.",
       }),
 
-    paymentMethod: Joi.string()
-      .valid("razorpay", "bank_transfer")
-      .required()
-      .messages({
-        "any.only": "Payment method must be either 'razorpay' or 'bank_transfer'.",
-        "any.required": "Payment method is required.",
-      }),
+
   });
   await JoiSchemaValidation(schema, req, next);
 

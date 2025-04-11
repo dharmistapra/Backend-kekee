@@ -780,6 +780,7 @@ model Order {
   Tax             Float
   discount        Float?
   shippingcharge  Float
+  handlingcharge  Float?
   totalAmount     Float
   status          OrderStatus
   createdAt       DateTime    @default(now())

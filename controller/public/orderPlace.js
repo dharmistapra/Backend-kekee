@@ -757,12 +757,13 @@ const generateOrderId = async (req, res, next) => {
             },
         });
 
-        const { DataModified2, totalSubtotal, totalTax, totalWeight } = calculateCartItemTotal(cartItems);
+        const { DataModified2, totalSubtotal, totalTax, } = calculateCartItemTotal(cartItems);
         if (DataModified2?.length == 0 || totalSubtotal === 0) {
             return res.status(400).json({ isSuccess: false, message: "Data Not Found", data: null });
         }
 
-
+        console.log("totalSubtotal", totalSubtotal);
+        return;
 
         const getShippingdata = await prisma.shippingZoneAddRate.findUnique({
             where: {
@@ -864,7 +865,7 @@ const generateOrderId = async (req, res, next) => {
 
 const razorpayOrderCreate = async (req, res, next) => {
     try {
-        const { user_id, amount, receipt, orderId, currency, paymentMethod, id } = req.body
+        const { user_id, orderId, currency, } = req.body
 
         const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
         if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
@@ -879,7 +880,8 @@ const razorpayOrderCreate = async (req, res, next) => {
         const checkOrderId = await prisma.order.findUnique({
             where: {
                 orderId: orderId
-            }
+            },
+
         })
 
 
@@ -901,9 +903,15 @@ const razorpayOrderCreate = async (req, res, next) => {
             });
         }
 
+        const paymenttype = await prisma.paymentMethods.findFirst({ where: { name: "razorpay" } })
+        if (!paymenttype) res.status(400).json({ isSuccess: false, message: "Payment method not found", data: null });
+
+        const handlingCharge = checkOrderId.totalAmount * (paymenttype?.charge / 100);
+        const razorpayAmount = Math.round((checkOrderId.totalAmount + handlingCharge) * 100);
+
 
         const razorpayOrder = await rozarpay.orders.create({
-            amount: Math.round(amount * 100),
+            amount: razorpayAmount,
             currency: currency?.code,
             receipt: `order_${orderId}`,
             payment_capture: 1,
@@ -911,7 +919,7 @@ const razorpayOrderCreate = async (req, res, next) => {
 
         const paymentData = {
             orderId: checkOrderId.id,
-            paymentMethod,
+            paymentMethod: "razorpay",
             status: "PROCESSING",
             transactionId: razorpayOrder.id
         };
@@ -922,9 +930,18 @@ const razorpayOrderCreate = async (req, res, next) => {
             orderId: orderId,
             razorpayOrderId: paymentData.transactionId,
             currency: currency,
-            amount: Math.round(amount * 100),
+            amount: razorpayAmount,
         };
 
+        await prisma.order.update({
+            where: {
+                id: checkOrderId.id
+            },
+            data: {
+                totalAmount: razorpayAmount,
+                handlingcharge: handlingCharge,
+            }
+        })
         return res.status(200).json({ isSuccess: false, mesage: "Razorpay order created successfully", data: response })
 
 

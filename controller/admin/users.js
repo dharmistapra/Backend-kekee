@@ -49,7 +49,7 @@ const paginationusers = async (req, res, next) => {
       pagesize: take,
     });
   } catch (error) {
-      let err = new Error("Something went wrong, please try again!");
+    let err = new Error("Something went wrong, please try again!");
     next(err);
   }
 };
@@ -193,14 +193,7 @@ const getOrderdetailsUsers = async (req, res, next) => {
             paymentMethod: true,
             transactionId: true,
             status: true,
-            bankaccount: {
-              select: {
-                bankName: true,
-                accountHolderName: true,
-                ifscCode: true,
-                accountNumber: true,
-              },
-            },
+
           },
         },
       },
@@ -267,6 +260,7 @@ const getOrderdetailsUsers = async (req, res, next) => {
 
     return res.status(200).json(response);
   } catch (error) {
+    console.log(error)
     next(new Error("Something went wrong, Please try again!"));
   }
 };

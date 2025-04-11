@@ -253,6 +253,6 @@ router.get("/bank/details", getBankdetails);
 
 router.get("/shippingmethod", getShippingMethod);
 
-router.post("/shareProduct/:id", shareProduct);
+router.post("/shareproduct/:id", shareProduct);
 
 export default router;

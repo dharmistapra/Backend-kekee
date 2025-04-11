@@ -1652,13 +1652,18 @@ const zipImages = async (req, res, next) => {
 
 const exportCatalogue = async (req, res, next) => {
   try {
-    const { category_id } = req.body;
-
+    let category_id = req.body.category_id || [];
+    let filter = req.body.filter?.toLowerCase() || null;
     const catalogueData = await prisma.catalogue.findMany({
       where: {
-        CatalogueCategory: {
-          some: { category_id: { in: category_id } },
-        },
+        ...(category_id.length > 0 && {
+          CatalogueCategory: {
+            some: { category_id: { in: category_id } },
+          },
+        }),
+        ...(filter !== null && {
+          cat_code: { contains: filter, mode: "insensitive" },
+        }),
       },
       include: {
         Product: {
@@ -1724,13 +1729,18 @@ const exportCatalogue = async (req, res, next) => {
     });
     const productData = await prisma.product.findMany({
       where: {
-        CatalogueCategory: {
-          some: {
-            category: { id: category_id },
+        catalogue_id: null,
+        ...(category_id.length > 0 && {
+          categories: {
+            some: {
+              category_id: { in: category_id },
+            },
           },
-        },
+        }),
+        ...(filter !== null && {
+          sku: { contains: filter, mode: "insensitive" },
+        }),
       },
-      where: { catalogue_id: null },
       include: {
         attributeValues: {
           include: {

@@ -594,7 +594,6 @@ const searchCatalogueAndProduct = async (req, res, next) => {
           image: true,
           description: true,
           tag: true,
-          stitching: true,
           isActive: true,
           attributeValues: {
             select: {

@@ -9,6 +9,7 @@ import {
   updateStatus,
 } from "../../../helper/common.js";
 import createSearchFilter from "../../../helper/searchFilter.js";
+import { data } from "../../../middleware/uploads.js";
 
 // CATEGORY ADD
 const postCategory = async (req, res, next) => {
@@ -97,10 +98,10 @@ const postCategory = async (req, res, next) => {
         image: filepath,
         ...(attributes &&
           attributes.length > 0 && {
-            CategoryAttribute: {
-              create: attributeConnection, // connect attributes to the category
-            },
-          }),
+          CategoryAttribute: {
+            create: attributeConnection, // connect attributes to the category
+          },
+        }),
       },
     });
     return res.status(200).json({
@@ -388,16 +389,16 @@ const updateCategory = async (req, res, next) => {
         meta_description,
         ...(attributes !== ""
           ? attributes.length > 0 && {
-              CategoryAttribute: {
-                deleteMany: {},
-                create: attributeConnections,
-              },
-            }
+            CategoryAttribute: {
+              deleteMany: {},
+              create: attributeConnections,
+            },
+          }
           : {
-              CategoryAttribute: {
-                deleteMany: {},
-              },
-            }),
+            CategoryAttribute: {
+              deleteMany: {},
+            },
+          }),
       },
     });
 
@@ -556,10 +557,15 @@ const updateCategoryShowInHomeStatus = async (req, res, next) => {
     const result = await prisma.categoryMaster.update({
       where: { id: id },
       data: { showInHome: newStatus },
+      select: {
+        id: true,
+        showInHome: true,
+      }
     });
     return res.status(200).json({
       status: true,
       message: "Category status updated successfully.",
+      data: result,
     });
   } catch (error) {
     let err = new Error("Something went wrong, please try again!");

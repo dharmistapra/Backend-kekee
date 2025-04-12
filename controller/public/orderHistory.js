@@ -15,6 +15,7 @@ const getOrderdetails = async (req, res, next) => {
         totalAmount: true,
         billingAddress: true,
         shippingAddress: true,
+        handlingcharge: true,
         status: true,
 
         orderItems: {

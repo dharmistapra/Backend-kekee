@@ -546,13 +546,11 @@ const calculateCartItemTotal = (cartItems) => {
           sizePriceAndQuantity.quantity === 0 ||
           product.quantity < quantity
         ) {
-          console.log("if condition");
           outOfStock = true;
           if (sizeObject) {
             sizeObject.price = sizePriceAndQuantity?.price;
           }
         } else {
-          console.log("else  condition");
           subtotal =
             (product.offer_price + sizePriceAndQuantity?.price) * quantity;
           tax = (subtotal * (product.retail_GST || 0)) / 100;

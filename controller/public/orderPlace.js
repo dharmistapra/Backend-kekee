@@ -762,8 +762,7 @@ const generateOrderId = async (req, res, next) => {
             return res.status(400).json({ isSuccess: false, message: "Data Not Found", data: null });
         }
 
-        console.log("totalSubtotal", totalSubtotal);
-        return;
+
 
         const getShippingdata = await prisma.shippingZoneAddRate.findUnique({
             where: {
@@ -938,7 +937,7 @@ const razorpayOrderCreate = async (req, res, next) => {
                 id: checkOrderId.id
             },
             data: {
-                totalAmount: razorpayAmount,
+                totalAmount: (checkOrderId.totalAmount + handlingCharge),
                 handlingcharge: handlingCharge,
             }
         })
@@ -1016,6 +1015,8 @@ const bankPayment = async (req, res, next) => {
             transactionId: paymentData.transactionId,
         };
 
+        const cartId = await prisma.cart.findFirst({ where: { user_id: checkOrderId.userId }, select: { id: true } })
+        await prisma.cartItem.deleteMany({ where: { cart_id: cartId.id } })
         return res.status(200).json({ isSuccess: false, mesage: "Payment paid successfylly", data: response })
 
 

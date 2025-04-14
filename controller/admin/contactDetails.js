@@ -78,6 +78,14 @@ const paginationContactDetails = async (req, res, next) => {
       });
 
     const result = await prisma.contactDetails.findMany({
+      select: {
+        id: true,
+        position: true,
+        name: true,
+        image: true,
+        description: true,
+        isActive: true,
+      },
       skip,
       take,
     });

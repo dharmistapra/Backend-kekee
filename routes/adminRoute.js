@@ -46,6 +46,9 @@ import {
   shippingchargesSchema,
   paymentMethodsSchema,
   webSettingSchema,
+  shippingMethodSchema,
+  shippingZoneSchema,
+  shippingRateSchema,
 } from "../schema/joi_schema.js";
 import {
   getAllSubCategory,
@@ -58,6 +61,7 @@ import {
   updateCurrencyStatus,
   deleteCurrency,
   paginationCurrency,
+  deleteMultipleCurrency,
   getAllCurrency,
 } from "../controller/admin/currency.js";
 import {
@@ -340,6 +344,25 @@ import {
   getWebSetting,
   postWebSetting,
 } from "../controller/admin/webSetting.js";
+import {
+  deleteShippingMethod,
+  getShippingMethod,
+  postShippingMethod,
+  shippingMethodStatus,
+  updateShippingMethod,
+} from "../controller/admin/shippingMethod.js";
+import {
+  deleteShippingZone,
+  getShippingZone,
+  postShippingZone,
+  updateShippingZone,
+} from "../controller/admin/shippingZone.js";
+import {
+  deleteShippingRate,
+  importShippingRate,
+  postShippingRate,
+  puttShippingRate,
+} from "../controller/admin/shippingRate.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -390,6 +413,7 @@ adminRouter.put(
 );
 adminRouter.get("/currency-status/:id", updateCurrencyStatus);
 adminRouter.delete("/currency/:id", deleteCurrency);
+adminRouter.post("/bulk/currency", deleteMultipleCurrency);
 adminRouter.post("/currency-pagination", [pageSchema], paginationCurrency);
 adminRouter.get("/currency", getAllCurrency);
 
@@ -791,5 +815,29 @@ adminRouter.post(
   postWebSetting
 );
 adminRouter.get("/websetting", getWebSetting);
+
+adminRouter.post("/shippingmethod", shippingMethodSchema, postShippingMethod);
+adminRouter.put(
+  "/shippingmethod/:id",
+  shippingMethodSchema,
+  updateShippingMethod
+);
+adminRouter.get("/shippingmethod", getShippingMethod);
+adminRouter.delete("/shippingmethod/:id", deleteShippingMethod);
+adminRouter.get("/shippingmethod-status/:id", shippingMethodStatus);
+
+adminRouter.post("/shipping/zone", shippingZoneSchema, postShippingZone);
+adminRouter.put("/shipping/zone/:id", shippingZoneSchema, updateShippingZone);
+adminRouter.get("/shipping/zone", getShippingZone);
+adminRouter.delete("/shipping/zone/:id", deleteShippingZone);
+
+adminRouter.post("/shipping/rate", [shippingRateSchema], postShippingRate);
+adminRouter.post(
+  "/importshipping-rate",
+  data.uploadShippingRate,
+  importShippingRate
+);
+adminRouter.put("/shipping/rate/:id", [shippingRateSchema], puttShippingRate);
+adminRouter.delete("/shipping/rate/:id", deleteShippingRate);
 
 export default adminRouter;

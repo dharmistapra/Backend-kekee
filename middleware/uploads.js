@@ -26,6 +26,7 @@ const folderPaths = {
     footerLogo: "./uploads/logo/footer",
     favIcon: "./uploads/logo/favIcon",
   },
+  shippingRate: "./uploads/shippingRate",
 };
 
 const storage = multer.diskStorage({
@@ -196,6 +197,12 @@ const uploadConfiguration = {
     { name: "footerLogo", maxCount: 1 },
     { name: "favIcon", maxCount: 1 },
   ]),
+
+  shippingRate: multer({
+    storage: dynamicStorage("shippingRate"),
+    fileFilter: csvFile,
+    limits: { fileSize: 10000000 * 5 },
+  }).single("csv"),
 };
 
 const currencystorage = multer.diskStorage({
@@ -273,6 +280,7 @@ const data = {
   uploadZip: uploadConfiguration.importZip,
   uploadPaymentMethod: uploadConfiguration.paymentMethod,
   uploadLogo: uploadConfiguration.logo,
+  uploadShippingRate: uploadConfiguration.shippingRate,
   // uploadCollectionImage:uploadConfiguration.co
 };
 
@@ -317,6 +325,25 @@ let uploadShippingChagresCSV = multer({
   fileFilter: fileFilterCSV,
 }).single("files");
 
+
+
+const BankPaymentUploadFile = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads/Bank_receipt");
+  },
+  filename: async (req, file, cb) => {
+    let filename = await uniqueFilename(file);
+    cb(null, filename);
+  },
+});
+
+let uploadBankPaymentReceipt = multer({
+  storage: BankPaymentUploadFile,
+  limits: { fileSize: 10000000 * 5 },
+  fileFilter: filefilter,
+}).single("receipt");
+
+
 export {
   uploadcurrencyImg,
   uploadtestimonialImg,
@@ -324,5 +351,6 @@ export {
   uploadCategorystorageImg,
   collectionImages,
   uploadShippingChagresCSV,
+  uploadBankPaymentReceipt,
   data,
 };

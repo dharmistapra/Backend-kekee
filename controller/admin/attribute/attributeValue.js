@@ -3,7 +3,7 @@ import prisma from "../../../db/config.js";
 import { deleteData, updateStatus } from "../../../helper/common.js";
 import createSearchFilter from "../../../helper/searchFilter.js";
 
-// HANDELE ADD ATTRIBUTE API
+// HANDLE ADD ATTRIBUTE API
 const postAttributeValue = async (req, res, next) => {
   try {
     // suppeose the value is a  ==> Cotton silk the value store in this format cotton-silk
@@ -57,13 +57,12 @@ const postAttributeValue = async (req, res, next) => {
       data,
     });
   } catch (error) {
-    console.log(error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
 };
 
-// HANDLE GET ALL ATRRIBUTE
+// HANDLE GET ALL ATTRIBUTE
 const getAllAttributeValue = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -240,7 +239,6 @@ const updateAttributeValue = async (req, res, next) => {
     });
   } catch (error) {
     console.log(error);
-
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
@@ -250,16 +248,14 @@ const updateAttributeValue = async (req, res, next) => {
 const deletAttributeValue = async (req, res, next) => {
   try {
     const id = req.params.id;
-    const result = await deleteData("attributeValue", id);
-    if (result.status === false)
-      return res
-        .status(400)
-        .json({ isSuccess: result.status, message: result.message });
+    const { status, message, data } = await deleteData("attributeValue", id);
+    if (!status)
+      return res.status(400).json({ isSuccess: status, message: message });
 
     return res.status(200).json({
-      isSuccess: result.status,
-      message: result.message,
-      data: result.data,
+      isSuccess: status,
+      message: message,
+      data: data,
     });
   } catch (error) {
     let err = new Error("Something went wrong, please try again!");
@@ -271,16 +267,14 @@ const deletAttributeValue = async (req, res, next) => {
 const updateAttributeValueStatus = async (req, res, next) => {
   try {
     let id = req.params.id.trim();
-    const result = await updateStatus("attributeValue", id);
-    if (result.status === false)
-      return res
-        .status(400)
-        .json({ isSuccess: false, message: result.message });
+    const { status, message, data } = await updateStatus("attributeValue", id);
+    if (!status)
+      return res.status(400).json({ isSuccess: status, message: message });
 
     return res.status(200).json({
-      isSuccess: true,
-      message: result.message,
-      data: result.data,
+      isSuccess: status,
+      message: message,
+      data: data,
     });
   } catch (error) {
     let err = new Error("Something went wrong, please try again!");

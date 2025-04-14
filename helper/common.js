@@ -177,6 +177,9 @@ const models = {
   shippingCharges: prisma.shippingCharges,
   collectionAll: prisma.collectionAll,
   paymentMethods: prisma.paymentMethods,
+  shippingMethod: prisma.shippingMethod,
+  shippingZone: prisma.shippingZone,
+  shippingZoneAddRate: prisma.shippingZoneAddRate
 };
 
 const updatePosition = async (model, data) => {
@@ -238,7 +241,6 @@ const updateStatus = async (model, id) => {
 const deleteData = async (model, id) => {
   try {
     // const id = req.params.id;
-    console.log("model", model);
     if (!/^[a-fA-F0-9]{24}$/.test(id)) {
       return { status: false, message: "Invalid ID format!" };
     }
@@ -766,7 +768,6 @@ const productsSku = async (sku) => {
     if (isProductExist.length !== skus.length) {
       const productSkus = isProductExist.map((val) => val.sku);
       let productSku = skus.filter((sku) => !productSkus.includes(sku));
-      // await removeProductImage(imagePaths);
       return {
         status: false,
         message: `${productSku} Related product not found!`,

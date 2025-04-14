@@ -532,7 +532,6 @@ model users {
   orders            Order[]
   // Order             Order[]
   // Address           Address[]
-  BankAccount       BankAccount[]
   CustomerAddress   CustomerAddress[]
 }
 
@@ -580,6 +579,7 @@ model StitchingOption {
   // has_customization    Boolean                @default(false)
   isActive             Boolean?               @default(true)
   isCustom             Boolean?               @default(false)
+  isDefault            Boolean?               @default(false)
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   stitchingValues      StitchingValue[]
@@ -776,9 +776,11 @@ model Order {
   subtotal        Float
   billingAddress  Json?
   shippingAddress Json?
+  shippingMethod  Json?
   Tax             Float
   discount        Float?
   shippingcharge  Float
+  handlingcharge  Float?
   totalAmount     Float
   status          OrderStatus
   createdAt       DateTime    @default(now())
@@ -853,26 +855,25 @@ model payment {
   orderId       String        @unique @db.ObjectId
   paymentMethod PaymentMethod
   transactionId String?
-  bankAccountId String?       @db.ObjectId
+  receiptImage  String?
   status        PaymentStatus
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  bankaccount   BankAccount?  @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
 }
 
-model BankAccount {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String    @db.ObjectId
-  bankName          String
-  accountNumber     String
-  ifscCode          String
-  accountHolderName String
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  user              users?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payment           payment[]
-}
+// model BankAccount {
+//   id                String    @id @default(auto()) @map("_id") @db.ObjectId
+//   userId            String    @db.ObjectId
+//   bankName          String
+//   accountNumber     String
+//   ifscCode          String
+//   accountHolderName String
+//   createdAt         DateTime  @default(now())
+//   updatedAt         DateTime  @updatedAt
+//   user              users?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   payment           payment[]
+// }
 
 enum ShippingStatus {
   PENDING
@@ -929,24 +930,73 @@ model ContactUs {
 }
 
 model WebSettings {
-  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
-  headerLogo          String
-  footerLogo          String
-  favIcon             String
-  address             String
-  interNationalNumber String?  @default("")
-  domesticNumber      String?  @default("")
-  complaintNumber     String?  @default("")
-  email               String
-  skypeId             String?  @default("")
-  timing              String?  @default("")
-  mapUrl              String
-  notification        String?  @default("")
-  happyToHelp         Json
-  showProductCount    Int      @default(10)
-  showPrice           Boolean? @default(false)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                       String   @id @default(auto()) @map("_id") @db.ObjectId
+  headerLogo               String
+  footerLogo               String
+  favIcon                  String
+  address                  String
+  interNationalNumber      String?  @default("")
+  domesticNumber           String?  @default("")
+  complaintNumber          String?  @default("")
+  email                    String
+  skypeId                  String?  @default("")
+  timing                   String?  @default("")
+  mapUrl                   String
+  notification             String?  @default("")
+  happyToHelp              Json
+  showProductCount         Int      @default(10)
+  showPrice                Boolean? @default(false)
+  wholesale_min_buy_qty    Int?     @default(0)
+  wholesale_min_buy_amount Int?     @default(0)
+  orderExpireyTime         Int?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+
+model ShippingMethod {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  price       Int
+  description String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ShippingZone {
+  id                  String                @id @default(auto()) @map("_id") @db.ObjectId
+  name                String
+  countries           String[]
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  ShippingZoneAddRate ShippingZoneAddRate[]
+}
+
+model ShippingZoneAddRate {
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  type           RateType
+  name           String
+  price          Float
+  selectedOption RateCondition?
+  minprice       Float?
+  maxprice       Float?
+  minWeight      Float?
+  maxWeight      Float?
+  description    String?
+  zone_id        String         @db.ObjectId
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  ShippingZone   ShippingZone   @relation(fields: [zone_id], references: [id], onDelete: Cascade)
+}
+
+enum RateType {
+  FLAT_RATE
+  EXCEL_SHEET
+}
+
+enum RateCondition {
+  WEIGHT
+  TOTAL_PRICE
 }
 
 // ORDER RELATED DATE END HERE EXPLAINATION

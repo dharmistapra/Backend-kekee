@@ -7,6 +7,7 @@ import { rozarpay } from "../../config/paymentConfig.js";
 import crypto from "crypto";
 import "dotenv/config";
 import { createBilling, createShipping } from "../../helper/addres.js";
+import { convertFilePathSlashes } from "../../helper/common.js";
 const OrderPlace = async (req, res, next) => {
     try {
         let { user_id, billingdata, shippingdata, paymentMethod, currency, bankdata, defaultAddressId, isSame, billingId, shippingId, type } = req.body;
@@ -70,6 +71,8 @@ const OrderPlace = async (req, res, next) => {
                 status: "PENDING",
             },
         });
+
+
         await prisma.orderItem.createMany({
             data: DataModified2?.map((item) => {
                 let availableProducts = [];
@@ -165,7 +168,7 @@ const verifyOrder = async (req, res, next) => {
             signature,
         } = req.body;
 
-        const order = await prisma.order.findUnique({ where: { orderId: orderId }, select: { id: true,userId:true } });
+        const order = await prisma.order.findUnique({ where: { orderId: orderId }, select: { id: true, userId: true } });
         if (!order)
             return res
                 .status(404)
@@ -708,12 +711,320 @@ const orderFailed = async (req, res) => {
             message: "Payment status updated to CANCELLED!",
         });
     } catch (error) {
-        console.error("Error updating payment status:", error);
         return res
             .status(500)
             .json({ success: false, message: "Failed to update payment status" });
     }
 };
 
+
+
+
+
+
+
+
+
+
+
+
+
+const generateOrderId = async (req, res, next) => {
+    try {
+        const { user_id, billingAddress, shippingAddress, shippingMethodId, isSame } = req.body
+        const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
+        if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
+
+
+
+        const cartItems = await prisma.cartItem.findMany({
+            where: { cart_id: finduser.id },
+            include: {
+                stitchingItems: { include: { option: true, }, },
+                product: {
+                    include: {
+                        categories: { include: { category: true } },
+                        sizes: { include: { size: true } },
+                    },
+                },
+                catalogue: {
+                    include: {
+                        Product: { include: { sizes: { include: { size: true } } } },
+                        CatalogueCategory: { include: { category: true } },
+                        CatalogueSize: { include: { size: true } },
+                    },
+                },
+            },
+        });
+
+        const { DataModified2, totalSubtotal, totalTax, } = calculateCartItemTotal(cartItems);
+        if (DataModified2?.length == 0 || totalSubtotal === 0) {
+            return res.status(400).json({ isSuccess: false, message: "Data Not Found", data: null });
+        }
+
+
+
+        const getShippingdata = await prisma.shippingZoneAddRate.findUnique({
+            where: {
+                id: shippingMethodId
+            }, select: {
+                id: true,
+                type: true,
+                name: true,
+                price: true,
+                selectedOption: true
+            }
+        })
+
+        if (!getShippingdata) {
+            return res.status(409).json({ isSuccess: false, message: "shipping not found", })
+        }
+
+        let ordertotal = totalSubtotal + totalTax + getShippingdata.price;
+        const now = new Date();
+        const date = now.toISOString().slice(0, 10).replace(/-/g, '');
+        const time = now.toTimeString().slice(0, 8).replace(/:/g, '');
+        const orderId = `ORD-${date}-${time}`;
+
+
+        const order = await prisma.order.create({
+            data: {
+                userId: user_id,
+                orderId: orderId,
+                subtotal: totalSubtotal,
+                Tax: totalTax,
+                discount: 0,
+                billingAddress: isSame ? JSON.stringify(shippingAddress) : JSON.stringify(billingAddress),
+                shippingAddress: JSON.stringify(shippingAddress),
+                shippingMethod: JSON.stringify(getShippingdata),
+                shippingcharge: getShippingdata.price,
+                totalAmount: ordertotal,
+                status: "PENDING",
+            },
+            select: {
+                id: true,
+                orderId: true
+
+            }
+        });
+
+        await prisma.orderItem.createMany({
+            data: DataModified2?.map((item) => {
+                let availableProducts = [];
+                if (item?.isCatalogue) {
+                    availableProducts = item?.products?.filter(prod => prod.quantity >= item.quantity) || [];
+                }
+
+
+                const stitchingTotal = item?.stitching?.reduce((sum, stitch) => sum + (stitch.option.price || 0), 0) || 0;
+                const stitchingPrice = (availableProducts?.length > 0 ? availableProducts.length : 1) * stitchingTotal;
+
+                const snapshots = {
+                    quantity: item.quantity,
+                    stitching: item.stitching || [],
+                    stitchingPrice,
+                    products: availableProducts,
+                    price: item?.price,
+                    subtotal: item?.subtotal,
+                    tax: item?.tax,
+                    size: item?.size || {},
+                }
+                return {
+                    orderId: order.id,
+                    productId: item?.product_id,
+                    catlogueId: item?.catalogue_id,
+                    quantity: item.quantity,
+                    productsnapshots: JSON.stringify(snapshots)
+                };
+            }) ?? []
+        });
+
+
+        let data = {
+            orderId: order.orderId,
+            totalAmount: ordertotal,
+            fullname: shippingAddress.fullname,
+            mobile: shippingAddress.mobile,
+            email: shippingAddress.email,
+        }
+
+        return res.status(200).json({
+            isSuccess: true,
+            "message": "Order id generate successfully",
+            data: data
+
+        })
+
+
+    } catch (error) {
+        let err = new Error("Something went wrong, please try again!")
+        next(err);
+    }
+}
+
+const razorpayOrderCreate = async (req, res, next) => {
+    try {
+        const { user_id, orderId, currency, } = req.body
+
+        const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
+        if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
+
+        const getOrderExpTime = await prisma.webSettings.findFirst({
+            select: {
+                orderExpireyTime: true
+            }
+        })
+
+        const ExpireTimeAdjust = getOrderExpTime?.orderExpireyTime || 3
+        const checkOrderId = await prisma.order.findUnique({
+            where: {
+                orderId: orderId
+            },
+
+        })
+
+
+        if (!checkOrderId) res.status(400).json({ isSuccess: false, message: "order not found", });
+
+
+
+        const orderCreatedAt = new Date(checkOrderId.createdAt);
+        const currentTime = new Date();
+
+        const diffMs = currentTime - orderCreatedAt;
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+        if (diffDays > ExpireTimeAdjust) {
+            return res.status(400).json({
+                isSuccess: false,
+                message: "Order has expired",
+                data: null
+            });
+        }
+
+        const paymenttype = await prisma.paymentMethods.findFirst({ where: { name: "razorpay" } })
+        if (!paymenttype) res.status(400).json({ isSuccess: false, message: "Payment method not found", data: null });
+
+        const handlingCharge = checkOrderId.totalAmount * (paymenttype?.charge / 100);
+        const razorpayAmount = Math.round((checkOrderId.totalAmount + handlingCharge) * 100);
+
+
+        const razorpayOrder = await rozarpay.orders.create({
+            amount: razorpayAmount,
+            currency: currency?.code,
+            receipt: `order_${orderId}`,
+            payment_capture: 1,
+        });
+
+        const paymentData = {
+            orderId: checkOrderId.id,
+            paymentMethod: "razorpay",
+            status: "PROCESSING",
+            transactionId: razorpayOrder.id
+        };
+
+        const payment = await prisma.payment.create({ data: paymentData });
+
+        const response = {
+            orderId: orderId,
+            razorpayOrderId: paymentData.transactionId,
+            currency: currency,
+            amount: razorpayAmount,
+        };
+
+        await prisma.order.update({
+            where: {
+                id: checkOrderId.id
+            },
+            data: {
+                totalAmount: (checkOrderId.totalAmount + handlingCharge),
+                handlingcharge: handlingCharge,
+            }
+        })
+        return res.status(200).json({ isSuccess: false, mesage: "Razorpay order created successfully", data: response })
+
+
+    } catch (error) {
+        console.log(error)
+        let err = new Error("Something went wrong, please try again!")
+        next(err);
+    }
+}
+
+
+
+const bankPayment = async (req, res, next) => {
+    try {
+        const { user_id, orderId, transactionId } = req.body
+        let receipt = req.file;
+
+        if (receipt) {
+            receipt = await convertFilePathSlashes(receipt.path);
+        }
+
+
+        const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
+        if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
+
+        const getOrderExpTime = await prisma.webSettings.findFirst({
+            select: {
+                orderExpireyTime: true
+            }
+        })
+
+        const ExpireTimeAdjust = getOrderExpTime?.orderExpireyTime || 3
+        const checkOrderId = await prisma.order.findUnique({
+            where: {
+                orderId: orderId
+            }
+        })
+
+
+        if (!checkOrderId) res.status(400).json({ isSuccess: false, message: "order not found", });
+
+
+
+        const orderCreatedAt = new Date(checkOrderId.createdAt);
+        const currentTime = new Date();
+
+        const diffMs = currentTime - orderCreatedAt;
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+        if (diffDays > ExpireTimeAdjust) {
+            return res.status(400).json({
+                isSuccess: false,
+                message: "Order has expired",
+                data: null
+            });
+        }
+
+
+
+        const paymentData = {
+            orderId: checkOrderId.id,
+            paymentMethod: "bank",
+            status: "PROCESSING",
+            receiptImage: receipt,
+            transactionId: transactionId
+        };
+
+        const payment = await prisma.payment.create({ data: paymentData });
+
+        const response = {
+            orderId: orderId,
+            transactionId: paymentData.transactionId,
+        };
+
+        const cartId = await prisma.cart.findFirst({ where: { user_id: checkOrderId.userId }, select: { id: true } })
+        await prisma.cartItem.deleteMany({ where: { cart_id: cartId.id } })
+        return res.status(200).json({ isSuccess: false, mesage: "Payment paid successfylly", data: response })
+
+
+    } catch (error) {
+        console.log(error)
+        let err = new Error("Something went wrong, please try again!")
+        next(err);
+    }
+}
 export default OrderPlace;
-export { verifyOrder, orderFailed };
+export { verifyOrder, orderFailed, generateOrderId, razorpayOrderCreate, bankPayment };

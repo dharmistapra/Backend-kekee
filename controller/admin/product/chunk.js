@@ -120,7 +120,7 @@ const HandleChunkData = async (req, res, next) => {
       ? parseFloat(offer_price)
       : parseFloat(price) * (1 - parseFloat(discount) / 100);
 
-    url = `${slug(name)}-${sku}`;
+    url = `${slug(name)}-${slug(sku)}`;
 
     const productData = {
       name,

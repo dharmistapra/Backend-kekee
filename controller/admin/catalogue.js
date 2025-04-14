@@ -266,7 +266,28 @@ const paginationCatalogue = async (req, res, next) => {
 
     const result = await prisma.catalogue.findMany({
       where: condition,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        cat_code: true,
+        no_of_product: true,
+        url: true,
+        quantity: true,
+        price: true,
+        catalogue_discount: true,
+        average_price: true,
+        GST: true,
+        offer_price: true,
+        optionType: true,
+        weight: true,
+        meta_title: true,
+        meta_keyword: true,
+        meta_description: true,
+        coverImage: true,
+        description: true,
+        tag: true,
+        isActive: true,
+        deletedAt: true,
         _count: {
           select: {
             Product: true,

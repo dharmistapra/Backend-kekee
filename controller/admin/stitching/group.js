@@ -23,6 +23,7 @@ const postgroupstitching = async (req, res, next) => {
           type: item.type,
           dispatch_time: item.dispatch_time,
           isCustom: item.isCustom,
+          isDefault: item.isDefault,
         },
         select: {
           id: true,
@@ -139,6 +140,7 @@ const paginationgroupstitching = async (req, res, next) => {
                 type: true,
                 dispatch_time: true,
                 isCustom: true,
+                isDefault: true,
               },
             },
           },
@@ -224,6 +226,7 @@ const putgroupstitching = async (req, res, next) => {
             type: item.type,
             dispatch_time: item.dispatch_time,
             isCustom: item.isCustom,
+            isDefault: item.isDefault,
           },
         });
       } else {
@@ -241,6 +244,7 @@ const putgroupstitching = async (req, res, next) => {
               type: item.type,
               dispatch_time: item.dispatch_time,
               isCustom: item.isCustom,
+              isDefault: item.isDefault,
             },
           });
         } else {
@@ -252,6 +256,7 @@ const putgroupstitching = async (req, res, next) => {
               type: item.type,
               dispatch_time: item.dispatch_time,
               isCustom: item.isCustom,
+              isDefault: item.isDefault,
             },
           });
         }

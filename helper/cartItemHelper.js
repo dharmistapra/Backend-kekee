@@ -510,8 +510,8 @@ const calculateCartItemTotal = (cartItems) => {
       outOfStock = availableProductCount === 0;
       const sizePrice = size
         ? catalogue.Product[0]?.sizes?.find(
-            (s) => s?.size?.id === JSON.parse(size)?.id
-          )?.price || 0
+          (s) => s?.size?.id === JSON.parse(size)?.id
+        )?.price || 0
         : 0;
 
       if (sizePrice) {
@@ -535,7 +535,6 @@ const calculateCartItemTotal = (cartItems) => {
         ? { price: sizeDetails.price || 0, quantity: sizeDetails.quantity || 0 }
         : { price: 0, quantity: 0 };
 
-      console.log("sizePriceAndQuantity", product.optionType);
 
       if (product.optionType === "Stitching") {
         subtotal = (product.offer_price + totalStitchingPrice) * quantity;
@@ -547,13 +546,11 @@ const calculateCartItemTotal = (cartItems) => {
           sizePriceAndQuantity.quantity === 0 ||
           product.quantity < quantity
         ) {
-          console.log("if condition");
           outOfStock = true;
           if (sizeObject) {
             sizeObject.price = sizePriceAndQuantity?.price;
           }
         } else {
-          console.log("else  condition");
           subtotal =
             (product.offer_price + sizePriceAndQuantity?.price) * quantity;
           tax = (subtotal * (product.retail_GST || 0)) / 100;
@@ -610,13 +607,13 @@ const calculateCartItemTotal = (cartItems) => {
       availableQuantity,
       products: isCatalogue
         ? catalogue.Product.map((prod) => ({
-            name: prod.name,
-            url: prod.url,
-            quantity: prod.quantity,
-            outOfStock: prod?.outOfStock,
-            code: prod.sku,
-            // price: prod.retail_price,
-          }))
+          name: prod.name,
+          url: prod.url,
+          quantity: prod.quantity,
+          outOfStock: prod?.outOfStock,
+          code: prod.sku,
+          // price: prod.retail_price,
+        }))
         : undefined,
     };
   });

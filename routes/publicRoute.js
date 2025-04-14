@@ -6,7 +6,7 @@ import {
 import { getHomeBanner } from "../controller/admin/homeBanner.js";
 import { getSocialMedia } from "../controller/admin/socialMediaIcon.js";
 import { getAllCurrency } from "../controller/admin/currency.js";
-import { getAllCms, getCms } from "../controller/admin/cms.js";
+import { getAllCms, getBankdetails, getCms } from "../controller/admin/cms.js";
 import {
   getCategories,
   getCategoryCollection,
@@ -22,6 +22,7 @@ import {
   getCatalogueProduct,
   relatedProduct,
   searchCatalogueAndProduct,
+  shareProduct,
 } from "../controller/public/catalogue.js";
 import passport from "../middleware/passport.js";
 import {
@@ -64,6 +65,7 @@ import {
   postContactUs,
 } from "../controller/admin/contactUs.js";
 import { getWebSetting } from "../controller/admin/webSetting.js";
+import { getShippingMethod } from "../controller/public/shippingMethod.js";
 const router = express.Router();
 
 // MENU API
@@ -247,5 +249,10 @@ router.get("/categorycollection", getCategoryCollection);
 router.post("/contact-us", contactUsSchema, postContactUs);
 
 router.get("/websetting", getWebSetting);
+router.get("/bank/details", getBankdetails);
+
+router.get("/shippingmethod", getShippingMethod);
+
+router.post("/shareproduct/:id", shareProduct);
 
 export default router;

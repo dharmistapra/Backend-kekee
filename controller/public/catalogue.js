@@ -217,6 +217,7 @@ const getCatalogueProduct = async (req, res, next) => {
                             dispatch_time: true,
                             isActive: true,
                             isCustom: true,
+                            isDefault: true,
                             stitchingValues: {
                               select: {
                                 id: true,
@@ -593,7 +594,6 @@ const searchCatalogueAndProduct = async (req, res, next) => {
           image: true,
           description: true,
           tag: true,
-          stitching: true,
           isActive: true,
           attributeValues: {
             select: {
@@ -697,9 +697,94 @@ const relatedProduct = async (req, res, next) => {
     next(error);
   }
 };
+
+const shareProduct = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    if (!id) {
+      return res.status(400).json({
+        isSuccess: false,
+        message: "Please provide product id!",
+      });
+    }
+    const url = req.body.url;
+    if (!url) {
+      return res.status(400).json({
+        isSuccess: false,
+        message: "Please provide catalogue or product url!",
+      });
+    }
+    const isCatalogueExists = await prisma.catalogue.findUnique({
+      where: { id: id },
+    });
+
+    if (isCatalogueExists) {
+      return res.status(200).json({
+        isSuccess: true,
+        message: "Catalogue get successfully.",
+        data: `
+            <!DOCTYPE html>
+        <html>
+          <head>
+            <meta property="og:title" content="${isCatalogueExists.name}" />
+            <meta property="og:description" content="${isCatalogueExists.description}" />
+            <meta property="og:image" content="${isCatalogueExists.image}" />
+            <meta property="og:url" content="${url}" />
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          </head>
+          <body>
+            <script>
+              window.location.replace("${isCatalogueExists.url}");
+            </script>
+          </body>
+        </html>
+          `,
+      });
+    }
+
+    const isProductExists = await prisma.product.findUnique({
+      where: { id: id },
+    });
+
+    if (isProductExists) {
+      return res
+        .status(200)
+        .setHeader("Content-Type", "text/html")
+        .send(
+          `<!DOCTYPE html>
+        <html>
+          <head>
+            <meta property="og:title" content="${isProductExists.name}" />
+            <meta property="og:description" content="${isProductExists.description}" />
+            <meta property="og:image" content="${isProductExists.image[0]}" />
+            <meta property="og:url" content="${url}" />
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          </head>
+          <body>
+            <script>
+              window.location.replace("${isProductExists.url}");
+            </script>
+          </body>
+        </html>`
+        );
+    }
+
+    return res.status(404).json({
+      isSuccess: false,
+      message: "Catalogue or Product not found!",
+    });
+  } catch (err) {
+    console.log(err);
+    const error = new Error("Something went wrong, Please try again!");
+    next(error);
+  }
+};
 export {
   getCatalogue,
   getCatalogueProduct,
   searchCatalogueAndProduct,
   relatedProduct,
+  shareProduct,
 };

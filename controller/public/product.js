@@ -343,6 +343,9 @@ const getProductDetails = async (req, res, next) => {
         sku: true,
         showInSingle: true,
         catalogue_id: true,
+        catalogue: {
+          select: { id: true, name: true, url: true },
+        },
         url: true,
         quantity: true,
         weight: true,
@@ -383,6 +386,7 @@ const getProductDetails = async (req, res, next) => {
                             dispatch_time: true,
                             isActive: true,
                             isCustom: true,
+                            isDefault: true,
                             stitchingValues: {
                               select: {
                                 id: true,
@@ -450,6 +454,21 @@ const getProductDetails = async (req, res, next) => {
             },
           },
         },
+        RelatedProduct: {
+          where: {
+            related: { catalogue: { deletedAt: null }, isActive: true },
+          },
+          select: {
+            related: {
+              select: {
+                id: true,
+                sku: true,
+                url: true,
+                image: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -458,6 +477,7 @@ const getProductDetails = async (req, res, next) => {
         .status(404)
         .json({ isSuccess: false, message: "Product not found!" });
 
+    data.catalogueUrl = data.catalogue?.url || null;
     if (data?.attributeValues?.length > 0) {
       let labels = [];
       let colours = [];
@@ -550,6 +570,11 @@ const getProductDetails = async (req, res, next) => {
           return item.size;
         })
         .flat();
+    }
+    if (data && data.RelatedProduct) {
+      data.RelatedProduct = data.RelatedProduct?.map((item) => {
+        return item.related;
+      }).flat();
     }
     console.log("dataata => ", data.stitchingOption);
     // delete data.categories;

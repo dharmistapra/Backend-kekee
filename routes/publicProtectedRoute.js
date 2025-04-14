@@ -7,11 +7,14 @@ import {
   getAllcartitemOptimizecode,
 } from "../controller/public/cartItem.js";
 import {
+  bankPaymentSchema,
   cartSchema,
   editCartSchema,
+  orderId_generate_Validation_Schema,
   orderPlaceSchema,
   pageSchema,
   postaddressSchema,
+  razorpayOrderSchema,
   updateUserbasicInfoSchema,
   userchangePasswordSchema,
   wishListSchema,
@@ -27,12 +30,16 @@ import {
   updateUserbasicInfo,
 } from "../controller/public/user/register.js";
 import OrderPlace, {
+  bankPayment,
+  generateOrderId,
   orderFailed,
+  razorpayOrderCreate,
   verifyOrder,
 } from "../controller/public/orderPlace.js";
 import {
   getOrderdetails,
   getOrderHistory,
+  getOrderPendingPayment,
   getuserAddresspagiantion,
 } from "../controller/public/orderHistory.js";
 import {
@@ -41,6 +48,8 @@ import {
   postshipAddress,
   shippingDefaultStatus,
 } from "../controller/public/address.js";
+import { getShippingMethod } from "../controller/admin/shippingRate.js";
+import { uploadBankPaymentReceipt } from "../middleware/uploads.js";
 
 // publicProtected.post("/cart-item", cartSchema, postCartItem);
 publicProtected.post("/cart-item", cartSchema, postCartItemOptimizeCode);
@@ -63,10 +72,13 @@ publicProtected.put(
   updateUserbasicInfo
 );
 
+publicProtected.post("/generate/orderId", [orderId_generate_Validation_Schema], generateOrderId);
+publicProtected.post("/razorpay/create-order", [razorpayOrderSchema], razorpayOrderCreate);
+publicProtected.post("/bank/payent", [uploadBankPaymentReceipt, bankPaymentSchema], bankPayment); // Wotjking This Modduleu
 publicProtected.post("/order/place", [orderPlaceSchema], OrderPlace);
 publicProtected.post("/verify/order", verifyOrder);
 publicProtected.post("/cancel/payment", orderFailed);
-publicProtected.post("/order/details", getOrderdetails);
+publicProtected.get("/order/details/:orderId", getOrderdetails);
 publicProtected.post("/order/history", getOrderHistory);
 
 publicProtected.post("/shipping/address", [postaddressSchema], postshipAddress);
@@ -76,4 +88,8 @@ publicProtected.delete("/shipping/address/:id", deleteshipAddress);
 publicProtected.get("/user/address/:id", getuserAddresspagiantion);
 
 publicProtected.get("/user/profile/:id", getuserById);
+
+publicProtected.get("/get/shippingmethod", getShippingMethod);
+publicProtected.get("/order-details/pending-payment/:orderId", getOrderPendingPayment);
+
 export default publicProtected;

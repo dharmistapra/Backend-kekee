@@ -10,7 +10,7 @@ import {
   uniqueImage,
 } from "../../../helper/common.js";
 import slug from "slug";
-import _ from "underscore";
+import _, { select } from "underscore";
 import {
   importCatalogue,
   importCatalogueSchema,
@@ -797,8 +797,7 @@ const importCatalogues = async (req, res, next) => {
           const formattedAttributes = missingAttributes
             .map(
               (item) =>
-                `Category: "${
-                  item.category
+                `Category: "${item.category
                 }", Missing Attributes: [${item.attributes.join(", ")}]`
             )
             .join("; ");
@@ -919,12 +918,12 @@ const importCatalogues = async (req, res, next) => {
 
         let finalOfferPrice =
           parseFloat(catalogueItemMarketPrice) > 0 &&
-          parseFloat(catalogueItemDiscount) > 0
+            parseFloat(catalogueItemDiscount) > 0
             ? parseFloat(catalogueItemMarketPrice) *
-              (1 - parseFloat(catalogueItemDiscount) / 100)
+            (1 - parseFloat(catalogueItemDiscount) / 100)
             : parseFloat(catalogueItemMarketPrice);
 
-        let cat_url = `${slug(productName)}-${catCode}`;
+        let cat_url = `${slug(productName)}-${slug(catCode)}`;
 
         let average_price = parseFloat(finalOfferPrice) / parseInt(noOfProduct);
 
@@ -1035,7 +1034,7 @@ const importCatalogues = async (req, res, next) => {
         } else if (catalogue) {
           finalOfferPrice = catalogue.average_price;
         }
-        let url = `${slug(productName)}-${productCode}`;
+        let url = `${slug(productName)}-${slug(productCode)}`;
 
         let product = {
           name: productName,
@@ -1652,13 +1651,18 @@ const zipImages = async (req, res, next) => {
 
 const exportCatalogue = async (req, res, next) => {
   try {
-    const { category_id } = req.body;
-
+    let category_id = req.body.category_id || [];
+    let filter = req.body.filter?.toLowerCase() || null;
     const catalogueData = await prisma.catalogue.findMany({
       where: {
-        CatalogueCategory: {
-          some: { category_id: { in: category_id } },
-        },
+        ...(category_id.length > 0 && {
+          CatalogueCategory: {
+            some: { category_id: { in: category_id } },
+          },
+        }),
+        ...(filter !== null && {
+          cat_code: { contains: filter, mode: "insensitive" },
+        }),
       },
       include: {
         Product: {
@@ -1681,12 +1685,36 @@ const exportCatalogue = async (req, res, next) => {
                 },
               },
             },
+            sizes: {
+              select: {
+                id: true,
+                price: true,
+                quantity: true,
+                size: {
+                  select: {
+                    id: true,
+                    value: true,
+                  },
+                },
+              }
+            },
             categories: {
               include: {
                 category: {
                   select: {
                     id: true,
                     name: true,
+                  },
+                },
+              },
+            },
+            RelatedProduct: {
+              where: { related: { catalogue: { deletedAt: null } } },
+              select: {
+                related: {
+                  select: {
+                    id: true,
+                    sku: true,
                   },
                 },
               },
@@ -1709,18 +1737,35 @@ const exportCatalogue = async (req, res, next) => {
             attributeValue: { select: { id: true, name: true, value: true } },
           },
         },
+        CatalogueSize: {
+          select: {
+            id: true,
+            price: true,
+            quantity: true,
+            size: {
+              select: {
+                id: true,
+                value: true,
+              },
+            },
+          }
+        }
       },
     });
-
     const productData = await prisma.product.findMany({
       where: {
-        CatalogueCategory: {
-          some: {
-            category: { id: category_id },
+        catalogue_id: null,
+        ...(category_id.length > 0 && {
+          categories: {
+            some: {
+              category_id: { in: category_id },
+            },
           },
-        },
+        }),
+        ...(filter !== null && {
+          sku: { contains: filter, mode: "insensitive" },
+        }),
       },
-      where: { catalogue_id: null },
       include: {
         attributeValues: {
           include: {
@@ -1740,6 +1785,19 @@ const exportCatalogue = async (req, res, next) => {
             },
           },
         },
+        sizes: {
+          select: {
+            id: true,
+            price: true,
+            quantity: true,
+            size: {
+              select: {
+                id: true,
+                value: true,
+              }
+            }
+          }
+        },
         categories: {
           include: {
             category: {
@@ -1750,8 +1808,20 @@ const exportCatalogue = async (req, res, next) => {
             },
           },
         },
+        RelatedProduct: {
+          where: { related: { catalogue: { deletedAt: null } } },
+          select: {
+            related: {
+              select: {
+                id: true,
+                sku: true,
+              },
+            },
+          },
+        },
       },
     });
+
     let products = [];
     let allAttributes = new Set();
     for (let catalogue of catalogueData) {
@@ -1784,6 +1854,13 @@ const exportCatalogue = async (req, res, next) => {
           !isAttribute && allAttributes.add(value.attribute.name);
         }
       });
+      let size = [];
+      if (catalogue.optionType === "Size") {
+        catalogue.CatalogueSize.map((value) => {
+          let sizes = `${value.size.value}-${value.quantity}-${value.price}`;
+          size.push(sizes);
+        })
+      }
       let catImage = path.basename(catalogue.coverImage);
       let data = {
         category: category.join(","),
@@ -1805,8 +1882,11 @@ const exportCatalogue = async (req, res, next) => {
         tag: catalogue.tag.join(","),
         cat_image: catImage,
         image: "",
-        isStitching: catalogue.stitching === true ? "Y" : "N",
-        isSize: catalogue.size === true ? "Y" : "N",
+        relatedProduct: "",
+        optionType: catalogue.optionType,
+        size: size.join(",") || "",
+        // isStitching: catalogue.stitching === true ? "Y" : "N",
+        // isSize: catalogue.size === true ? "Y" : "N",
         isActive: catalogue.isActive === true ? "Y" : "N",
         showInSingle: "",
       };
@@ -1820,6 +1900,7 @@ const exportCatalogue = async (req, res, next) => {
         for (const product of catalogue.Product) {
           let category = product.categories.map((value) => value.category.name);
           let attributes = [];
+          let size = [];
           product.attributeValues.map((value) => {
             let isAttribute = Object.values(allAttributes).includes(
               value.attribute.name
@@ -1845,6 +1926,17 @@ const exportCatalogue = async (req, res, next) => {
               !isAttribute && allAttributes.add(value.attribute.name);
             }
           });
+
+          if (product.optionType === "Size") {
+            product.sizes.map((value) => {
+              let sizes = `${value.size.value}-${value.quantity}-${value.price}`;
+              size.push(sizes);
+            })
+
+          }
+          const relatedProduct = product?.RelatedProduct.map(
+            (item) => item.related.sku
+          );
           const productImage = product.image.map((val) => path.basename(val));
           let data = {
             category: category.join(","),
@@ -1866,8 +1958,14 @@ const exportCatalogue = async (req, res, next) => {
             tag: product.tag.join(","),
             cat_image: "",
             image: productImage.join(","),
-            isStitching: product.stitching === true ? "Y" : "N",
-            isSize: product.size === true ? "Y" : "N",
+            // isStitching: product.stitching === true ? "Y" : "N",
+            // isSize: product.size === true ? "Y" : "N",
+            relatedProduct:
+              relatedProduct && relatedProduct.length > 0
+                ? relatedProduct.join(",")
+                : "",
+            optionType: product.optionType,
+            size: size.join(",") || "",
             isActive: product.isActive === true ? "Y" : "N",
             showInSingle: product.showInSingle === true ? "Y" : "N",
           };
@@ -1885,6 +1983,7 @@ const exportCatalogue = async (req, res, next) => {
       for (let product of productData) {
         let category = product.categories.map((value) => value.category.name);
         let attributes = [];
+        let size = [];
         product.attributeValues.map((value) => {
           let isAttribute = Object.values(allAttributes).includes(
             value.attribute.name
@@ -1910,6 +2009,17 @@ const exportCatalogue = async (req, res, next) => {
             !isAttribute && allAttributes.add(value.attribute.name);
           }
         });
+
+        if (product.optionType === "Size") {
+          product.sizes.map((value) => {
+            let sizes = `${value.size.value}-${value.quantity}-${value.price}`;
+            size.push(sizes);
+          })
+        }
+
+        const relatedProduct = product?.RelatedProduct.map(
+          (item) => item.related.sku
+        );
         const productImage = product.image.map((val) => path.basename(val));
         let data = {
           category: category.join(","),
@@ -1931,8 +2041,14 @@ const exportCatalogue = async (req, res, next) => {
           tag: product.tag.join(","),
           cat_image: "",
           image: productImage.join(","),
-          isStitching: product.stitching === true ? "Y" : "N",
-          isSize: product.size === true ? "Y" : "N",
+          relatedProduct:
+            relatedProduct && relatedProduct.length > 0
+              ? relatedProduct.join(",")
+              : "",
+          optionType: product.optionType,
+          size: size.join(",") || "",
+          // isStitching: product.stitching === true ? "Y" : "N",
+          // isSize: product.size === true ? "Y" : "N",
           isActive: product.isActive === true ? "Y" : "N",
           showInSingle: product.showInSingle === true ? "Y" : "N",
         };
@@ -2014,23 +2130,23 @@ const formatData = (item, isCatalogue = false) => {
     productName: item.name,
     ...(isCatalogue
       ? {
-          catCode: item.cat_code,
-          noOfProduct: item.no_of_product,
-          catalogueItemMarketPrice: item.price,
-          catalogueItemDiscount: item.catalogue_discount,
-          GST: item.GST,
-          cat_image: item.coverImage,
-        }
+        catCode: item.cat_code,
+        noOfProduct: item.no_of_product,
+        catalogueItemMarketPrice: item.price,
+        catalogueItemDiscount: item.catalogue_discount,
+        GST: item.GST,
+        cat_image: item.coverImage,
+      }
       : {
-          productCode: item.productCode || item.sku,
-          catalogueItemMarketPrice: item.average_price || 0,
-          catalogueItemDiscount: item.catalogue_discount || 0,
-          retailPrice: item.retail_price,
-          retailDiscount: item.retail_discount,
-          GST: item.retail_GST,
-          image: item.image.join(","),
-          showInSingle: item.showInSingle ? "Y" : "N",
-        }),
+        productCode: item.productCode || item.sku,
+        catalogueItemMarketPrice: item.average_price || 0,
+        catalogueItemDiscount: item.catalogue_discount || 0,
+        retailPrice: item.retail_price,
+        retailDiscount: item.retail_discount,
+        GST: item.retail_GST,
+        image: item.image.join(","),
+        showInSingle: item.showInSingle ? "Y" : "N",
+      }),
     description: item.description,
     quantity: item.quantity,
     metaTitle: item.meta_title,

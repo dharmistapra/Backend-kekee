@@ -17,6 +17,7 @@ import {
 import { productSchema } from "../../../schema/joi_schema.js";
 import { promises as fs } from "fs";
 import path from "path";
+import createSearchFilter from "../../../helper/searchFilter.js";
 
 let products = [];
 
@@ -697,43 +698,43 @@ const getAllReatialProduct = async (req, res, next) => {
       newProduct.attributeValues = product.attributeValues.map((av) =>
         av.attributeValue
           ? {
-              id: av.attributeValue.id,
-              name: av.attributeValue.name,
-              value: av.attributeValue.value,
-              isActive: av.attributeValue.isActive,
-              createdAt: av.attributeValue.createdAt,
-              updatedAt: av.attributeValue.updatedAt,
-            }
+            id: av.attributeValue.id,
+            name: av.attributeValue.name,
+            value: av.attributeValue.value,
+            isActive: av.attributeValue.isActive,
+            createdAt: av.attributeValue.createdAt,
+            updatedAt: av.attributeValue.updatedAt,
+          }
           : null
       );
 
       newProduct.categories = product.categories.map((cat) =>
         cat.category
           ? {
-              id: cat.category.id,
-              name: cat.category.name,
-              meta_title: cat.category.meta_title,
-              meta_keyword: cat.category.meta_keyword,
-              meta_description: cat.category.meta_description,
-              isActive: cat.category.isActive,
-              createdAt: cat.category.createdAt,
-              updatedAt: cat.category.updatedAt,
-            }
+            id: cat.category.id,
+            name: cat.category.name,
+            meta_title: cat.category.meta_title,
+            meta_keyword: cat.category.meta_keyword,
+            meta_description: cat.category.meta_description,
+            isActive: cat.category.isActive,
+            createdAt: cat.category.createdAt,
+            updatedAt: cat.category.updatedAt,
+          }
           : null
       );
 
       newProduct.collection = product.collection.map((cat) =>
         cat.collection
           ? {
-              id: cat.collection.id,
-              name: cat.collection.name,
-              meta_title: cat.collection.meta_title,
-              meta_keyword: cat.collection.meta_keyword,
-              meta_description: cat.collection.meta_description,
-              isActive: cat.collection.isActive,
-              createdAt: cat.collection.createdAt,
-              updatedAt: cat.collection.updatedAt,
-            }
+            id: cat.collection.id,
+            name: cat.collection.name,
+            meta_title: cat.collection.meta_title,
+            meta_keyword: cat.collection.meta_keyword,
+            meta_description: cat.collection.meta_description,
+            isActive: cat.collection.isActive,
+            createdAt: cat.collection.createdAt,
+            updatedAt: cat.collection.updatedAt,
+          }
           : null
       );
 
@@ -752,11 +753,21 @@ const getAllReatialProduct = async (req, res, next) => {
 
 const paginationReatilProduct = async (req, res, next) => {
   try {
-    const { perPage, pageNo, category_id } = req.body;
+    const { perPage, pageNo, category_id, searchQuery } = req.body;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
 
+
+    const productSearchFilters = [
+      { sku: { contains: searchQuery, mode: "insensitive" } },
+      { name: { contains: searchQuery, mode: "insensitive" } },
+      { description: { contains: searchQuery, mode: "insensitive" } },
+      { price: isNaN(searchQuery) ? undefined : { equals: parseFloat(searchQuery) }, },
+      { quantity: isNaN(searchQuery) ? undefined : { equals: parseFloat(searchQuery) }, },
+      { discount: isNaN(searchQuery) ? undefined : { equals: parseFloat(searchQuery) }, },
+    ];
+    const cleanedsearchFilters = createSearchFilter(searchQuery, productSearchFilters);
     const filter = {
       categories: {
         some: {
@@ -765,7 +776,9 @@ const paginationReatilProduct = async (req, res, next) => {
       },
       showInSingle: true,
       OR: [{ catalogue_id: null }, { catalogue: { deletedAt: null } }],
+      ...(cleanedsearchFilters ? { AND: [cleanedsearchFilters] } : {}),
     };
+
     const count = await prisma.product.count({ where: filter });
     if (count === 0)
       return res
@@ -779,18 +792,50 @@ const paginationReatilProduct = async (req, res, next) => {
         .json({ isSuccess: false, message: "Invalid ID format!" });
     }
 
-    const data = await prisma.product.findMany({
+
+    const catalogueProductCount = await prisma.product.count({
+      where: {
+        catalogue_id: { not: null },
+        showInSingle: true,
+        categories: {
+          some: {
+            category_id: category_id,
+          },
+        },
+        ...(cleanedsearchFilters ? { AND: [cleanedsearchFilters] } : {}),
+      },
+    });
+
+    const retailProductCount = await prisma.product.count({
+      where: {
+        catalogue_id: null,
+        showInSingle: true,
+        categories: {
+          some: {
+            category_id: category_id, // Filter by the provided category_id
+          },
+        },
+        ...(cleanedsearchFilters ? { AND: [cleanedsearchFilters] } : {}),
+      },
+    });
+
+    const outOfStockCount = await prisma.product.count({
+      where: {
+        quantity: 0,
+        showInSingle: true,
+        categories: {
+          some: {
+            category_id: category_id,
+          },
+        },
+        ...(cleanedsearchFilters ? { AND: [cleanedsearchFilters] } : {}),
+      },
+    });
+
+
+    const dbdata = await prisma.product.findMany({
       where: filter,
       include: {
-        // attributeValues: {
-        //   include: {
-        //     attributeValue: {
-        //       include: {
-        //         attribute: true,
-        //       },
-        //     },
-        //   },
-        // },
         attributeValues: true,
         categories: {
           include: {
@@ -803,12 +848,6 @@ const paginationReatilProduct = async (req, res, next) => {
             collection: true,
           },
         },
-
-        // collection: {
-        //   include: {
-        //     collection: true,
-        //   },
-        // },
         colours: {
           include: {
             colour: true,
@@ -843,7 +882,7 @@ const paginationReatilProduct = async (req, res, next) => {
       orderBy: { updatedAt: "desc" },
     });
 
-    const formattedData = data?.map((product) => {
+    const formattedData = dbdata?.map((product) => {
       const newProduct = {};
       Object.keys(product).forEach((key) => {
         if (key !== "attributeValues" && key !== "colours") {
@@ -883,44 +922,14 @@ const paginationReatilProduct = async (req, res, next) => {
         price: size.price,
         quantity: size.quantity,
       }));
-      // const attributes = product.attributeValues.map((val) => {
-      //   let datas = [];
-      //   if (datas.length > 0) {
-      //     const existingAttribute = datas.find(
-      //       (attr) => attr.attribute_id === val.attribute_id
-      //     );
-      //     if (existingAttribute) {
-      //       existingAttribute.attributeValue_id.push(
-      //         val.attributeValue_id || ""
-      //       );
-      //     } else {
-      //       datas.push({
-      //         attribute_id: val.attribute_id,
-      //         attributeValue_id: [val.attributeValue_id],
-      //         value: val.value || "",
-      //       });
-      //     }
-      //   } else {
-      //     datas.push({
-      //       attribute_id: val.attribute_id,
-      //       attributeValue: [val.attributeValue_id || ""],
-      //       value: val.value || "",
-      //     });
-      //   }
-      //   return datas;
-      // });
-      // newProduct.attributes = attributes;
-
-      // newProduct.attributes = attributeMap;
-
       newProduct.categories = product.categories.map((cat) =>
         cat.category
           ? {
-              id: cat.category.id,
-              parentId: cat.category.parent_id ? cat.category.parent_id : null,
-              name: cat.category.name,
-              isActive: cat.category.isActive,
-            }
+            id: cat.category.id,
+            parentId: cat.category.parent_id ? cat.category.parent_id : null,
+            name: cat.category.name,
+            isActive: cat.category.isActive,
+          }
           : null
       );
 
@@ -932,10 +941,10 @@ const paginationReatilProduct = async (req, res, next) => {
       newProduct.collection = product?.collection?.map((cat) =>
         cat.collection
           ? {
-              id: cat.collection.id,
-              name: cat.collection.name,
-              isActive: cat.collection.isActive,
-            }
+            id: cat.collection.id,
+            name: cat.collection.name,
+            isActive: cat.collection.isActive,
+          }
           : null
       );
 
@@ -959,10 +968,17 @@ const paginationReatilProduct = async (req, res, next) => {
       return newProduct;
     });
 
+    let data = {
+      data: formattedData,
+      catalogueProductCount,
+      retailProductCount,
+      outOfStockCount
+    }
+
     return res.status(200).json({
       isSuccess: true,
       message: "Product get successfully.",
-      data: formattedData,
+      data,
       totalCount: count,
       currentPage: page,
       pagesize: take,

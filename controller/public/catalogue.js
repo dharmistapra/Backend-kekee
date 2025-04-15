@@ -698,6 +698,7 @@ const relatedProduct = async (req, res, next) => {
   }
 };
 
+const BASE_URL = "https://45b3-115-96-89-241.ngrok-free.app/"
 const shareProduct = async (req, res, next) => {
   try {
     const id = req.params.id;
@@ -707,15 +708,15 @@ const shareProduct = async (req, res, next) => {
         message: "Please provide product id!",
       });
     }
-    const url = req.body.url;
-    if (!url) {
-      return res.status(400).json({
-        isSuccess: false,
-        message: "Please provide catalogue or product url!",
-      });
-    }
-    const isCatalogueExists = await prisma.catalogue.findUnique({
-      where: { id: id },
+    // const url = req.body.url;
+    // if (!url) {
+    //   return res.status(400).json({
+    //     isSuccess: false,
+    //     message: "Please provide catalogue or product url!",
+    //   });
+    // }
+    const isCatalogueExists = await prisma.catalogue.findFirst({
+      where: { cat_code: id },
     });
 
     if (isCatalogueExists) {
@@ -735,7 +736,7 @@ const shareProduct = async (req, res, next) => {
           </head>
           <body>
             <script>
-              window.location.replace("${isCatalogueExists.url}");
+              window.location.replace("${isCatalogueExists.id}");
             </script>
           </body>
         </html>
@@ -743,9 +744,14 @@ const shareProduct = async (req, res, next) => {
       });
     }
 
-    const isProductExists = await prisma.product.findUnique({
-      where: { id: id },
+    const isProductExists = await prisma.product.findFirst({
+      where: { sku: id },
     });
+
+    let imageUrl = isProductExists.image[0];
+    if (imageUrl.startsWith("upload")) {
+      imageUrl = `${BASE_URL}/${imageUrl}`;
+    }
 
     if (isProductExists) {
       return res
@@ -755,16 +761,16 @@ const shareProduct = async (req, res, next) => {
           `<!DOCTYPE html>
         <html>
           <head>
-            <meta property="og:title" content="${isProductExists.name}" />
+            <meta property="og:title" content="${`${isProductExists.name}`}" />
             <meta property="og:description" content="${isProductExists.description}" />
-            <meta property="og:image" content="${isProductExists.image[0]}" />
-            <meta property="og:url" content="${url}" />
+            <meta property="og:image" content="${imageUrl}" />
+            <meta property="og:url" content="${isProductExists.id}" />
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           </head>
           <body>
             <script>
-              window.location.replace("${isProductExists.url}");
+              window.location.replace("${id}");
             </script>
           </body>
         </html>`

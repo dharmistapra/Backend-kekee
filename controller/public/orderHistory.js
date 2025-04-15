@@ -4,7 +4,11 @@ const getOrderdetails = async (req, res, next) => {
   try {
     const { orderId } = req.params;
     const orderDetails = await prisma.order.findUnique({
-      where: { orderId: orderId },
+      where: {
+        orderId: orderId
+
+      },
+
       select: {
         orderId: true,
         createdAt: true,
@@ -118,7 +122,7 @@ const getOrderHistory = async (req, res, next) => {
   try {
     const { perPage, pageNo, userId } = req.body;
     const page = +pageNo || 1;
-    const take = +perPage || 10;
+    const take = +perPage || 20;
     const skip = (page - 1) * take;
 
     if (!userId) {
@@ -128,6 +132,9 @@ const getOrderHistory = async (req, res, next) => {
     const result = await prisma.order.findMany({
       where: {
         userId: userId,
+      },
+      orderBy: {
+        updatedAt: "desc"
       },
       select: {
         id: true,

@@ -797,7 +797,8 @@ const importCatalogues = async (req, res, next) => {
           const formattedAttributes = missingAttributes
             .map(
               (item) =>
-                `Category: "${item.category
+                `Category: "${
+                  item.category
                 }", Missing Attributes: [${item.attributes.join(", ")}]`
             )
             .join("; ");
@@ -918,9 +919,9 @@ const importCatalogues = async (req, res, next) => {
 
         let finalOfferPrice =
           parseFloat(catalogueItemMarketPrice) > 0 &&
-            parseFloat(catalogueItemDiscount) > 0
+          parseFloat(catalogueItemDiscount) > 0
             ? parseFloat(catalogueItemMarketPrice) *
-            (1 - parseFloat(catalogueItemDiscount) / 100)
+              (1 - parseFloat(catalogueItemDiscount) / 100)
             : parseFloat(catalogueItemMarketPrice);
 
         let cat_url = `${slug(productName)}-${slug(catCode)}`;
@@ -1685,19 +1686,6 @@ const exportCatalogue = async (req, res, next) => {
                 },
               },
             },
-            sizes: {
-              select: {
-                id: true,
-                price: true,
-                quantity: true,
-                size: {
-                  select: {
-                    id: true,
-                    value: true,
-                  },
-                },
-              }
-            },
             categories: {
               include: {
                 category: {
@@ -1737,19 +1725,6 @@ const exportCatalogue = async (req, res, next) => {
             attributeValue: { select: { id: true, name: true, value: true } },
           },
         },
-        CatalogueSize: {
-          select: {
-            id: true,
-            price: true,
-            quantity: true,
-            size: {
-              select: {
-                id: true,
-                value: true,
-              },
-            },
-          }
-        }
       },
     });
     const productData = await prisma.product.findMany({
@@ -1784,19 +1759,6 @@ const exportCatalogue = async (req, res, next) => {
               },
             },
           },
-        },
-        sizes: {
-          select: {
-            id: true,
-            price: true,
-            quantity: true,
-            size: {
-              select: {
-                id: true,
-                value: true,
-              }
-            }
-          }
         },
         categories: {
           include: {
@@ -1854,13 +1816,6 @@ const exportCatalogue = async (req, res, next) => {
           !isAttribute && allAttributes.add(value.attribute.name);
         }
       });
-      let size = [];
-      if (catalogue.optionType === "Size") {
-        catalogue.CatalogueSize.map((value) => {
-          let sizes = `${value.size.value}-${value.quantity}-${value.price}`;
-          size.push(sizes);
-        })
-      }
       let catImage = path.basename(catalogue.coverImage);
       let data = {
         category: category.join(","),
@@ -1884,7 +1839,6 @@ const exportCatalogue = async (req, res, next) => {
         image: "",
         relatedProduct: "",
         optionType: catalogue.optionType,
-        size: size.join(",") || "",
         // isStitching: catalogue.stitching === true ? "Y" : "N",
         // isSize: catalogue.size === true ? "Y" : "N",
         isActive: catalogue.isActive === true ? "Y" : "N",
@@ -1900,7 +1854,6 @@ const exportCatalogue = async (req, res, next) => {
         for (const product of catalogue.Product) {
           let category = product.categories.map((value) => value.category.name);
           let attributes = [];
-          let size = [];
           product.attributeValues.map((value) => {
             let isAttribute = Object.values(allAttributes).includes(
               value.attribute.name
@@ -1927,13 +1880,6 @@ const exportCatalogue = async (req, res, next) => {
             }
           });
 
-          if (product.optionType === "Size") {
-            product.sizes.map((value) => {
-              let sizes = `${value.size.value}-${value.quantity}-${value.price}`;
-              size.push(sizes);
-            })
-
-          }
           const relatedProduct = product?.RelatedProduct.map(
             (item) => item.related.sku
           );
@@ -1965,7 +1911,6 @@ const exportCatalogue = async (req, res, next) => {
                 ? relatedProduct.join(",")
                 : "",
             optionType: product.optionType,
-            size: size.join(",") || "",
             isActive: product.isActive === true ? "Y" : "N",
             showInSingle: product.showInSingle === true ? "Y" : "N",
           };
@@ -1983,7 +1928,6 @@ const exportCatalogue = async (req, res, next) => {
       for (let product of productData) {
         let category = product.categories.map((value) => value.category.name);
         let attributes = [];
-        let size = [];
         product.attributeValues.map((value) => {
           let isAttribute = Object.values(allAttributes).includes(
             value.attribute.name
@@ -2009,13 +1953,6 @@ const exportCatalogue = async (req, res, next) => {
             !isAttribute && allAttributes.add(value.attribute.name);
           }
         });
-
-        if (product.optionType === "Size") {
-          product.sizes.map((value) => {
-            let sizes = `${value.size.value}-${value.quantity}-${value.price}`;
-            size.push(sizes);
-          })
-        }
 
         const relatedProduct = product?.RelatedProduct.map(
           (item) => item.related.sku
@@ -2046,7 +1983,6 @@ const exportCatalogue = async (req, res, next) => {
               ? relatedProduct.join(",")
               : "",
           optionType: product.optionType,
-          size: size.join(",") || "",
           // isStitching: product.stitching === true ? "Y" : "N",
           // isSize: product.size === true ? "Y" : "N",
           isActive: product.isActive === true ? "Y" : "N",
@@ -2130,23 +2066,23 @@ const formatData = (item, isCatalogue = false) => {
     productName: item.name,
     ...(isCatalogue
       ? {
-        catCode: item.cat_code,
-        noOfProduct: item.no_of_product,
-        catalogueItemMarketPrice: item.price,
-        catalogueItemDiscount: item.catalogue_discount,
-        GST: item.GST,
-        cat_image: item.coverImage,
-      }
+          catCode: item.cat_code,
+          noOfProduct: item.no_of_product,
+          catalogueItemMarketPrice: item.price,
+          catalogueItemDiscount: item.catalogue_discount,
+          GST: item.GST,
+          cat_image: item.coverImage,
+        }
       : {
-        productCode: item.productCode || item.sku,
-        catalogueItemMarketPrice: item.average_price || 0,
-        catalogueItemDiscount: item.catalogue_discount || 0,
-        retailPrice: item.retail_price,
-        retailDiscount: item.retail_discount,
-        GST: item.retail_GST,
-        image: item.image.join(","),
-        showInSingle: item.showInSingle ? "Y" : "N",
-      }),
+          productCode: item.productCode || item.sku,
+          catalogueItemMarketPrice: item.average_price || 0,
+          catalogueItemDiscount: item.catalogue_discount || 0,
+          retailPrice: item.retail_price,
+          retailDiscount: item.retail_discount,
+          GST: item.retail_GST,
+          image: item.image.join(","),
+          showInSingle: item.showInSingle ? "Y" : "N",
+        }),
     description: item.description,
     quantity: item.quantity,
     metaTitle: item.meta_title,

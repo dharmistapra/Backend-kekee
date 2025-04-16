@@ -135,7 +135,7 @@ const postCatlogProduct = async (req, res, next) => {
         .toFile(thumbImage);
 
       await sharp(images.path)
-        .resize(300, 300, { fit: "inside" })
+        .resize(360, 540, { fit: "inside" })
         .toFile(mediumImage);
 
       productImages.push({
@@ -620,8 +620,8 @@ const updateCatalogueProduct = async (req, res, next) => {
     const processedImages = imagePaths
       ? [...imagePaths, ...(findData?.image || [])]
       : typeof images === "string"
-      ? [images]
-      : images;
+        ? [images]
+        : images;
     let productImages = [];
     if (req.files) {
       for (const images of req.files) {
@@ -646,16 +646,16 @@ const updateCatalogueProduct = async (req, res, next) => {
     const processedThumbs =
       imagePaths && productImages.length > 0
         ? [
-            ...productImages.map((img) => img.thumbImage),
-            ...(findData?.thumbImage || []),
-          ]
+          ...productImages.map((img) => img.thumbImage),
+          ...(findData?.thumbImage || []),
+        ]
         : [];
     const processedMediums =
       imagePaths && processedImages.length > 0
         ? [
-            ...productImages.map((img) => img.mediumImage),
-            ...(findData?.mediumImage || []),
-          ]
+          ...productImages.map((img) => img.mediumImage),
+          ...(findData?.mediumImage || []),
+        ]
         : [];
     const productData = {
       name,
@@ -928,21 +928,21 @@ const catlogtGetSingleProduct = async (req, res, next) => {
       newProduct.categories = product.categories.map((cat) =>
         cat.category
           ? {
-              id: cat.category.id,
-              parentId: cat.category.parent_id ? cat.category.parent_id : null,
-              name: cat.category.name,
-              isActive: cat.category.isActive,
-            }
+            id: cat.category.id,
+            parentId: cat.category.parent_id ? cat.category.parent_id : null,
+            name: cat.category.name,
+            isActive: cat.category.isActive,
+          }
           : null
       );
 
       newProduct.collection = product.collection.map((cat) =>
         cat.collection
           ? {
-              id: cat.collection.id,
-              name: cat.collection.name,
-              isActive: cat.collection.isActive,
-            }
+            id: cat.collection.id,
+            name: cat.collection.name,
+            isActive: cat.collection.isActive,
+          }
           : null
       );
 
@@ -1628,13 +1628,13 @@ const addCatalogue = async (req, res, next) => {
               },
               ...(attributes &&
                 attributes.length > 0 && {
-                  attributeValues: { create: attributeValueConnection },
-                }),
+                attributeValues: { create: attributeValueConnection },
+              }),
               ...(optionType === "Size" &&
                 sizes &&
                 sizes.length > 0 && {
-                  CatalogueSize: { create: catalogueSizeConnection },
-                }),
+                CatalogueSize: { create: catalogueSizeConnection },
+              }),
               tag,
               isActive: true,
               deletedAt: null,
@@ -1681,19 +1681,19 @@ const addCatalogue = async (req, res, next) => {
               },
               ...(attributes && attributes.length > 0
                 ? {
-                    attributeValues: {
-                      deleteMany: {},
-                      create: attributeValueConnection,
-                    },
-                  }
+                  attributeValues: {
+                    deleteMany: {},
+                    create: attributeValueConnection,
+                  },
+                }
                 : { attributeValues: { deleteMany: {} } }),
               ...(optionType === "Size" && sizes && sizes.length > 0
                 ? {
-                    CatalogueSize: {
-                      deleteMany: {},
-                      create: catalogueSizeConnection,
-                    },
-                  }
+                  CatalogueSize: {
+                    deleteMany: {},
+                    create: catalogueSizeConnection,
+                  },
+                }
                 : { CatalogueSize: { deleteMany: {} } }),
               tag,
               isActive: true,
@@ -2139,23 +2139,23 @@ const getCatalogueProduct = async (req, res, next) => {
       datas.CatalogueCategory = product.CatalogueCategory.map((cat) =>
         cat.category
           ? {
-              id: cat.category.id,
-              parentId: cat.category.parent_id ? cat.category.parent_id : null,
-              name: cat.category.name,
-              isActive: cat.category.isActive,
-            }
+            id: cat.category.id,
+            parentId: cat.category.parent_id ? cat.category.parent_id : null,
+            name: cat.category.name,
+            isActive: cat.category.isActive,
+          }
           : null
       );
 
       datas.CatalogueSize = product.CatalogueSize.map((cat) => {
         return cat.size
           ? {
-              id: cat.size.id,
-              // value: cat.size.value,
-              quantity: cat.quantity,
-              price: cat.price,
-              // isActive: cat.size.isActive,
-            }
+            id: cat.size.id,
+            // value: cat.size.value,
+            quantity: cat.quantity,
+            price: cat.price,
+            // isActive: cat.size.isActive,
+          }
           : null;
       });
 
@@ -2235,13 +2235,13 @@ const getCatalogueProduct = async (req, res, next) => {
         newProduct.categories = product.categories.map((cat) =>
           cat.category
             ? {
-                id: cat.category.id,
-                parentId: cat.category.parent_id
-                  ? cat.category.parent_id
-                  : null,
-                name: cat.category.name,
-                isActive: cat.category.isActive,
-              }
+              id: cat.category.id,
+              parentId: cat.category.parent_id
+                ? cat.category.parent_id
+                : null,
+              name: cat.category.name,
+              isActive: cat.category.isActive,
+            }
             : null
         );
 

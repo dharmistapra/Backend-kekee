@@ -797,8 +797,7 @@ const importCatalogues = async (req, res, next) => {
           const formattedAttributes = missingAttributes
             .map(
               (item) =>
-                `Category: "${
-                  item.category
+                `Category: "${item.category
                 }", Missing Attributes: [${item.attributes.join(", ")}]`
             )
             .join("; ");
@@ -919,9 +918,9 @@ const importCatalogues = async (req, res, next) => {
 
         let finalOfferPrice =
           parseFloat(catalogueItemMarketPrice) > 0 &&
-          parseFloat(catalogueItemDiscount) > 0
+            parseFloat(catalogueItemDiscount) > 0
             ? parseFloat(catalogueItemMarketPrice) *
-              (1 - parseFloat(catalogueItemDiscount) / 100)
+            (1 - parseFloat(catalogueItemDiscount) / 100)
             : parseFloat(catalogueItemMarketPrice);
 
         let cat_url = `${slug(productName)}-${slug(catCode)}`;
@@ -1729,7 +1728,7 @@ const exportCatalogue = async (req, res, next) => {
     });
     const productData = await prisma.product.findMany({
       where: {
-        catalogue_id: null,
+        ...(filter === null && { catalogue_id: null }),
         ...(category_id.length > 0 && {
           categories: {
             some: {
@@ -1926,18 +1925,27 @@ const exportCatalogue = async (req, res, next) => {
 
     if (productData.length > 0) {
       for (let product of productData) {
-        let category = product.categories.map((value) => value.category.name);
-        let attributes = [];
-        product.attributeValues.map((value) => {
-          let isAttribute = Object.values(allAttributes).includes(
-            value.attribute.name
-          );
-          if (attributes && attributes.length > 0) {
-            let isAttributeExist = attributes.find(
-              (val) => val.name === value.attribute.name
+        const productExist = products.find((val) => val.productCode === product.sku);
+        if (!productExist) {
+          let category = product.categories.map((value) => value.category.name);
+          let attributes = [];
+          product.attributeValues.map((value) => {
+            let isAttribute = Object.values(allAttributes).includes(
+              value.attribute.name
             );
-            if (isAttributeExist) {
-              isAttributeExist.value.push(value.attributeValue.name);
+            if (attributes && attributes.length > 0) {
+              let isAttributeExist = attributes.find(
+                (val) => val.name === value.attribute.name
+              );
+              if (isAttributeExist) {
+                isAttributeExist.value.push(value.attributeValue.name);
+              } else {
+                attributes.push({
+                  name: value.attribute.name,
+                  value: [value.attributeValue.name],
+                });
+                !isAttribute && allAttributes.add(value.attribute.name);
+              }
             } else {
               attributes.push({
                 name: value.attribute.name,
@@ -1945,55 +1953,49 @@ const exportCatalogue = async (req, res, next) => {
               });
               !isAttribute && allAttributes.add(value.attribute.name);
             }
-          } else {
-            attributes.push({
-              name: value.attribute.name,
-              value: [value.attributeValue.name],
-            });
-            !isAttribute && allAttributes.add(value.attribute.name);
-          }
-        });
-
-        const relatedProduct = product?.RelatedProduct.map(
-          (item) => item.related.sku
-        );
-        const productImage = product.image.map((val) => path.basename(val));
-        let data = {
-          category: category.join(","),
-          catCode: "",
-          productCode: product.sku,
-          productName: product.name,
-          description: product.description,
-          noOfProduct: "",
-          quantity: product.quantity,
-          catalogueItemMarketPrice: "",
-          catalogueItemDiscount: "",
-          retailPrice: product.retail_price,
-          retailDiscount: product.retail_discount,
-          GST: product.retail_GST,
-          metaTitle: product.meta_title,
-          metaKeyword: product.meta_keyword,
-          metaDescription: product.meta_description,
-          weight: product.weight,
-          tag: product.tag.join(","),
-          cat_image: "",
-          image: productImage.join(","),
-          relatedProduct:
-            relatedProduct && relatedProduct.length > 0
-              ? relatedProduct.join(",")
-              : "",
-          optionType: product.optionType,
-          // isStitching: product.stitching === true ? "Y" : "N",
-          // isSize: product.size === true ? "Y" : "N",
-          isActive: product.isActive === true ? "Y" : "N",
-          showInSingle: product.showInSingle === true ? "Y" : "N",
-        };
-        if (attributes.length > 0) {
-          attributes.forEach((value) => {
-            data[value.name] = value.value.join(",");
           });
+
+          const relatedProduct = product?.RelatedProduct.map(
+            (item) => item.related.sku
+          );
+          const productImage = product.image.map((val) => path.basename(val));
+          let data = {
+            category: category.join(","),
+            catCode: "",
+            productCode: product.sku,
+            productName: product.name,
+            description: product.description,
+            noOfProduct: "",
+            quantity: product.quantity,
+            catalogueItemMarketPrice: "",
+            catalogueItemDiscount: "",
+            retailPrice: product.retail_price,
+            retailDiscount: product.retail_discount,
+            GST: product.retail_GST,
+            metaTitle: product.meta_title,
+            metaKeyword: product.meta_keyword,
+            metaDescription: product.meta_description,
+            weight: product.weight,
+            tag: product.tag.join(","),
+            cat_image: "",
+            image: productImage.join(","),
+            relatedProduct:
+              relatedProduct && relatedProduct.length > 0
+                ? relatedProduct.join(",")
+                : "",
+            optionType: product.optionType,
+            // isStitching: product.stitching === true ? "Y" : "N",
+            // isSize: product.size === true ? "Y" : "N",
+            isActive: product.isActive === true ? "Y" : "N",
+            showInSingle: product.showInSingle === true ? "Y" : "N",
+          };
+          if (attributes.length > 0) {
+            attributes.forEach((value) => {
+              data[value.name] = value.value.join(",");
+            });
+          }
+          products.push(data);
         }
-        products.push(data);
       }
     }
     // let products = catalogueData.flatMap((catalogue) => {
@@ -2066,23 +2068,23 @@ const formatData = (item, isCatalogue = false) => {
     productName: item.name,
     ...(isCatalogue
       ? {
-          catCode: item.cat_code,
-          noOfProduct: item.no_of_product,
-          catalogueItemMarketPrice: item.price,
-          catalogueItemDiscount: item.catalogue_discount,
-          GST: item.GST,
-          cat_image: item.coverImage,
-        }
+        catCode: item.cat_code,
+        noOfProduct: item.no_of_product,
+        catalogueItemMarketPrice: item.price,
+        catalogueItemDiscount: item.catalogue_discount,
+        GST: item.GST,
+        cat_image: item.coverImage,
+      }
       : {
-          productCode: item.productCode || item.sku,
-          catalogueItemMarketPrice: item.average_price || 0,
-          catalogueItemDiscount: item.catalogue_discount || 0,
-          retailPrice: item.retail_price,
-          retailDiscount: item.retail_discount,
-          GST: item.retail_GST,
-          image: item.image.join(","),
-          showInSingle: item.showInSingle ? "Y" : "N",
-        }),
+        productCode: item.productCode || item.sku,
+        catalogueItemMarketPrice: item.average_price || 0,
+        catalogueItemDiscount: item.catalogue_discount || 0,
+        retailPrice: item.retail_price,
+        retailDiscount: item.retail_discount,
+        GST: item.retail_GST,
+        image: item.image.join(","),
+        showInSingle: item.showInSingle ? "Y" : "N",
+      }),
     description: item.description,
     quantity: item.quantity,
     metaTitle: item.meta_title,

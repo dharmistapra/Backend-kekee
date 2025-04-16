@@ -698,7 +698,7 @@ const relatedProduct = async (req, res, next) => {
   }
 };
 
-const BASE_URL = "https://45b3-115-96-89-241.ngrok-free.app/"
+const BASE_URL = "https://b02f-115-96-88-134.ngrok-free.app"
 const shareProduct = async (req, res, next) => {
   try {
     const id = req.params.id;

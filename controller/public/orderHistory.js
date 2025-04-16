@@ -31,6 +31,7 @@ const getOrderdetails = async (req, res, next) => {
               select: {
                 name: true,
                 image: true,
+                retail_GST: true,
                 categories: {
                   select: {
                     category: {
@@ -49,6 +50,7 @@ const getOrderdetails = async (req, res, next) => {
                 name: true,
                 url: true,
                 coverImage: true,
+                GST: true,
                 CatalogueCategory: {
                   select: {
                     category: {
@@ -86,6 +88,7 @@ const getOrderdetails = async (req, res, next) => {
         ...item,
         name: item?.product?.name || item?.catalogue?.name,
         url: item?.product?.url || item?.catalogue?.url,
+        Taxpercentage: item?.product?.retail_GST || item?.catalogue?.GST,
         image: item?.catalogue?.coverImage || item?.product?.image?.[0],
         type: item?.catalogue ? "Catalogue" : "product",
         categoryURL:
@@ -130,9 +133,7 @@ const getOrderHistory = async (req, res, next) => {
     }
 
     const result = await prisma.order.findMany({
-      where: {
-        userId: userId,
-      },
+      where: { userId: userId, },
       orderBy: {
         updatedAt: "desc"
       },
@@ -309,6 +310,7 @@ const getOrderPendingPayment = async (req, res, next) => {
               select: {
                 name: true,
                 image: true,
+                retail_GST: true,
                 categories: {
                   select: {
                     category: {
@@ -326,6 +328,7 @@ const getOrderPendingPayment = async (req, res, next) => {
               select: {
                 name: true,
                 url: true,
+                GST: true,
                 coverImage: true,
                 CatalogueCategory: {
                   select: {
@@ -366,6 +369,7 @@ const getOrderPendingPayment = async (req, res, next) => {
         name: item?.product?.name || item?.catalogue?.name,
         url: item?.product?.url || item?.catalogue?.url,
         image: item?.catalogue?.coverImage || item?.product?.image?.[0],
+        Taxpercentage: item?.product?.retail_GST || item?.catalogue?.GST,
         type: item?.catalogue ? "Catalogue" : "product",
         categoryURL:
           item?.product?.categories?.[0]?.category?.url ||

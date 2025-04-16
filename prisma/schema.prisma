@@ -773,6 +773,7 @@ model Order {
   id              String      @id @default(auto()) @map("_id") @db.ObjectId
   userId          String      @db.ObjectId
   orderId         String      @unique
+  InvoiceNo       String      @unique
   subtotal        Float
   billingAddress  Json?
   shippingAddress Json?

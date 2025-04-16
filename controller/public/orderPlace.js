@@ -45,7 +45,8 @@ const OrderPlace = async (req, res, next) => {
 
         const shippingCountry = isSame ? billingdata.country : shippingdata.country;
         const shippingconst = await calculateShippingCost(totalWeight, shippingCountry);
-
+        console.log("shippingconst=================>", shippingconst);
+        return;
         let ordertotal = totalSubtotal + totalTax + shippingconst.shippingCost;
         const now = new Date();
         const date = now.toISOString().slice(0, 10).replace(/-/g, '');
@@ -734,9 +735,6 @@ const generateOrderId = async (req, res, next) => {
         const { user_id, billingAddress, shippingAddress, shippingMethodId, isSame } = req.body
         const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
         if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
-
-
-
         const cartItems = await prisma.cartItem.findMany({
             where: { cart_id: finduser.id },
             include: {
@@ -765,9 +763,8 @@ const generateOrderId = async (req, res, next) => {
 
 
         const getShippingdata = await prisma.shippingZoneAddRate.findUnique({
-            where: {
-                id: shippingMethodId
-            }, select: {
+            where: { id: shippingMethodId },
+            select: {
                 id: true,
                 type: true,
                 name: true,
@@ -776,21 +773,19 @@ const generateOrderId = async (req, res, next) => {
             }
         })
 
-        if (!getShippingdata) {
-            return res.status(409).json({ isSuccess: false, message: "shipping not found", })
-        }
-
+        if (!getShippingdata) res.status(409).json({ isSuccess: false, message: "shipping not found", })
+        const totalOrders = await prisma.order.count();
         let ordertotal = totalSubtotal + totalTax + getShippingdata.price;
         const now = new Date();
         const date = now.toISOString().slice(0, 10).replace(/-/g, '');
         const time = now.toTimeString().slice(0, 8).replace(/:/g, '');
-        const orderId = `ORD-${date}-${time}`;
-
-
+        const orderId = `ORD-${date}-${time}${totalOrders + 1}`;
+        const Invoice = `INV-${date}-${totalOrders + 1}`;
         const order = await prisma.order.create({
             data: {
                 userId: user_id,
                 orderId: orderId,
+                InvoiceNo: Invoice,
                 subtotal: totalSubtotal,
                 Tax: totalTax,
                 discount: 0,

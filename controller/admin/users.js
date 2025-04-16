@@ -86,6 +86,9 @@ const getOrderHistoryusers = async (req, res, next) => {
 
     const result = await prisma.order.findMany({
       where: whereCondition,
+      orderBy: {
+        updatedAt: "desc",
+      },
       select: {
         orderId: true,
         createdAt: true,
@@ -157,6 +160,9 @@ const getOrderdetailsUsers = async (req, res, next) => {
         status: true,
         billingAddress: true,
         shippingAddress: true,
+        InvoiceNo: true,
+        shippingMethod: true,
+        handlingcharge: true,
         user: {
           select: {
             name: true,
@@ -176,6 +182,7 @@ const getOrderdetailsUsers = async (req, res, next) => {
                 sku: true,
                 image: true,
                 quantity: true,
+                retail_GST: true
               },
             },
             catalogue: {
@@ -184,6 +191,7 @@ const getOrderdetailsUsers = async (req, res, next) => {
                 cat_code: true,
                 coverImage: true,
                 quantity: true,
+                GST: true
               },
             },
           },
@@ -216,6 +224,7 @@ const getOrderdetailsUsers = async (req, res, next) => {
         sku: item?.catalogue?.cat_code || item?.product?.sku,
         type: item?.catalogue?.cat_code ? "Catalogue" : "products",
         image: item?.catalogue?.coverImage || item?.product?.image[0],
+        taxPercentage: item?.catalogue?.GST || item?.product?.retail_GST
       };
     });
 
@@ -240,7 +249,10 @@ const getOrderdetailsUsers = async (req, res, next) => {
         shippingCharge: orderDetails.shippingcharge,
         stitchingCharges: totalStitchingCharges,
         totalAmount: orderDetails.totalAmount,
+        handlingcharge: orderDetails?.handlingcharge,
         status: orderDetails.status,
+        InvoiceNo: orderDetails?.InvoiceNo,
+        shippingMethod: typeof orderDetails?.shippingAddress === "string" ? JSON.parse(orderDetails.shippingMethod)?.name : "",
         name: orderDetails?.user?.name,
         email: orderDetails?.user?.email,
         phone: orderDetails?.user?.mobile_number,

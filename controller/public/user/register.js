@@ -35,9 +35,7 @@ const userRegister = async (req, res, next) => {
 
 const userlogin = async (req, res, next) => {
   try {
-    passport.authenticate(
-      "user",
-      { session: false },
+    passport.authenticate("user", { session: false },
       async (err, user, info) => {
         if (err) {
           return res.status(500).json({
@@ -51,6 +49,8 @@ const userlogin = async (req, res, next) => {
             .json({ isSuccess: false, message: info.message });
         }
         const { token, payload } = generateJWT_Token(user, "user");
+
+
         return res.status(200).json({
           isSuccess: true,
           message: "Login Successfully.",

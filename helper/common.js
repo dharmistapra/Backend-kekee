@@ -16,7 +16,7 @@ const deleteFile = async (filePath) => {
 };
 
 // const deleteFile = (filePath) => {
-//   try {
+//   try {  
 //     if (!filePath) return;
 //     filePath = path.resolve(filePath);
 

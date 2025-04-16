@@ -1447,7 +1447,6 @@ const postaddressSchema = async (req, res, next) => {
   const schema = Joi.object({
     email: Joi.string()
       .email()
-      // .pattern(new RegExp("^[a-zA-Z0-9._%+-]+@gmail\\.com$"))
       .required()
       .messages({
         "string.pattern.base": "Enter a valid email address",

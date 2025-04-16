@@ -219,6 +219,7 @@ const paginationCatalogue = async (req, res, next) => {
     const skip = (page - 1) * take;
 
     const filter = [
+      
       { name: { contains: search, mode: "insensitive" } },
       { cat_code: { contains: search, mode: "insensitive" } },
       { url: { contains: search, mode: "insensitive" } },

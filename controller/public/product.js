@@ -223,6 +223,8 @@ const getProductpublic = async (req, res, next) => {
             retail_discount: true,
             offer_price: true,
             image: true,
+            mediumImage: true,
+            thumbImage: true,
             tag: true,
             isActive: true,
             readyToShip: true,

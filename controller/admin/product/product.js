@@ -753,7 +753,7 @@ const getAllReatialProduct = async (req, res, next) => {
 
 const paginationReatilProduct = async (req, res, next) => {
   try {
-    const { perPage, pageNo, category_id, searchQuery } = req.body;
+    const { perPage, pageNo, category_id, searchQuery, type } = req.body;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
@@ -778,6 +778,20 @@ const paginationReatilProduct = async (req, res, next) => {
       OR: [{ catalogue_id: null }, { catalogue: { deletedAt: null } }],
       ...(cleanedsearchFilters ? { AND: [cleanedsearchFilters] } : {}),
     };
+
+
+    if (type === "catalogue") {
+      filter.catalogue_id = { not: null };
+      filter.OR = [{ catalogue: { deletedAt: null } }];
+    } else if (type === "retail") {
+      filter.catalogue_id = null;
+    } else if (type === "outOfStock") {
+      filter.quantity = 0;
+    }
+
+    if (!filter.catalogue_id && !filter.quantity) {
+      filter.OR = [{ catalogue_id: null }, { catalogue: { deletedAt: null } }];
+    }
 
     const count = await prisma.product.count({ where: filter });
     if (count === 0)

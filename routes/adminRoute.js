@@ -12,6 +12,7 @@ import {
   getAllParentCategory,
   getAllCategories,
   updateCategoryShowInHomeStatus,
+  getCategoryById,
 } from "../controller/admin/category/category.js";
 import {
   attributeMasterSchema,
@@ -384,7 +385,7 @@ adminRouter.put(
 );
 adminRouter.delete("/category/:id", deleteCategory);
 adminRouter.get("/category", getAllParentCategory);
-
+adminRouter.get("/categoryid/:id", getCategoryById);
 adminRouter.get("/all-category", getAllParentCategory);
 adminRouter.get("/mixed-category", getAllCategories);
 

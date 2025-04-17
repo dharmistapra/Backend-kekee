@@ -176,6 +176,87 @@ const getAllParentCategory = async (req, res, next) => {
 };
 
 // GET CATEGORY WITH PAGINATION
+// const categoryPagination = async (req, res, next) => {
+//   try {
+//     const { perPage, pageNo, parent_id, search } = req.body;
+//     const page = +pageNo || 1;
+//     const take = +perPage || 10;
+//     const skip = (page - 1) * take;
+
+//     const filter = [{ name: { contains: search, mode: "insensitive" } }];
+//     const searchFilter = createSearchFilter(search, filter);
+//     const count = await prisma.categoryMaster.count({
+//       where: { parent_id: parent_id || null },
+//     });
+
+//     if (count === 0) {
+//       return res
+//         .status(200)
+//         .json({ isSuccess: false, message: "Category not found!", data: [] });
+//     }
+//     const result = await prisma.categoryMaster.findMany({
+//       where: {
+//         parent_id: parent_id || null,
+//         ...searchFilter,
+//       },
+//       orderBy: { position: "asc" },
+//       select: {
+//         id: true,
+//         parent_id: true,
+//         position: true,
+//         name: true,
+//         title: true,
+//         isActive: true,
+//         image: true,
+//         showInHome: true,
+//         _count: {
+//           select: {
+//             children: true,
+//             products: {
+//               where: {
+//                 product: {
+//                   AND: [
+//                     { showInSingle: true },
+//                     {
+//                       OR: [
+//                         { catalogue_id: null },
+//                         { catalogue: { deletedAt: null } },
+//                       ],
+//                     },
+//                   ],
+//                 },
+//               },
+//             },
+//             CatalogueCategory: {
+//               where: {
+//                 catalogue: {
+//                   deletedAt: null,
+//                 },
+//               },
+//             },
+//           },
+//         },
+//       },
+//       skip,
+//       take,
+//     });
+
+//     return res.status(200).json({
+//       isSuccess: true,
+//       message: "Category get successfully.",
+//       data: result,
+//       totalCount: count,
+//       currentPage: page,
+//       pageSize: take,
+//     });
+//   } catch (err) {
+//     console.log("errr", err);
+//     let error = new Error("Something went wrong, please try again!");
+//     next(error);
+//   }
+// };
+
+
 const categoryPagination = async (req, res, next) => {
   try {
     const { perPage, pageNo, parent_id, search } = req.body;
@@ -183,18 +264,9 @@ const categoryPagination = async (req, res, next) => {
     const take = +perPage || 10;
     const skip = (page - 1) * take;
 
-    const filter = [{ name: { contains: search, mode: "insensitive" } }];
-    const searchFilter = createSearchFilter(search, filter);
-    const count = await prisma.categoryMaster.count({
-      where: { parent_id: parent_id || null },
-    });
+    const searchFilter = search ? { name: { contains: search, mode: "insensitive" } } : {};
 
-    if (count === 0) {
-      return res
-        .status(200)
-        .json({ isSuccess: false, message: "Category not found!", data: [] });
-    }
-    const result = await prisma.categoryMaster.findMany({
+    const resultPromise = prisma.categoryMaster.findMany({
       where: {
         parent_id: parent_id || null,
         ...searchFilter,
@@ -206,26 +278,9 @@ const categoryPagination = async (req, res, next) => {
         position: true,
         name: true,
         title: true,
-        url: true,
-        meta_title: true,
-        meta_keyword: true,
-        meta_description: true,
         isActive: true,
         image: true,
         showInHome: true,
-        CategoryAttribute: {
-          select: {
-            id: true,
-            category_id: true,
-            attribute: {
-              select: {
-                id: true,
-                key: true,
-                name: true,
-              },
-            },
-          },
-        },
         _count: {
           select: {
             children: true,
@@ -238,40 +293,54 @@ const categoryPagination = async (req, res, next) => {
                       OR: [
                         { catalogue_id: null },
                         { catalogue: { deletedAt: null } },
-                      ],
-                    },
-                  ],
-                },
-              },
+                      ]
+                    }
+                  ]
+                }
+              }
             },
             CatalogueCategory: {
-              where: {
-                catalogue: {
-                  deletedAt: null,
-                },
-              },
-            },
-          },
-        },
+              where: { catalogue: { deletedAt: null } }
+            }
+          }
+        }
       },
       skip,
       take,
     });
 
+    const totalCountPromise = prisma.categoryMaster.count({
+      where: { parent_id: parent_id || null, ...searchFilter }
+    });
+
+    const [result, totalCount] = await prisma.$transaction([resultPromise, totalCountPromise]);
+
+    if (totalCount === 0) {
+      return res.status(200).json({
+        isSuccess: false,
+        message: "Category not found!",
+        data: [],
+      });
+    }
+
     return res.status(200).json({
       isSuccess: true,
-      message: "Category get successfully.",
+      message: "Categories retrieved successfully.",
       data: result,
-      totalCount: count,
+      totalCount,
       currentPage: page,
       pageSize: take,
     });
+
   } catch (err) {
-    console.log("errr", err);
+    console.error("Error:", err);
     let error = new Error("Something went wrong, please try again!");
     next(error);
   }
 };
+
+
+
 // UPDATE CATEGORY
 const updateCategory = async (req, res, next) => {
   try {
@@ -708,6 +777,55 @@ const getAllCategories = async (req, res, next) => {
   }
 };
 
+
+const getCategoryById = async (req, res, next) => {
+  try {
+
+    const { id } = req.params
+    console.log("id", id)
+    if (!id) res.status(400).json({ "isSuccess": false, "message": "Id is missing", data: [] })
+
+    const result = await prisma.categoryMaster.findUnique({
+      where: {
+        id: id
+      }, select: {
+        parent_id: true,
+        name: true,
+        title: true,
+        url: true,
+        meta_title: true,
+        meta_keyword: true,
+        meta_description: true,
+        image: true,
+        CategoryAttribute: {
+          select: {
+            id: true,
+            category_id: true,
+            attribute: {
+              select: {
+                id: true,
+                key: true,
+                name: true,
+              },
+            },
+          },
+        }
+      }
+    })
+
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "Category get successfully.",
+      data: result,
+    });
+  } catch (error) {
+    console.log("fetchCategoryData", error)
+    const err = new Error("Something Went wrong!")
+    next(err)
+  }
+}
+
 export {
   postCategory,
   getAllParentCategory,
@@ -721,4 +839,5 @@ export {
   getSubCategory,
   deleteCategoryImage,
   getAllCategories,
+  getCategoryById
 };

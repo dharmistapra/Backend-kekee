@@ -708,25 +708,19 @@ const relatedProduct = async (req, res, next) => {
   }
 };
 
-const BASE_URL = "https://b02f-115-96-88-134.ngrok-free.app"
+const BASE_URL = "https://api.lajo.in/"
 const shareProduct = async (req, res, next) => {
   try {
-    const id = req.params.id;
-    if (!id) {
+    const code = req.params.id;
+    if (!code) {
       return res.status(400).json({
         isSuccess: false,
         message: "Please provide product id!",
       });
     }
-    // const url = req.body.url;
-    // if (!url) {
-    //   return res.status(400).json({
-    //     isSuccess: false,
-    //     message: "Please provide catalogue or product url!",
-    //   });
-    // }
+
     const isCatalogueExists = await prisma.catalogue.findFirst({
-      where: { cat_code: id },
+      where: { cat_code: code },
     });
 
     if (isCatalogueExists) {
@@ -755,7 +749,7 @@ const shareProduct = async (req, res, next) => {
     }
 
     const isProductExists = await prisma.product.findFirst({
-      where: { sku: id },
+      where: { sku: code },
     });
 
     let imageUrl = isProductExists.image[0];
@@ -780,7 +774,7 @@ const shareProduct = async (req, res, next) => {
           </head>
           <body>
             <script>
-              window.location.replace("${id}");
+              window.location.replace("${code}");
             </script>
           </body>
         </html>`

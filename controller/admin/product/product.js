@@ -1973,6 +1973,241 @@ const removeArrayOfProducts = async (req, res, next) => {
   }
 };
 
+
+
+
+
+const getProductDetails = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = await prisma.product.findUnique({
+      where: {
+        id: id,
+      },
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        showInSingle: true,
+        catalogue_id: true,
+        catalogue: {
+          select: { id: true, name: true, url: true },
+        },
+        url: true,
+        quantity: true,
+        weight: true,
+        average_price: true,
+        retail_price: true,
+        retail_discount: true,
+        offer_price: true,
+        image: true,
+        description: true,
+        tag: true,
+        readyToShip: true,
+        meta_title: true,
+        meta_keyword: true,
+        meta_description: true,
+        optionType: true,
+        categories: {
+          select: {
+            category: {
+              select: {
+                id: true,
+                StitchingGroup: {
+                  select: {
+                    id: true,
+                    name: true,
+                    stitchingGroupOption: {
+                      select: {
+                        stitchingOption: {
+                          select: {
+                            id: true,
+                            name: true,
+                            catalogue_price: true,
+                            price: true,
+                            type: true,
+                            dispatch_time: true,
+                            isActive: true,
+                            isCustom: true,
+                            isDefault: true,
+                            stitchingValues: {
+                              select: {
+                                id: true,
+                                type: true,
+                                name: true,
+                                range: true,
+                                values: true,
+                              },
+                              where: {
+                                isActive: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                      where: {
+                        stitchingOption: {
+                          isActive: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        attributeValues: {
+          select: {
+            attribute: true,
+            attributeValue: true,
+          },
+        },
+        colours: {
+          include: {
+            colour: {
+              select: {
+                code: true,
+                name: true,
+              },
+            },
+          },
+        },
+        labels: {
+          select: {
+            id: true,
+            label: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            expiryTime: true,
+          },
+        },
+        sizes: {
+          where: { size: { isActive: true } },
+          include: {
+            size: {
+              select: {
+                id: true,
+                value: true,
+                position: true,
+              },
+            },
+          },
+        },
+        RelatedProduct: {
+          where: {
+            related: { catalogue: { deletedAt: null }, isActive: true },
+          },
+          select: {
+            related: {
+              select: {
+                id: true,
+                sku: true,
+                url: true,
+                image: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!data)
+      return res
+        .status(404)
+        .json({ isSuccess: false, message: "Product not found!" });
+
+    data.catalogueUrl = data.catalogue?.url || null;
+    if (data?.attributeValues?.length > 0) {
+      let labels = [];
+      let colours = [];
+      const processedAttributes = data.attributeValues.reduce((acc, item) => {
+        const { attribute, attributeValue } = item;
+        if (attribute.type === "ExpiryTime") return acc;
+        if (attribute.type === "Label") {
+          labels.push({
+            label: attributeValue.name,
+            colour: attributeValue.colour,
+          });
+          return acc;
+        }
+        if (attribute.type === "Colour") {
+          colours.push({ color: attributeValue.value, code: attributeValue.code });
+          return acc;
+        }
+
+        if (!acc[attribute.id]) {
+          acc[attribute.id] = {
+            name: attribute.name,
+            key: attribute.key,
+            values: [],
+          };
+        }
+        if (attributeValue && attributeValue.attr_id === attribute.id) {
+          acc[attribute.id].values.push(attributeValue.value);
+        }
+        return acc;
+      }, {});
+      data.labels = labels;
+      data.colours = colours;
+      data.attributeValues = Object.values(processedAttributes);
+    }
+    if (data && data.optionType === "Stitching") {
+      data.stitchingOption = data.categories
+        ?.map((item) => {
+          const stitchingGroup = item.category?.StitchingGroup;
+
+          if (Array.isArray(stitchingGroup) && stitchingGroup.length > 0) {
+            return stitchingGroup.flatMap((group) => ({
+              id: group.id,
+              name: group.name,
+              stitchingOption: group.stitchingGroupOption
+                .map((option) => ({
+                  ...option.stitchingOption,
+                }))
+                .flat(),
+            }));
+          }
+
+          return [];
+        })
+        .flat();
+    }
+    if (data && data.categories) {
+      data.categories = data.categories.map((item) => item.category.id);
+    }
+
+    if (data && data.sizes) {
+      data.sizes = data.sizes
+        ?.map((item) => {
+          item.size.price = item.price;
+          item.size.quantity = item.quantity;
+          return item.size;
+        })
+        .flat();
+    }
+    if (data && data.RelatedProduct) {
+      data.RelatedProduct = data.RelatedProduct?.map((item) => {
+        return item.related;
+      }).flat();
+    }
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "Product get successfully.",
+      data: data,
+    });
+  } catch (error) {
+    console.log(error);
+    let err = new Error("Something went wrong, please try again!");
+    next(err);
+  }
+};
+
+
 export {
   postRetailProduct,
   getAllReatialProduct,
@@ -1984,6 +2219,7 @@ export {
   deleteProductImage,
   arrayProducts,
   removeArrayOfProducts,
+  getProductDetails
 };
 
 const __dirname = path.resolve();

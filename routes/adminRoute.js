@@ -183,6 +183,7 @@ import {
   deleteProductImage,
   deleteReatailProduct,
   getAllReatialProduct,
+  getProductDetails,
   paginationReatilProduct,
   postCatalogueProduct,
   postRetailProduct,
@@ -621,7 +622,7 @@ adminRouter.post("/arrayproduct", [data.uploadProduct], arrayProducts);
 adminRouter.post("/remove-arrayproduct", removeArrayOfProduct);
 adminRouter.get("/remove-arrayproducts", removeArrayOfProducts);
 adminRouter.get("/arrayproduct/:cat_code", getArrayOfProducts);
-
+adminRouter.get("/proudct-details/:id", getProductDetails)
 adminRouter.post("/chunk", [data.uploadProduct], HandleChunkData);
 
 // CONTACT DETAILS API

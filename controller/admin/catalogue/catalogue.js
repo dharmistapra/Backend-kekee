@@ -135,7 +135,7 @@ const postCatlogProduct = async (req, res, next) => {
         .toFile(thumbImage);
 
       await sharp(images.path)
-        .resize(360, 540, { fit: "inside" })
+        .resize(720, 1080, { fit: "inside" })
         .toFile(mediumImage);
 
       productImages.push({

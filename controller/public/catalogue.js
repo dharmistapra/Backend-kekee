@@ -671,6 +671,7 @@ const relatedProduct = async (req, res, next) => {
         catalogue_id: true,
         sku: true,
         url: true,
+        mediumImage: true,
         quantity: true,
         ...(shouldHidePrice === false && {
           retail_price: true,
@@ -679,6 +680,15 @@ const relatedProduct = async (req, res, next) => {
           offer_price: true,
         }),
         image: true,
+        categories: {
+          select: {
+            category: {
+              select: {
+                url: true
+              }
+            }
+          }
+        }
       },
       orderBy: { updatedAt: "desc" },
       take: 10,

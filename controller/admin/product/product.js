@@ -18,18 +18,32 @@ import { productSchema } from "../../../schema/joi_schema.js";
 import { promises as fs } from "fs";
 import path from "path";
 import createSearchFilter from "../../../helper/searchFilter.js";
+import imageSize from "image-size";
 
 let products = [];
 
 const postRetailProduct = async (req, res, next) => {
   try {
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ error: "At least 1 image is required." });
+      return res
+        .status(400)
+        .json({ isSuccess: false, message: "At least 1 image is required." });
     }
 
     const imagePaths = await Promise.all(
       req.files.map(async (file) => convertFilePathSlashes(file?.path))
     );
+
+    for (const file of req.files) {
+      const dimension = imageSize(file.path);
+      if (dimension.width !== 2000 && dimension.height !== 3000) {
+        await removeProductImage(imagePaths);
+        return res.status(400).json({
+          isSuccess: false,
+          message: "Product image must be 2000 x 3000.",
+        });
+      }
+    }
 
     let {
       name,
@@ -400,6 +414,18 @@ const postCatalogueProduct = async (req, res, next) => {
         const imagePaths = await Promise.all(
           productFiles.map(async (file) => convertFilePathSlashes(file?.path))
         );
+
+        for (const file of productFiles) {
+          const dimension = imageSize(file.path);
+          if (dimension.width !== 2000 && dimension.height !== 3000) {
+            await removeProductImage(imagePaths);
+            return res.status(400).json({
+              isSuccess: false,
+              message: `Product image must be 2000 x 3000 ${index + 1}.`,
+            });
+          }
+        }
+
         const schema = await productSchema();
         const { error } = schema.validate(value);
         if (error) {
@@ -698,43 +724,43 @@ const getAllReatialProduct = async (req, res, next) => {
       newProduct.attributeValues = product.attributeValues.map((av) =>
         av.attributeValue
           ? {
-            id: av.attributeValue.id,
-            name: av.attributeValue.name,
-            value: av.attributeValue.value,
-            isActive: av.attributeValue.isActive,
-            createdAt: av.attributeValue.createdAt,
-            updatedAt: av.attributeValue.updatedAt,
-          }
+              id: av.attributeValue.id,
+              name: av.attributeValue.name,
+              value: av.attributeValue.value,
+              isActive: av.attributeValue.isActive,
+              createdAt: av.attributeValue.createdAt,
+              updatedAt: av.attributeValue.updatedAt,
+            }
           : null
       );
 
       newProduct.categories = product.categories.map((cat) =>
         cat.category
           ? {
-            id: cat.category.id,
-            name: cat.category.name,
-            meta_title: cat.category.meta_title,
-            meta_keyword: cat.category.meta_keyword,
-            meta_description: cat.category.meta_description,
-            isActive: cat.category.isActive,
-            createdAt: cat.category.createdAt,
-            updatedAt: cat.category.updatedAt,
-          }
+              id: cat.category.id,
+              name: cat.category.name,
+              meta_title: cat.category.meta_title,
+              meta_keyword: cat.category.meta_keyword,
+              meta_description: cat.category.meta_description,
+              isActive: cat.category.isActive,
+              createdAt: cat.category.createdAt,
+              updatedAt: cat.category.updatedAt,
+            }
           : null
       );
 
       newProduct.collection = product.collection.map((cat) =>
         cat.collection
           ? {
-            id: cat.collection.id,
-            name: cat.collection.name,
-            meta_title: cat.collection.meta_title,
-            meta_keyword: cat.collection.meta_keyword,
-            meta_description: cat.collection.meta_description,
-            isActive: cat.collection.isActive,
-            createdAt: cat.collection.createdAt,
-            updatedAt: cat.collection.updatedAt,
-          }
+              id: cat.collection.id,
+              name: cat.collection.name,
+              meta_title: cat.collection.meta_title,
+              meta_keyword: cat.collection.meta_keyword,
+              meta_description: cat.collection.meta_description,
+              isActive: cat.collection.isActive,
+              createdAt: cat.collection.createdAt,
+              updatedAt: cat.collection.updatedAt,
+            }
           : null
       );
 
@@ -758,16 +784,30 @@ const paginationReatilProduct = async (req, res, next) => {
     const take = +perPage || 10;
     const skip = (page - 1) * take;
 
-
     const productSearchFilters = [
       { sku: { contains: searchQuery, mode: "insensitive" } },
       { name: { contains: searchQuery, mode: "insensitive" } },
       { description: { contains: searchQuery, mode: "insensitive" } },
-      { price: isNaN(searchQuery) ? undefined : { equals: parseFloat(searchQuery) }, },
-      { quantity: isNaN(searchQuery) ? undefined : { equals: parseFloat(searchQuery) }, },
-      { discount: isNaN(searchQuery) ? undefined : { equals: parseFloat(searchQuery) }, },
+      {
+        price: isNaN(searchQuery)
+          ? undefined
+          : { equals: parseFloat(searchQuery) },
+      },
+      {
+        quantity: isNaN(searchQuery)
+          ? undefined
+          : { equals: parseFloat(searchQuery) },
+      },
+      {
+        discount: isNaN(searchQuery)
+          ? undefined
+          : { equals: parseFloat(searchQuery) },
+      },
     ];
-    const cleanedsearchFilters = createSearchFilter(searchQuery, productSearchFilters);
+    const cleanedsearchFilters = createSearchFilter(
+      searchQuery,
+      productSearchFilters
+    );
     const filter = {
       categories: {
         some: {
@@ -778,7 +818,6 @@ const paginationReatilProduct = async (req, res, next) => {
       OR: [{ catalogue_id: null }, { catalogue: { deletedAt: null } }],
       ...(cleanedsearchFilters ? { AND: [cleanedsearchFilters] } : {}),
     };
-
 
     if (type === "catalogue") {
       filter.catalogue_id = { not: null };
@@ -805,7 +844,6 @@ const paginationReatilProduct = async (req, res, next) => {
         .status(400)
         .json({ isSuccess: false, message: "Invalid ID format!" });
     }
-
 
     const catalogueProductCount = await prisma.product.count({
       where: {
@@ -845,7 +883,6 @@ const paginationReatilProduct = async (req, res, next) => {
         ...(cleanedsearchFilters ? { AND: [cleanedsearchFilters] } : {}),
       },
     });
-
 
     const dbdata = await prisma.product.findMany({
       where: filter,
@@ -939,11 +976,11 @@ const paginationReatilProduct = async (req, res, next) => {
       newProduct.categories = product.categories.map((cat) =>
         cat.category
           ? {
-            id: cat.category.id,
-            parentId: cat.category.parent_id ? cat.category.parent_id : null,
-            name: cat.category.name,
-            isActive: cat.category.isActive,
-          }
+              id: cat.category.id,
+              parentId: cat.category.parent_id ? cat.category.parent_id : null,
+              name: cat.category.name,
+              isActive: cat.category.isActive,
+            }
           : null
       );
 
@@ -955,10 +992,10 @@ const paginationReatilProduct = async (req, res, next) => {
       newProduct.collection = product?.collection?.map((cat) =>
         cat.collection
           ? {
-            id: cat.collection.id,
-            name: cat.collection.name,
-            isActive: cat.collection.isActive,
-          }
+              id: cat.collection.id,
+              name: cat.collection.name,
+              isActive: cat.collection.isActive,
+            }
           : null
       );
 
@@ -986,8 +1023,8 @@ const paginationReatilProduct = async (req, res, next) => {
       data: formattedData,
       catalogueProductCount,
       retailProductCount,
-      outOfStockCount
-    }
+      outOfStockCount,
+    };
 
     return res.status(200).json({
       isSuccess: true,
@@ -1073,6 +1110,19 @@ const updateRetailProduct = async (req, res, next) => {
       return res
         .status(400)
         .json({ isSuccess: false, message: error?.details[0].message });
+    }
+
+    if (req.files && req.files?.length > 0) {
+      for (const file of req.files) {
+        const dimension = imageSize(file.path);
+        if (dimension.width !== 2000 && dimension.height !== 3000) {
+          await removeProductImage(imagePaths);
+          return res.status(400).json({
+            isSuccess: false,
+            message: "Product image must be 2000 x 3000.",
+          });
+        }
+      }
     }
 
     showInSingle = showInSingle == "true" ? true : false;
@@ -1973,10 +2023,6 @@ const removeArrayOfProducts = async (req, res, next) => {
   }
 };
 
-
-
-
-
 const getProductDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -2135,7 +2181,10 @@ const getProductDetails = async (req, res, next) => {
           return acc;
         }
         if (attribute.type === "Colour") {
-          colours.push({ color: attributeValue.value, code: attributeValue.code });
+          colours.push({
+            color: attributeValue.value,
+            code: attributeValue.code,
+          });
           return acc;
         }
 
@@ -2207,7 +2256,6 @@ const getProductDetails = async (req, res, next) => {
   }
 };
 
-
 export {
   postRetailProduct,
   getAllReatialProduct,
@@ -2219,7 +2267,7 @@ export {
   deleteProductImage,
   arrayProducts,
   removeArrayOfProducts,
-  getProductDetails
+  getProductDetails,
 };
 
 const __dirname = path.resolve();

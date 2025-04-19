@@ -18,6 +18,7 @@ import {
 import { catalogueSchema, productSchema } from "../../../schema/joi_schema.js";
 import createSearchFilter from "../../../helper/searchFilter.js";
 import sharp from "sharp";
+import imageSize from "image-size";
 const postCatlogProduct = async (req, res, next) => {
   try {
     if (!req.files || req.files.length === 0) {
@@ -68,6 +69,17 @@ const postCatlogProduct = async (req, res, next) => {
       return res
         .status(400)
         .json({ isSuccess: false, message: error?.details[0].message });
+    }
+
+    for (const file of req.files) {
+      const dimension = imageSize(file.path);
+      if (dimension.width !== 2000 && dimension.height !== 3000) {
+        await removeProductImage(imagePaths);
+        return res.status(400).json({
+          isSuccess: false,
+          message: "Product image must be 2000 x 3000.",
+        });
+      }
     }
 
     showInSingle = showInSingle == "true" ? true : false;
@@ -524,6 +536,19 @@ const updateCatalogueProduct = async (req, res, next) => {
         .json({ isSuccess: false, message: error?.details[0].message });
     }
 
+    if (imagePaths) {
+      for (const file of req.files) {
+        const dimension = imageSize(file.path);
+        if (dimension.width !== 2000 && dimension.height !== 3000) {
+          await removeProductImage(imagePaths);
+          return res.status(400).json({
+            isSuccess: false,
+            message: "Product image must be 2000 x 3000.",
+          });
+        }
+      }
+    }
+
     showInSingle = showInSingle == "true" ? true : false;
 
     if (req.files && req.files?.length > 0) {
@@ -620,8 +645,8 @@ const updateCatalogueProduct = async (req, res, next) => {
     const processedImages = imagePaths
       ? [...imagePaths, ...(findData?.image || [])]
       : typeof images === "string"
-        ? [images]
-        : images;
+      ? [images]
+      : images;
     let productImages = [];
     if (req.files) {
       for (const images of req.files) {
@@ -646,16 +671,16 @@ const updateCatalogueProduct = async (req, res, next) => {
     const processedThumbs =
       imagePaths && productImages.length > 0
         ? [
-          ...productImages.map((img) => img.thumbImage),
-          ...(findData?.thumbImage || []),
-        ]
+            ...productImages.map((img) => img.thumbImage),
+            ...(findData?.thumbImage || []),
+          ]
         : [];
     const processedMediums =
       imagePaths && processedImages.length > 0
         ? [
-          ...productImages.map((img) => img.mediumImage),
-          ...(findData?.mediumImage || []),
-        ]
+            ...productImages.map((img) => img.mediumImage),
+            ...(findData?.mediumImage || []),
+          ]
         : [];
     const productData = {
       name,
@@ -928,21 +953,21 @@ const catlogtGetSingleProduct = async (req, res, next) => {
       newProduct.categories = product.categories.map((cat) =>
         cat.category
           ? {
-            id: cat.category.id,
-            parentId: cat.category.parent_id ? cat.category.parent_id : null,
-            name: cat.category.name,
-            isActive: cat.category.isActive,
-          }
+              id: cat.category.id,
+              parentId: cat.category.parent_id ? cat.category.parent_id : null,
+              name: cat.category.name,
+              isActive: cat.category.isActive,
+            }
           : null
       );
 
       newProduct.collection = product.collection.map((cat) =>
         cat.collection
           ? {
-            id: cat.collection.id,
-            name: cat.collection.name,
-            isActive: cat.collection.isActive,
-          }
+              id: cat.collection.id,
+              name: cat.collection.name,
+              isActive: cat.collection.isActive,
+            }
           : null
       );
 
@@ -1368,6 +1393,17 @@ const addCatalogue = async (req, res, next) => {
       }
     }
 
+    if (image) {
+      const dimension = imageSize(filepath);
+      if (dimension.width !== 200 && dimension.height !== 200) {
+        deleteFile(image.path);
+        return res.status(400).json({
+          isSuccess: false,
+          message: "cover image must be 200 x 400.",
+        });
+      }
+    }
+
     // if (
     //   size === true &&
     //   product.map((value) => !value.sizes || value.sizes.length === 0)
@@ -1628,13 +1664,13 @@ const addCatalogue = async (req, res, next) => {
               },
               ...(attributes &&
                 attributes.length > 0 && {
-                attributeValues: { create: attributeValueConnection },
-              }),
+                  attributeValues: { create: attributeValueConnection },
+                }),
               ...(optionType === "Size" &&
                 sizes &&
                 sizes.length > 0 && {
-                CatalogueSize: { create: catalogueSizeConnection },
-              }),
+                  CatalogueSize: { create: catalogueSizeConnection },
+                }),
               tag,
               isActive: true,
               deletedAt: null,
@@ -1681,19 +1717,19 @@ const addCatalogue = async (req, res, next) => {
               },
               ...(attributes && attributes.length > 0
                 ? {
-                  attributeValues: {
-                    deleteMany: {},
-                    create: attributeValueConnection,
-                  },
-                }
+                    attributeValues: {
+                      deleteMany: {},
+                      create: attributeValueConnection,
+                    },
+                  }
                 : { attributeValues: { deleteMany: {} } }),
               ...(optionType === "Size" && sizes && sizes.length > 0
                 ? {
-                  CatalogueSize: {
-                    deleteMany: {},
-                    create: catalogueSizeConnection,
-                  },
-                }
+                    CatalogueSize: {
+                      deleteMany: {},
+                      create: catalogueSizeConnection,
+                    },
+                  }
                 : { CatalogueSize: { deleteMany: {} } }),
               tag,
               isActive: true,
@@ -2139,23 +2175,23 @@ const getCatalogueProduct = async (req, res, next) => {
       datas.CatalogueCategory = product.CatalogueCategory.map((cat) =>
         cat.category
           ? {
-            id: cat.category.id,
-            parentId: cat.category.parent_id ? cat.category.parent_id : null,
-            name: cat.category.name,
-            isActive: cat.category.isActive,
-          }
+              id: cat.category.id,
+              parentId: cat.category.parent_id ? cat.category.parent_id : null,
+              name: cat.category.name,
+              isActive: cat.category.isActive,
+            }
           : null
       );
 
       datas.CatalogueSize = product.CatalogueSize.map((cat) => {
         return cat.size
           ? {
-            id: cat.size.id,
-            // value: cat.size.value,
-            quantity: cat.quantity,
-            price: cat.price,
-            // isActive: cat.size.isActive,
-          }
+              id: cat.size.id,
+              // value: cat.size.value,
+              quantity: cat.quantity,
+              price: cat.price,
+              // isActive: cat.size.isActive,
+            }
           : null;
       });
 
@@ -2235,13 +2271,13 @@ const getCatalogueProduct = async (req, res, next) => {
         newProduct.categories = product.categories.map((cat) =>
           cat.category
             ? {
-              id: cat.category.id,
-              parentId: cat.category.parent_id
-                ? cat.category.parent_id
-                : null,
-              name: cat.category.name,
-              isActive: cat.category.isActive,
-            }
+                id: cat.category.id,
+                parentId: cat.category.parent_id
+                  ? cat.category.parent_id
+                  : null,
+                name: cat.category.name,
+                isActive: cat.category.isActive,
+              }
             : null
         );
 

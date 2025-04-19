@@ -365,6 +365,7 @@ import {
   postShippingRate,
   puttShippingRate,
 } from "../controller/admin/shippingRate.js";
+import getDashboard from "../controller/admin/dashboard.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -841,5 +842,5 @@ adminRouter.post(
 );
 adminRouter.put("/shipping/rate/:id", [shippingRateSchema], puttShippingRate);
 adminRouter.delete("/shipping/rate/:id", deleteShippingRate);
-
+adminRouter.get("/dashboard", getDashboard)
 export default adminRouter;

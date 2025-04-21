@@ -176,8 +176,8 @@ const postCatalogue = async (req, res, next) => {
         // }),
         ...(attributes &&
           attributes.length > 0 && {
-            attributeValues: { create: attributeValueConnection },
-          }),
+          attributeValues: { create: attributeValueConnection },
+        }),
         tag: tag,
         isActive,
       },
@@ -213,13 +213,13 @@ const postCatalogue = async (req, res, next) => {
 
 const paginationCatalogue = async (req, res, next) => {
   try {
-    const { category_id, perPage, pageNo, search } = req.body;
+    const { category_id, perPage, pageNo, search } = req.query;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
 
     const filter = [
-      
+
       { name: { contains: search, mode: "insensitive" } },
       { cat_code: { contains: search, mode: "insensitive" } },
       { url: { contains: search, mode: "insensitive" } },
@@ -451,11 +451,11 @@ const updateCatalogue = async (req, res, next) => {
         },
         ...(attributes && attributes.length > 0
           ? {
-              attributeValues: {
-                deleteMany: {},
-                create: attributeValueConnection,
-              },
-            }
+            attributeValues: {
+              deleteMany: {},
+              create: attributeValueConnection,
+            },
+          }
           : { attributeValues: { deleteMany: {} } }),
         tag,
         isActive,

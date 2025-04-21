@@ -36,17 +36,19 @@ passport.use(
 );
 
 // FOR USER AUTHENTICATE PASSPORT  USE
-passport.use(
-  "user",
-  new LocalStrategy(
-    { usernameField: "email", passwordField: "password" },
+passport.use("user",
+  new LocalStrategy({ usernameField: "email", passwordField: "password" },
     async (usernameField, passwordField, done) => {
       try {
         const validUser = await prisma.users.findFirst({
           where: {
-            email: usernameField,
+            AND: [
+              { email: usernameField },
+              { isActive: true }
+            ]
           },
         });
+        
         if (!validUser)
           return done(null, false, { message: "Invalid email or password!" });
         const comparePassword = await bcrypt.compare(
@@ -57,7 +59,6 @@ passport.use(
           return done(null, false, { message: "email or password wrong!" });
         return done(null, validUser, { message: "LogIn successfully." });
       } catch (error) {
-        console.log("Errrorrorooror ===============<>", error);
         return done(error);
       }
     }
@@ -69,19 +70,7 @@ const jwtOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 };
 
-// passport.use(
-//   new JwtStrategy(jwtOptions, async (payload, done) => {
-//     try {
-//       const user = await prisma.adminMaster.findUnique({
-//         where: { id: payload.id },
-//       });
-//       if (!user) return done(null, false);
-//       return done(null, user);
-//     } catch (error) {
-//       return done(error, null);
-//     }
-//   })
-// );
+
 
 passport.use(
   new JwtStrategy(jwtOptions, async (payload, done) => {
@@ -215,3 +204,10 @@ const isAuthenticated = (req, res, next) => {
 
 export default passport;
 export { isAuthenticated };
+
+
+passport.use("newuser",new LocalStrategy(
+  {usernameField:"email", passwordField: "password"},async(usernameField,passwordField,done)=>{
+
+  }
+))

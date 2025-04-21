@@ -97,7 +97,7 @@ const getAllAttributeValue = async (req, res, next) => {
 // HANDLE ALL PAGINATION API
 const getAttributeValuePagination = async (req, res, next) => {
   try {
-    const { attribute_id, perPage, pageNo, search } = req.body;
+    const { attribute_id, perPage, pageNo, search } = req.query;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;

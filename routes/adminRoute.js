@@ -392,7 +392,7 @@ adminRouter.get("/all-category", getAllParentCategory);
 adminRouter.get("/mixed-category", getAllCategories);
 
 adminRouter.get("/category-status/:id", updateCategoryStatus);
-adminRouter.post("/category-pagination", categoryPagination);
+adminRouter.get("/category-pagination", categoryPagination);
 adminRouter.post("/category-position", [positionSchema], categoryPosition);
 adminRouter.get("/category/:id", getSubCategory);
 adminRouter.post("/category-image/:id", deleteCategoryImage);
@@ -417,7 +417,7 @@ adminRouter.put(
 adminRouter.get("/currency-status/:id", updateCurrencyStatus);
 adminRouter.delete("/currency/:id", deleteCurrency);
 adminRouter.post("/bulk/currency", deleteMultipleCurrency);
-adminRouter.post("/currency-pagination", [pageSchema], paginationCurrency);
+adminRouter.get("/currency-pagination", paginationCurrency);
 adminRouter.get("/currency", getAllCurrency);
 
 // ATTRIBUTE MASTER API HANDLE
@@ -428,9 +428,8 @@ adminRouter.get("/attribute-status/:id", updateAttributeStatus);
 adminRouter.get("/attribute-filterstatus/:id", updateAttributeFilterStatus);
 adminRouter.get("/attribute", getAllAttribute);
 adminRouter.post("/default-attribute", getDefaultAttributes);
-adminRouter.post(
+adminRouter.get(
   "/attribute-pagination",
-  [pageSchema],
   getAllAttributePagination
 );
 
@@ -448,9 +447,8 @@ adminRouter.put(
 adminRouter.delete("/attribute-value/:id", deletAttributeValue);
 adminRouter.get("/attribute-value-status/:id", updateAttributeValueStatus);
 adminRouter.get("/attribute-value/:id", getAllAttributeValue);
-adminRouter.post(
+adminRouter.get(
   "/attribute-pagination-value",
-  [attributeValuePageSchema],
   getAttributeValuePagination
 );
 
@@ -461,7 +459,7 @@ adminRouter.post("/cms", [cmsSchema], postCms);
 adminRouter.put("/cms/:id", [cmsSchema], updateCms);
 adminRouter.delete("/cms/:id", deleteCms);
 adminRouter.get("/cms-status/:id", cmsStatus);
-adminRouter.post("/cms-pagination", paginationCms);
+adminRouter.get("/cms-pagination", paginationCms);
 adminRouter.post("/cms-position", [positionSchema], cmsPosition);
 
 // HOME BANNER API
@@ -477,7 +475,7 @@ adminRouter.put(
 );
 adminRouter.delete("/homebanner/:id", deleteHomeBanner);
 adminRouter.get("/homebanner-status/:id", updateHomeBannerStatus);
-adminRouter.post("/homebanner-pagination", [pageSchema], paginationHomeBanner);
+adminRouter.get("/homebanner-pagination", paginationHomeBanner);
 adminRouter.post("/homebanner-position", [positionSchema], homeBannerPosition);
 adminRouter.delete("/homebanner-image/:id", deleteHomeBannerImage);
 
@@ -495,9 +493,8 @@ adminRouter.put(
 adminRouter.delete("/testimonial/:id", deleteTestimonial);
 adminRouter.get("/testimonial-status/:id", updateTestimonialStatus);
 adminRouter.post("/filter-testimonial", filterTestimonial);
-adminRouter.post(
+adminRouter.get(
   "/testimonial-pagination",
-  [pageSchema],
   paginationTestimonial
 );
 adminRouter.post(
@@ -511,9 +508,8 @@ adminRouter.post("/socialmedia", [socialMediaIconSchema], postSocialMedia);
 adminRouter.put("/socialmedia/:id", [socialMediaIconSchema], updateSocialMedia);
 adminRouter.delete("/socialmedia/:id", deleteSocialMedia);
 adminRouter.get("/socialmedia-status/:id", updateSocialMediaStatus);
-adminRouter.post(
+adminRouter.get(
   "/socialmedia-pagination",
-  [pageSchema],
   paginationSocialMedia
 );
 
@@ -530,9 +526,8 @@ adminRouter.put(
 );
 adminRouter.delete("/pagewisebanner/:id", deletePageWiseBanner);
 adminRouter.get("/pagewisebanner-status/:id", updatePageWiseBannerStatus);
-adminRouter.post(
+adminRouter.get(
   "/pagewisebanner-pagination",
-  [pageSchema],
   paginationPageWiseBanner
 );
 
@@ -549,7 +544,7 @@ adminRouter.put(
   updateEmailTemplate
 );
 adminRouter.delete("/emailtemplate/:id", deleteEmailTemplate);
-adminRouter.post("/emailtemplate-pagination", paginationEmailTemplate);
+adminRouter.get("/emailtemplate-pagination", paginationEmailTemplate);
 
 adminRouter.post("/menu", [menuSchema], postMenu);
 adminRouter.put("/menu/:id", [menuSchema], updateMenu);
@@ -605,11 +600,11 @@ adminRouter.put(
 );
 adminRouter.get("/catalogue-status/:id", updateCatalogueStatus);
 // adminRouter.delete("/catalogue/:id", deleteCatalogue);
-adminRouter.post("/catalogue-pagination", paginationCatalogue);
+adminRouter.get("/catalogue-pagination", paginationCatalogue);
 
 adminRouter.post("/product", [data.uploadProduct], postRetailProduct);
 adminRouter.get("/product", getAllReatialProduct);
-adminRouter.post("/product-pagination", paginationReatilProduct);
+adminRouter.get("/product-pagination", paginationReatilProduct);
 adminRouter.put("/product/:id", [data.uploadProduct], updateRetailProduct);
 adminRouter.delete("/product/:id", deleteReatailProduct);
 adminRouter.get("/product-status/:id", updateReatailProductStatus);
@@ -641,9 +636,8 @@ adminRouter.put(
 adminRouter.get("/contactdetails-status/:id", updateContactDetailsStatus);
 adminRouter.delete("/contactdetail/:id", deleteContactDetails);
 adminRouter.post("/contactdetail-image/:id", deleteContactDetailsImage);
-adminRouter.post(
+adminRouter.get(
   "/contactdetails-pagination",
-  [pageSchema],
   paginationContactDetails
 );
 
@@ -692,7 +686,7 @@ adminRouter.put(
 );
 adminRouter.delete("/stitching-group/:id", deletegroupstitching);
 adminRouter.get("/stitching-option", getAllgroupstitching);
-adminRouter.post("/stitching-option-pagination", paginationgroupstitching);
+adminRouter.get("/stitching-option-pagination", paginationgroupstitching);
 // END
 
 // IN THIS ROUTE HIS CONTROLLER WE CAN ADD ONY STITCHING OPTION BY GROPING ID
@@ -742,7 +736,7 @@ adminRouter.post("/collection-position", positionSchema, collectionPosition);
 
 // NEWS LETTER API
 
-adminRouter.post("/newsletter-pagination", getNewsLetter);
+adminRouter.get("/newsletter-pagination", getNewsLetter);
 adminRouter.delete("/newsletter/:id", deleteNewsLetter);
 
 // IMPORT CATALOGUE PRODUCTS API
@@ -751,7 +745,7 @@ adminRouter.post("/importsheet", data.uploadCSV, importCatalogues);
 adminRouter.post("/exportsheet", exportCatalogue);
 adminRouter.post("/importzip", data.uploadZip, zipImages);
 
-adminRouter.post("/users-pagination", paginationusers);
+adminRouter.get("/users-pagination", paginationusers);
 adminRouter.get("/users-status/:id", updateUsersStatus);
 
 adminRouter.post("/shipping-charges-pagination", paginationShippingcharges);
@@ -803,14 +797,14 @@ adminRouter.delete("/paymentmethod/:id", deletePaymentMethod);
 adminRouter.get("/paymentmethod-status/:id", paymentMethodStatus);
 adminRouter.post("/paymentmethod-position", paymentMethodPosition);
 adminRouter.get("/paymentmethod-image/:id", deletePaymentMethodImage);
-adminRouter.post("/customer/order/history", getOrderHistoryusers);
+adminRouter.get("/customer/order/history", getOrderHistoryusers);
 adminRouter.post("/customer/order/details", getOrderdetailsUsers);
 adminRouter.post("/order/status", updateOrderStatus);
 
 adminRouter.post("/inventory/single/product", getAllSingleProductInventory);
 
 adminRouter.delete("/contact-us/:id", deleteContactUs);
-adminRouter.post("/contact-us-pagination", getAllContactUs);
+adminRouter.get("/contact-us-pagination", getAllContactUs);
 
 adminRouter.post(
   "/websetting",

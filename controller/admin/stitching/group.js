@@ -108,7 +108,7 @@ const getAllgroupstitching = async (req, res, next) => {
 
 const paginationgroupstitching = async (req, res, next) => {
   try {
-    const { perPage, pageNo } = req.body;
+    const { perPage, pageNo } = req.query;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;

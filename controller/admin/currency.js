@@ -74,7 +74,7 @@ const getAllCurrency = async (req, res, next) => {
 // GET CURRENCY BY PAGINATION
 const paginationCurrency = async (req, res, next) => {
   try {
-    const { perPage, pageNo, search } = req.body;
+    const { perPage, pageNo, search } = req.query;
     const page = Number(pageNo) || 1;
     const take = Number(perPage) || 10;
     const skip = (page - 1) * take;

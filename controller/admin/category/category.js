@@ -259,7 +259,7 @@ const getAllParentCategory = async (req, res, next) => {
 
 const categoryPagination = async (req, res, next) => {
   try {
-    const { perPage, pageNo, parent_id, search } = req.body;
+    const { perPage, pageNo, parent_id, search } = req.query;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;

@@ -37,21 +37,21 @@ const postContactUs = async (req, res, next) => {
 
 const getAllContactUs = async (req, res, next) => {
   try {
-    const { pageNo, perPage, search } = req.body;
+    const { pageNo, perPage, search } = req.query;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
 
     const searchFilter = search
       ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            isNaN(search) ? {} : { mobile_number: parseInt(search) },
-            { email: { contains: search, mode: "insensitive" } },
-            { subject: { contains: search, mode: "insensitive" } },
-            { message: { contains: search, mode: "insensitive" } },
-          ],
-        }
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          isNaN(search) ? {} : { mobile_number: parseInt(search) },
+          { email: { contains: search, mode: "insensitive" } },
+          { subject: { contains: search, mode: "insensitive" } },
+          { message: { contains: search, mode: "insensitive" } },
+        ],
+      }
       : {};
 
     const result = await prisma.contactUs.findMany({

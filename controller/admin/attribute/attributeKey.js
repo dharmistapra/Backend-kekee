@@ -141,7 +141,7 @@ const getDefaultAttributes = async (req, res, next) => {
 // HANDLE ALL PAGINATION API
 const getAllAttributePagination = async (req, res, next) => {
   try {
-    const { perPage, pageNo } = req.body;
+    const { perPage, pageNo } = req.query;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;

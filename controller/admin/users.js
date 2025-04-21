@@ -4,7 +4,7 @@ import createSearchFilter from "../../helper/searchFilter.js";
 import { checkStock, reduceProductQuantity } from "../public/orderPlace.js";
 const paginationusers = async (req, res, next) => {
   try {
-    const { perPage, pageNo, search } = req.body;
+    const { perPage, pageNo, search } = req.query;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
@@ -30,6 +30,7 @@ const paginationusers = async (req, res, next) => {
         email: true,
         mobile_number: true,
         createdAt: true,
+        isActive: true,
         _count: {
           select: {
             orders: true,
@@ -75,7 +76,7 @@ const updateUsersStatus = async (req, res, next) => {
 
 const getOrderHistoryusers = async (req, res, next) => {
   try {
-    const { perPage, pageNo, userId } = req.body;
+    const { perPage, pageNo, userId } = req.query;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;

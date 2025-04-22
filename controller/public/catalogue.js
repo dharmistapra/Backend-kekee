@@ -592,6 +592,7 @@ const searchCatalogueAndProduct = async (req, res, next) => {
           retail_discount: true,
           offer_price: true,
           image: true,
+          mediumImage: true,
           description: true,
           tag: true,
           isActive: true,

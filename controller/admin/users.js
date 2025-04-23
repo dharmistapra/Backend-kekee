@@ -1,6 +1,6 @@
 import prisma from "../../db/config.js";
 import { updateStatus } from "../../helper/common.js";
-import createSearchFilter from "../../helper/searchFilter.js";
+import createSearchFilter, { createSearchFilterOder } from "../../helper/searchFilter.js";
 import { checkStock, reduceProductQuantity } from "../public/orderPlace.js";
 const paginationusers = async (req, res, next) => {
   try {
@@ -74,76 +74,220 @@ const updateUsersStatus = async (req, res, next) => {
   }
 };
 
+// const getOrderHistoryusers = async (req, res, next) => {
+//   try {
+//     const { perPage, pageNo, userId } = req.query;
+//     const page = +pageNo || 1;
+//     const take = +perPage || 10;
+//     const skip = (page - 1) * take;
+
+//     const whereCondition = userId ? { userId: userId } : {};
+
+//     const count = await prisma.order.count({ where: whereCondition })
+
+//     const result = await prisma.order.findMany({
+//       where: whereCondition,
+//       orderBy: {
+//         updatedAt: "desc",
+//       },
+//       select: {
+//         orderId: true,
+//         createdAt: true,
+//         status: true,
+//         totalAmount: true,
+//         _count: { select: { orderItems: true } },
+//         payment: { select: { paymentMethod: true, status: true } },
+//         orderItems: {
+//           select: {
+//             quantity: true,
+//             product: { select: { sku: true, image: true } },
+//             catalogue: { select: { cat_code: true, coverImage: true } },
+//           },
+//         },
+//       },
+//       skip,
+//       take,
+//     });
+
+//     const formattedResult = result.map((order) => {
+//       const payment = order.payment[0] || null;
+//       const orderItem = order.orderItems[0] || {};
+//       const { sku, image } = orderItem.product || {};
+//       const { cat_code, coverImage } = orderItem.catalogue || {};
+
+//       return {
+//         orderId: order.orderId,
+//         createdAt: order.createdAt,
+//         status: order.status,
+//         totalAmount: order.totalAmount,
+//         orderItemCount: order._count.orderItems,
+//         payment,
+//         orderItems: orderItem
+//           ? {
+//             sku: sku || cat_code,
+//             image: image?.[0] || coverImage,
+//           }
+//           : null,
+//       };
+//     });
+
+//     return res.status(200).json({
+//       message: "Order history fetched successfully",
+//       isSuccess: true,
+//       data: formattedResult,
+//       totalCount: count,
+//       currentPage: page,
+//       pageSize: take,
+//     });
+//   } catch (error) {
+//     const err = new Error("Something went wrong, Please try again!");
+//     next(err);
+//   }
+// };
+
+
+
+
 const getOrderHistoryusers = async (req, res, next) => {
   try {
-    const { perPage, pageNo, userId } = req.query;
-    const page = +pageNo || 1;
-    const take = +perPage || 10;
+    const {
+      perPage = 10,
+      pageNo = 1,
+      userId,
+      search = "",
+      startDate,
+      endDate,
+      paymentStatus,
+      orderStatus,
+    } = req.query;
+
+    const take = parseInt(perPage);
+    const page = parseInt(pageNo);
     const skip = (page - 1) * take;
 
-    const whereCondition = userId ? { userId: userId } : {};
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      return res.status(400).json({
+        message: "End date cannot be earlier than start date.",
+        isSuccess: false,
+      });
+    }
 
-    const count = await prisma.order.count({ where: whereCondition })
+    const searchFilter = createSearchFilterOder(search);
 
-    const result = await prisma.order.findMany({
-      where: whereCondition,
-      orderBy: {
-        updatedAt: "desc",
-      },
-      select: {
-        orderId: true,
-        createdAt: true,
-        status: true,
-        totalAmount: true,
-        _count: { select: { orderItems: true } },
-        payment: { select: { paymentMethod: true, status: true } },
-        orderItems: {
-          select: {
-            quantity: true,
-            product: { select: { sku: true, image: true } },
-            catalogue: { select: { cat_code: true, coverImage: true } },
+    const where = {
+      ...(userId && { userId }),
+      ...(orderStatus && { status: orderStatus }),
+      ...(startDate && endDate && {
+        createdAt: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      }),
+      ...(paymentStatus && {
+        payment: {
+          some: {
+            status: paymentStatus,
           },
         },
-      },
-      skip,
-      take,
-    });
+      }),
+      ...(search && {
+        OR: searchFilter,
+      }),
+    };
 
-    const formattedResult = result.map((order) => {
-      const payment = order.payment[0] || null;
-      const orderItem = order.orderItems[0] || {};
+    const [totalCount, orders] = await Promise.all([
+      prisma.order.count({ where }),
+      prisma.order.findMany({
+        where,
+        orderBy: { updatedAt: "desc" },
+        skip,
+        take,
+        select: {
+          orderId: true,
+          createdAt: true,
+          status: true,
+          totalAmount: true,
+          payment: {
+            select: {
+              paymentMethod: true,
+              status: true,
+            },
+          },
+          orderItems: {
+            select: {
+              quantity: true,
+              product: {
+                select: {
+                  sku: true,
+                  image: true,
+                },
+              },
+              catalogue: {
+                select: {
+                  cat_code: true,
+                  coverImage: true,
+                },
+              },
+            },
+          },
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const formattedOrders = orders.map((order) => {
+      const payment = order.payment?.[0] || {};
+      const orderItem = order.orderItems?.[0] || {};
       const { sku, image } = orderItem.product || {};
       const { cat_code, coverImage } = orderItem.catalogue || {};
+      const user = order.user || {};
 
       return {
         orderId: order.orderId,
         createdAt: order.createdAt,
         status: order.status,
         totalAmount: order.totalAmount,
-        orderItemCount: order._count.orderItems,
+        orderItemCount: order.orderItems?.length || 0,
         payment,
-        orderItems: orderItem
-          ? {
-            sku: sku || cat_code,
-            image: image?.[0] || coverImage,
-          }
-          : null,
+        user: {
+          name: user.name || '',
+          email: user.email || '',
+        },
+        orderItems: {
+          sku: sku || cat_code || "",
+          image: (Array.isArray(image) ? image[0] : image) || coverImage || "",
+        },
       };
     });
 
     return res.status(200).json({
       message: "Order history fetched successfully",
       isSuccess: true,
-      data: formattedResult,
-      totalCount: count,
+      data: formattedOrders,
+      totalCount,
       currentPage: page,
       pageSize: take,
     });
   } catch (error) {
-    const err = new Error("Something went wrong, Please try again!");
-    next(err);
+    console.error("Error in getOrderHistoryusers:", error);
+    return res.status(500).json({
+      message: "Something went wrong, please try again.",
+      isSuccess: false,
+    });
   }
 };
+
+
+
+
+
+
+
 
 const getOrderdetailsUsers = async (req, res, next) => {
   try {

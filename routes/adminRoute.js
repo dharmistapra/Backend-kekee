@@ -369,7 +369,7 @@ import {
 } from "../controller/admin/shippingRate.js";
 import getDashboard from "../controller/admin/dashboard.js";
 import uploadCMSImages, { deleteUploadImages } from "../controller/admin/uploadImages.js";
-import { cmsContent, paginationcmsContent } from "../controller/admin/cmsContent.js";
+import { cmsContent, paginationcmsContent, updatecmsContent } from "../controller/admin/cmsContent.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -847,4 +847,5 @@ adminRouter.delete("/delete-cms-images", deleteUploadImages)
 
 adminRouter.post("/cms-content", [cmsContentSchema], cmsContent)
 adminRouter.get("/cms-content-pagination", paginationcmsContent)
+adminRouter.put("/cms-content/:id", [cmsContentSchema], updatecmsContent)
 export default adminRouter;

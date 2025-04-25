@@ -28,8 +28,6 @@ const cmsContent = async (req, res, next) => {
     }
 }
 
-
-
 const paginationcmsContent = async (req, res, next) => {
     try {
         const { perPage, pageNo, search } = req.query;
@@ -75,4 +73,34 @@ const paginationcmsContent = async (req, res, next) => {
         next(new Error("Something went wrong, please try again!"));
     }
 };
-export { cmsContent, paginationcmsContent }
+
+
+const updatecmsContent = async (req, res, next) => {
+    const { id } = req.params;
+    if (!id) {
+        return res.status(400).json({
+            isSuccess: false,
+            message: "ID is required.",
+        });
+    }
+    const { pageName, content } = req.body;
+    try {
+        const result = await prisma.cmsContent.update({
+            where: { id: id },
+            data: {
+                pageName: pageName,
+                content: content,
+            },
+        });
+        return res.status(200).json({
+            isSuccess: true,
+            message: "CMS content updated successfully.",
+            data: result,
+        });
+    } catch (err) {
+        const error = new Error("Something went wrong, please try again!");
+        next(error);
+    }
+
+}
+export { cmsContent, paginationcmsContent,updatecmsContent }

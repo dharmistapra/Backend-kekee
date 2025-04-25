@@ -942,7 +942,7 @@ model WebSettings {
   email                    String
   skypeId                  String?  @default("")
   timing                   String?  @default("")
-  mapUrl                   String
+  mapUrl                   String?  @default("")
   notification             String?  @default("")
   happyToHelp              Json
   showProductCount         Int      @default(10)
@@ -950,6 +950,10 @@ model WebSettings {
   wholesale_min_buy_qty    Int?     @default(0)
   wholesale_min_buy_amount Int?     @default(0)
   orderExpireyTime         Int?
+  metadescription          String?  @default("")
+  metakeyword              String?  @default("")
+  metatitle                String?  @default("")
+  copyRightText            String?  @default("")
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }
@@ -993,6 +997,16 @@ model ShippingZoneAddRate {
 enum RateType {
   FLAT_RATE
   EXCEL_SHEET
+}
+
+model CmsContent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  pageName  String   
+  content   String
+  position  Int
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum RateCondition {

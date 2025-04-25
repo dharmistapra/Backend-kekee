@@ -15,6 +15,26 @@ const deleteFile = async (filePath) => {
   }
 };
 
+
+
+
+
+export const deleteFileReturn = async (filePath) => {
+  if (!filePath) return false;
+
+  filePath = "." + filePath;
+  console.log(filePath);
+  try {
+    if (fs.existsSync(filePath)) {
+      await fs.unlinkSync(filePath);
+      return true
+    }
+  } catch (err) {
+    console.log(err)
+    return false;
+  }
+};
+
 // const deleteFile = (filePath) => {
 //   try {  
 //     if (!filePath) return;

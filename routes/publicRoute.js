@@ -66,6 +66,7 @@ import {
 } from "../controller/admin/contactUs.js";
 import { getWebSetting } from "../controller/admin/webSetting.js";
 import { getShippingMethod } from "../controller/public/shippingMethod.js";
+import { getCmsContentPublic } from "../controller/public/cmsContent.js";
 const router = express.Router();
 
 // MENU API
@@ -254,5 +255,5 @@ router.get("/bank/details", getBankdetails);
 router.get("/shippingmethod", getShippingMethod);
 
 router.get("/shareproduct/:id", shareProduct);
-
+router.get("/cms-content", getCmsContentPublic);
 export default router;

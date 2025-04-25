@@ -762,6 +762,7 @@ const getAllCategories = async (req, res, next) => {
       select: {
         id: true,
         name: true,
+        url: true 
       },
     });
 

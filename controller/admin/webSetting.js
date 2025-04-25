@@ -18,6 +18,10 @@ const postWebSetting = async (req, res, next) => {
       showPrice,
       wholesale_min_buy_qty,
       wholesale_min_buy_amount,
+      metadescription,
+      metakeyword,
+      copyRightText,
+      metatitle
     } = req.body;
 
     const isExistWebSetting = await prisma.webSettings.findFirst();
@@ -61,6 +65,10 @@ const postWebSetting = async (req, res, next) => {
           headerLogo,
           footerLogo,
           favIcon,
+          metadescription,
+          metakeyword,
+          metatitle,
+          copyRightText
         },
       });
       if (req.files && req.files.headerLogo)
@@ -118,6 +126,10 @@ const postWebSetting = async (req, res, next) => {
           headerLogo,
           footerLogo,
           favIcon,
+          metadescription,
+          metakeyword,
+          metatitle,
+          copyRightText,
         },
       });
     }
@@ -156,6 +168,12 @@ const getWebSetting = async (req, res, next) => {
         showPrice: true,
         wholesale_min_buy_qty: true,
         wholesale_min_buy_amount: true,
+        metadescription: true,
+        metakeyword: true,
+        metatitle: true,
+        copyRightText: true,
+        
+        
       },
     });
     return res.status(200).json({

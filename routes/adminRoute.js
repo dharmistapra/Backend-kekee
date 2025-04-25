@@ -50,6 +50,7 @@ import {
   shippingMethodSchema,
   shippingZoneSchema,
   shippingRateSchema,
+  cmsContentSchema,
 } from "../schema/joi_schema.js";
 import {
   getAllSubCategory,
@@ -73,6 +74,7 @@ import {
   uploadCategorystorageImg,
   collectionImages,
   uploadShippingChagresCSV,
+  uploadImgesStorage,
 } from "../middleware/uploads.js";
 import {
   deleteAttribute,
@@ -366,6 +368,8 @@ import {
   puttShippingRate,
 } from "../controller/admin/shippingRate.js";
 import getDashboard from "../controller/admin/dashboard.js";
+import uploadCMSImages, { deleteUploadImages } from "../controller/admin/uploadImages.js";
+import { cmsContent, paginationcmsContent } from "../controller/admin/cmsContent.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -837,4 +841,10 @@ adminRouter.post(
 adminRouter.put("/shipping/rate/:id", [shippingRateSchema], puttShippingRate);
 adminRouter.delete("/shipping/rate/:id", deleteShippingRate);
 adminRouter.get("/dashboard", getDashboard)
+
+adminRouter.post("/upload-images", [uploadImgesStorage], uploadCMSImages)
+adminRouter.delete("/delete-cms-images", deleteUploadImages)
+
+adminRouter.post("/cms-content", [cmsContentSchema], cmsContent)
+adminRouter.get("/cms-content-pagination", paginationcmsContent)
 export default adminRouter;

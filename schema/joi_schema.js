@@ -1563,6 +1563,12 @@ const webSettingSchema = async (req, res, next) => {
     headerLogo: Joi.string(),
     footerLogo: Joi.string(),
     favIcon: Joi.string(),
+
+    metadescription: Joi.string().optional(),
+    metakeyword: Joi.string().optional(),
+    metatitle: Joi.string().optional(),
+    copyRightText: Joi.string().optional(),
+
     address: Joi.string().required(),
     interNationalNumber: Joi.string().optional(),
     domesticNumber: Joi.string().optional(),
@@ -1828,6 +1834,30 @@ const bankPaymentSchema = async (req, res, next) => {
 
 };
 
+
+
+
+const cmsContentSchema = async (req, res, next) => {
+  const schema = Joi.object({
+    pageName: Joi.string()
+      .pattern(/^[A-Za-z\s]+$/)
+      .required()
+      .messages({
+        "string.pattern.base": "Name must contain only letters and spaces",
+        "any.required": "Name is required",
+      }),
+
+    content: Joi.string().required().messages({
+      "any.required": "Content is required",
+    }),
+
+  });
+
+  await JoiSchemaValidation(schema, req, next);
+};
+
+
+
 export {
   categorySchema,
   subCategorySchema,
@@ -1888,5 +1918,6 @@ export {
   orderId_generate_Validation_Schema,
   razorpayOrderSchema,
   importShippingRateSchema,
-  bankPaymentSchema
+  bankPaymentSchema,
+  cmsContentSchema
 };

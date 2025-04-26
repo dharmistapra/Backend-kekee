@@ -710,6 +710,7 @@ const relatedProduct = async (req, res, next) => {
 };
 
 const BASE_URL = "https://api.lajo.in/"
+// const BASE_URL = "https://fb00-116-72-43-254.ngrok-free.app"
 const shareProduct = async (req, res, next) => {
   try {
     const code = req.params.id;

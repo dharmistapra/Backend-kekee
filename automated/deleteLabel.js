@@ -3,7 +3,6 @@ import prisma from "../db/config.js";
 import dayjs from "dayjs";
 
 const deleteLabels = new cron.CronJob("0 0 * * *", async () => {
-  console.log("Checking and deleting expired label attributes...");
 
   try {
     const labelAttributes = await prisma.attributeMaster.findMany({
@@ -13,7 +12,6 @@ const deleteLabels = new cron.CronJob("0 0 * * *", async () => {
 
     const labelAttributeIds = labelAttributes.map((attr) => attr.id);
     if (labelAttributeIds.length === 0) {
-      console.log("No label attributes found.");
       return;
     }
 
@@ -51,7 +49,6 @@ const deleteLabels = new cron.CronJob("0 0 * * *", async () => {
       await prisma.productAttributeValue.deleteMany({
         where: { attributeValue_id: { in: expiredIds } },
       });
-      console.log(`Deleted ${expiredIds.length} expired attribute values.`);
     } else {
       console.log("No expired attribute values found.");
     }

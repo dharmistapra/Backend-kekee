@@ -7,14 +7,12 @@ const deleteCatalogues = new cron.CronJob("0 0 * * *", async () => {
     const currentTime = new Date();
     const cutoffTime = new Date(currentTime - 48 * 60 * 60 * 1000);
 
-    console.log(currentTime, cutoffTime);
 
     const cataloguesToDelete = await prisma.catalogue.findMany({
       where: { deletedAt: { lte: cutoffTime }, NOT: { deletedAt: null } },
       include: { Product: true },
     });
 
-    console.log(`catalogues ${cataloguesToDelete.length} to delete.`);
     for (const catalogue of cataloguesToDelete) {
       await prisma.product.deleteMany({
         where: { catalogue_id: catalogue.id },
@@ -28,22 +26,15 @@ const deleteCatalogues = new cron.CronJob("0 0 * * *", async () => {
           product.mediumImage.length > 0 &&
             product.mediumImage.map(async (image) => await deleteFile(image));
           // }
-          console.log(`Deleted images for product ID: ${product.id}`);
         }
       }
-
-      console.log(`Deleted products for catalogue ID: ${catalogue.id}`);
-
       await prisma.catalogue.delete({ where: { id: catalogue.id } });
-
       if (catalogue.coverImage) {
         await deleteFile(catalogue.coverImage);
-        console.log(`Deleted cover image for catalogue ID: ${catalogue.id}`);
       }
-      console.log(`Deleted Catalogue ID: ${catalogue.id}`);
     }
   } catch (error) {
-    console.log("Error during cron job execution:", error);
+    return error;
   }
 });
 

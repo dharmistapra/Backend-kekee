@@ -220,7 +220,6 @@ const resetPassword = async (req, res, next) => {
       .status(200)
       .json({ isSuccess: true, message: "Password reset successfully." });
   } catch (error) {
-    console.log(error)
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }

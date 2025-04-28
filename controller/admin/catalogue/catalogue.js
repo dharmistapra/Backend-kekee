@@ -288,182 +288,10 @@ const postCatlogProduct = async (req, res, next) => {
       }
     }
   } catch (error) {
-    console.log(error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
 };
-
-//   const postCatlogProduct = async (req, res, next) => {
-//     let createdProduct = null;
-//     try {
-//       if (!req.files || req.files.length === 0) {
-//         return res.status(400).json({ error: "At least 1 image is required." });
-//       }
-
-//       const imagePaths = await Promise.all(
-//         req.files.map(async (file) => convertFilePathSlashes(file?.path))
-//       );
-
-//       let {
-//         name,
-//         catalogue_id,
-//         sku,
-//         url,
-//         quantity,
-//         weight,
-//         price,
-//         discount,
-//         offer_price,
-//         description,
-//         label,
-//         tag,
-//         showInSingle,
-//         category_id,
-//         attributes,
-//         colour_id,
-//         readyToShip,
-//       } = req.body;
-
-//       attributes = attributes?.map((jsonString) => JSON.parse(jsonString));
-//       req.body.attributes = attributes;
-
-//       const schema = await productSchema();
-//       const { error } = schema.validate(req.body);
-//       if (error) {
-//         await removeProductImage(imagePaths);
-//         return res
-//           .status(400)
-//           .json({ isSuccess: false, message: error?.details[0].message });
-//       }
-
-//       showInSingle = showInSingle === "true";
-
-//       const findUniqueData = await prisma.product.findUnique({
-//         where: { sku },
-//       });
-
-//       if (findUniqueData) {
-//         await removeProductImage(imagePaths);
-//         return res
-//           .status(409)
-//           .json({ isSuccess: false, message: "SKU Already Used" });
-//       }
-
-//       catalogue_id = catalogue_id || null;
-
-//       if (catalogue_id) {
-//         const findCatalogue = await prisma.catalogue.findUnique({
-//           where: { id: catalogue_id },
-//         });
-
-//         if (!findCatalogue) {
-//           await removeProductImage(imagePaths);
-//           return res
-//             .status(404)
-//             .json({ isSuccess: false, message: "Catalogue not found!" });
-//         }
-//       }
-
-//       const finalOfferPrice = offer_price
-//         ? parseFloat(offer_price)
-//         : parseFloat(price) * (1 - parseFloat(discount) / 100);
-
-//       url = `${slug(name)}-${sku}`;
-//       const productData = {
-//         name,
-//         catalogue_id,
-//         sku,
-//         url,
-//         quantity,
-//         weight,
-//         price: parseFloat(price),
-//         discount: parseFloat(discount),
-//         offer_price: finalOfferPrice,
-//         description,
-//         label,
-//         tag,
-//         showInSingle,
-//         readyToShip,
-//         image: imagePaths,
-//       };
-
-//       await prisma.$transaction(async (transaction) => {
-//         createdProduct = await transaction.product.create({
-//           data: productData,
-//         });
-
-//         if (category_id) {
-//           const { status, message } = await handleProductConnection(
-//             "category",
-//             category_id,
-//             imagePaths
-//           );
-//           if (!status) throw new Error(message);
-
-//           const categoryConnection = category_id.map((catId) => ({
-//             category: { connect: { id: catId } },
-//           }));
-
-//           await transaction.product.update({
-//             where: { id: createdProduct.id },
-//             data: { categories: { create: categoryConnection } },
-//           });
-//         }
-
-//         if (attributes && attributes.length > 0) {
-//           const { status, message, data } = await handleProductAttributeConnection(
-//             attributes,
-//             imagePaths
-//           );
-//           if (!status) throw new Error(message);
-
-//           await transaction.product.update({
-//             where: { id: createdProduct.id },
-//             data: { attributeValues: { create: data } },
-//           });
-//         }
-
-//         if (colour_id) {
-//           const { status, message } = await handleProductConnection(
-//             "colour",
-//             colour_id,
-//             imagePaths
-//           );
-//           if (!status) throw new Error(message);
-
-//           const colourConnection = colour_id.map((colourId) => ({
-//             colour: { connect: { id: colourId } },
-//           }));
-
-//           await transaction.product.update({
-//             where: { id: createdProduct.id },
-//             data: { colours: { create: colourConnection } },
-//           });
-//         }
-//       });
-
-//       return res.status(200).json({
-//         isSuccess: true,
-//         message: "Product created successfully.",
-//         data: createdProduct,
-//       });
-//     } catch (error) {
-//         console.log(error)
-//         if (createdProduct) {
-//         await prisma.product.delete({
-//           where: { id: createdProduct.id },
-//         });
-//       }
-
-//       await removeProductImage(imagePaths);
-//       return res.status(500).json({
-//         isSuccess: false,
-//         message: "Something went wrong. Please try again!",
-//       });
-//     }
-//   };
-
 const updateCatalogueProduct = async (req, res, next) => {
   try {
     const id = req.params.id;
@@ -832,7 +660,6 @@ const updateCatalogueProduct = async (req, res, next) => {
       data: newProduct,
     });
   } catch (err) {
-    console.log(err);
     const error = new Error("Something went wrong, please try again!");
     next(error);
   }
@@ -895,34 +722,6 @@ const catlogtGetSingleProduct = async (req, res, next) => {
           newProduct[key] = product[key];
         }
       });
-
-      // const attributes = product.attributeValues.map((val) => {
-      //   let datas = [];
-      //   console.log(val);
-      //   if (datas.length > 0) {
-      //     const existingAttribute = datas.find(
-      //       (attr) => attr.attribute_id === val.attribute_id
-      //     );
-      //     if (existingAttribute) {
-      //       existingAttribute.attributeValue_id.push(
-      //         val.attributeValue_id || ""
-      //       );
-      //     } else {
-      //       datas.push({
-      //         attribute_id: val.attribute_id,
-      //         attributeValue_id: [val.attributeValue_id],
-      //         value: val.value || "",
-      //       });
-      //     }
-      //   } else {
-      //     datas.push({
-      //       attribute_id: val.attribute_id,
-      //       attributeValue: [val.attributeValue_id || ""],
-      //       value: val.value || "",
-      //     });
-      //   }
-      //   return datas;
-      // });
 
       const attributes = product.attributeValues.reduce((acc, val) => {
         const existingAttribute = acc.find(
@@ -1005,7 +804,6 @@ const catlogtGetSingleProduct = async (req, res, next) => {
       data: formattedData,
     });
   } catch (error) {
-    console.log(error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
@@ -1025,295 +823,10 @@ const deleteCatlogProduct = async (req, res, next) => {
       .status(200)
       .json({ isSuccess: result.status, message: result.message });
   } catch (error) {
-    console.log(error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
 };
-
-// const addCatalogue = async (req, res, next) => {
-//   try {
-//     let {
-//       id,
-//       name,
-//       cat_code,
-//       category_id,
-//       no_of_product,
-//       price,
-//       catalogue_discount,
-//       average_price,
-//       offer_price,
-//       stitching,
-//       size,
-//       weight,
-//       attributes,
-//       meta_title,
-//       meta_keyword,
-//       meta_description,
-//       description,
-//       tag,
-//       isActive,
-//       product,
-//     } = req.body;
-
-//     no_of_product = parseInt(no_of_product);
-//     price = parseInt(price);
-//     catalogue_discount = parseInt(catalogue_discount);
-//     average_price = parseInt(average_price);
-//     weight = parseInt(weight);
-
-//     if (!id && !req.file)
-//       return res
-//         .status(400)
-//         .json({ isSuccess: false, message: "Please upload cover image!" });
-
-//     attributes = attributes?.map((jsonString) => JSON.parse(jsonString));
-//     req.body.attributes = attributes;
-//     product = product?.map((jsonString) => JSON.parse(jsonString));
-//     req.body.product = product;
-
-//     const image = req.file;
-//     let filepath = null;
-//     if (req.file) filepath = await convertFilePathSlashes(image.path);
-
-//     const schema = await catalogueSchema();
-//     const { error } = schema.validate(req.body);
-//     if (error) {
-//       if (req.file) await deleteFile(filepath);
-//       return res
-//         .status(400)
-//         .json({ isSuccess: false, message: error?.details[0].message });
-//     }
-//     let catalogueCondition = { cat_code: cat_code };
-//     let catalogue;
-//     if (id) {
-//       catalogue = await prisma.catalogue.findUnique({ where: { id: id } });
-//       if (!catalogue) {
-//         if (req.file) deleteFile(filepath);
-//         return res
-//           .status(404)
-//           .json({ isSuccess: false, message: "catalogue not found!" });
-//       }
-//     }
-
-//     if (id) catalogueCondition = { ...catalogueCondition, id: { not: id } };
-//     const [uniqueCode, isCategoryExists] = await prisma.$transaction([
-//       prisma.catalogue.findFirst({
-//         where: catalogueCondition,
-//       }),
-//       prisma.categoryMaster.findMany({
-//         where: { id: { in: category_id } },
-//         select: { id: true },
-//       }),
-//     ]);
-
-//     if (uniqueCode) {
-//       if (req.file) await deleteFile(filepath);
-//       return res
-//         .status(400)
-//         .json({ isSuccess: false, message: "Catalogue code already exists!" });
-//     }
-//     if (isCategoryExists.length === 0) {
-//       if (req.file) await deleteFile(filepath);
-//       return res
-//         .status(400)
-//         .json({ isSuccess: false, message: "Category not found!" });
-//     }
-//     let categoryConnection = [];
-//     const existingCategoryIds = isCategoryExists.map((cat) => cat.id);
-//     const invalidCategories = category_id.filter(
-//       (catId) => !existingCategoryIds.includes(catId)
-//     );
-//     if (invalidCategories.length > 0) {
-//       if (req.file) await deleteFile(filepath);
-//       return res.status(404).json({
-//         isSuccess: false,
-//         message: "Invalid Categories provided.",
-//         invalidCategories,
-//       });
-//     }
-//     categoryConnection = category_id.map((catId) => ({
-//       category: { connect: { id: catId } },
-//     }));
-
-//     let attributeValueConnection;
-//     if (attributes && attributes.length > 0) {
-//       const { status, message, data } =
-//         await handleCatalogueAttributeConnection(attributes, filepath);
-//       if (!status) {
-//         if (req.file) await deleteFile(filepath);
-//         return res.status(400).json({
-//           isSuccess: status,
-//           message: message,
-//         });
-//       }
-//       attributeValueConnection = data;
-//     }
-
-//     const productId = product.map((value) => value.id);
-//     if (no_of_product !== product.length) {
-//       if (req.file) await deleteFile(filepath);
-//       return res
-//         .status(404)
-//         .json({ isSuccess: false, message: "No of product not matched!" });
-//     }
-
-//     const isProductExists = await prisma.product.findMany({
-//       where: { id: { in: productId } },
-//       select: {
-//         id: true,
-//         sku: true,
-//         retail_discount: true,
-//         offer_price: true,
-//       },
-//     });
-//     if (productId.length !== isProductExists.length) {
-//       if (req.file) await deleteFile(filepath);
-//       return res
-//         .status(404)
-//         .json({ isSuccess: false, message: "Some products does not exists!" });
-//     }
-
-//     let finalOfferPrice = 0;
-//     if (price > 0 && catalogue_discount > 0) {
-//       finalOfferPrice = offer_price
-//         ? parseFloat(offer_price)
-//         : parseFloat(price) * (1 - parseFloat(catalogue_discount) / 100);
-//     } else {
-//       finalOfferPrice = offer_price ? parseFloat(offer_price) : price;
-//     }
-
-//     const totalPrice = product.reduce(
-//       (acc, product) => acc + (parseFloat(product.average_price) || 0),
-//       0
-//     );
-
-//     const ceilingPrice = Math.ceil(totalPrice);
-//     console.log("ceilingPrice", finalOfferPrice);
-//     if (ceilingPrice !== finalOfferPrice) {
-//       if (req.file) await deleteFile(filepath);
-//       return res.status(400).json({
-//         isSuccess: false,
-//         message: "Price mismatch with catalogue. Please verify.",
-//       });
-//     }
-
-//     let result;
-//     if (!catalogue) {
-//       result = await prisma.catalogue.create({
-//         data: {
-//           name: name,
-//           cat_code: cat_code,
-//           no_of_product: no_of_product,
-//           price: price,
-//           catalogue_discount: catalogue_discount,
-//           average_price: average_price,
-//           offer_price: finalOfferPrice,
-//           stitching: Boolean(stitching),
-//           size: Boolean(size),
-//           weight: weight,
-//           meta_title: meta_title,
-//           meta_keyword: meta_keyword,
-//           meta_description: meta_description,
-//           coverImage: filepath,
-//           description: description,
-//           CatalogueCategory: {
-//             create: categoryConnection,
-//           },
-//           ...(attributes &&
-//             attributes.length > 0 && {
-//             attributeValues: { create: attributeValueConnection },
-//           }),
-//           tag: tag,
-//           isActive: Boolean(isActive),
-//         },
-//       });
-//     } else {
-//       result = await prisma.catalogue.update({
-//         where: { id: id },
-//         data: {
-//           name: name,
-//           cat_code: cat_code,
-//           no_of_product: no_of_product,
-//           price: price,
-//           catalogue_discount: catalogue_discount,
-//           average_price: average_price,
-//           offer_price: finalOfferPrice,
-//           stitching: Boolean(stitching),
-//           size: Boolean(size),
-//           weight: weight,
-//           meta_title: meta_title,
-//           meta_keyword: meta_keyword,
-//           meta_description: meta_description,
-//           ...(req.file && { coverImage: filepath }),
-//           description: description,
-//           CatalogueCategory: {
-//             deleteMany: {},
-//             create: categoryConnection,
-//           },
-//           ...(attributes && attributes.length > 0
-//             ? {
-//               attributeValues: {
-//                 deleteMany: {},
-//                 create: attributeValueConnection,
-//               },
-//             }
-//             : { attributeValues: { deleteMany: {} } }),
-//           tag: tag,
-//           isActive: Boolean(isActive),
-//         },
-//       });
-
-//       if (catalogue.coverImage) await deleteFile(catalogue.coverImage);
-//     }
-
-//     await prisma.$transaction(
-//       product.map((value) => {
-//         const existingProduct = isProductExists.find((p) => p.id === value.id);
-//         if (!existingProduct) {
-//           return res.status(400).json({
-//             isSuccess: false,
-//             message: `product with Id ${value.id} does not exists!`,
-//           });
-//         }
-//         const discount = existingProduct.retail_discount || 0;
-//         const retailPrice = parseInt(value.retail_price);
-//         const offer_price =
-//           discount > 0
-//             ? parseInt(retailPrice) * (1 - parseInt(discount) / 100)
-//             : retailPrice;
-//         const url = `${slug(name)}-${existingProduct.sku}`;
-//         return prisma.product.update({
-//           where: { id: value.id },
-//           data: {
-//             name: value.name,
-//             url: url,
-//             categories: { deleteMany: {}, create: categoryConnection },
-//             catalogue_id: result.id,
-//             average_price: parseFloat(value.average_price),
-//             retail_price: retailPrice,
-//             retail_discount: discount,
-//             offer_price: offer_price,
-//             isActive: true,
-//             isDraft:false,
-//             showInSingle: Boolean(value.showInSingle),
-//           },
-//         });
-//       })
-//     );
-//     return res.status(200).json({
-//       isSuccess: true,
-//       message: "catalogue created successfully.",
-//       data: result,
-//     });
-//   } catch (err) {
-//     if (req.file) await deleteFile(req.file.path);
-//     console.log(err);
-//     const error = new Error("Something went wrong, please try again!");
-//     next(error);
-//   }
-// };
-
 const addCatalogue = async (req, res, next) => {
   try {
     let {
@@ -1543,8 +1056,6 @@ const addCatalogue = async (req, res, next) => {
     if (optionType === "Size" && sizes.length > 0) {
       let size = sizes.map((value) => value.quantity);
       let totalSize = size.reduce((acc, currentValue) => acc + currentValue);
-      console.log("totalSize", totalSize);
-      console.log("quantity", quantity);
       if (totalSize !== quantity) {
         if (req.file) await deleteFile(filepath);
         return res
@@ -1571,8 +1082,6 @@ const addCatalogue = async (req, res, next) => {
         .json({ isSuccess: false, message: "Some products do not exist!" });
     }
 
-    // console.log("delete_product_ids", delete_product_ids);
-    // Validate delete_product_ids
     if (delete_product_ids && delete_product_ids.length > 0) {
       const productsToDelete = await prisma.product.findMany({
         where: { id: { in: delete_product_ids }, catalogue_id: id },
@@ -1806,7 +1315,6 @@ const addCatalogue = async (req, res, next) => {
               // productData["sizes"] = {
               //   create: productSizeConnection,
               // };
-              console.log(sizeConnection);
             } else if (result.optionType !== "Size") {
               sizeConnection = { sizes: { deleteMany: {} } };
             }
@@ -1882,7 +1390,6 @@ const addCatalogue = async (req, res, next) => {
     });
   } catch (err) {
     if (req.file) await deleteFile(req.file.path);
-    console.error(err);
     next(new Error("Something went wrong, please try again!"));
   }
 };
@@ -1977,7 +1484,6 @@ const getCatalogueProducts = async (req, res, next) => {
       pageSize: take,
     });
   } catch (err) {
-    console.log(err);
     const error = new Error("Something went wrong, please try again!");
     next(error);
   }
@@ -2333,7 +1839,6 @@ const getCatalogueProduct = async (req, res, next) => {
       totalCount: count,
     });
   } catch (err) {
-    console.log(err);
     const error = new Error("Something went wrong, please try again!");
     next(error);
   }
@@ -2376,7 +1881,6 @@ const deleteCatalogue = async (req, res, next) => {
       .status(200)
       .json({ isSuccess: true, message: "Catalogue deleted successfully." });
   } catch (error) {
-    console.log(error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
@@ -2425,7 +1929,6 @@ const restoreDeleteCatalogue = async (req, res, next) => {
       .status(200)
       .json({ isSuccess: true, message: "Catalogue deleted successfully." });
   } catch (err) {
-    console.log(err);
     const error = new Error("Something went wrong, please try again!");
     return next(error);
   }
@@ -2460,7 +1963,6 @@ const draftProdcutRemove = async (req, res, next) => {
       deletedCount: deleted.count,
     });
   } catch (error) {
-    console.error("Error removing drafts:", error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
@@ -2488,7 +1990,6 @@ const restoreCatalogues = async (req, res, next) => {
       data: catalogues,
     });
   } catch (err) {
-    console.log(err);
     const error = new Error("Something went wrong, please try again!");
     next(error);
   }
@@ -2559,7 +2060,6 @@ const restoreCatalogue = async (req, res, next) => {
       .status(200)
       .json({ isSuccess: true, message: "Catalogue restore successfully." });
   } catch (err) {
-    console.log(err);
     const error = new Error("Something went wronng, please try again!");
     next(error);
   }

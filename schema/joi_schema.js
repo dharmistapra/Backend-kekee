@@ -1851,6 +1851,8 @@ const cmsContentSchema = async (req, res, next) => {
       "any.required": "Content is required",
     }),
 
+    position: Joi.number().optional().allow(null)
+
   });
 
   await JoiSchemaValidation(schema, req, next);

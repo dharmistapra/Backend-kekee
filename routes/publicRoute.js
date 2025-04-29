@@ -67,6 +67,7 @@ import {
 import { getWebSetting } from "../controller/admin/webSetting.js";
 import { getShippingMethod } from "../controller/public/shippingMethod.js";
 import { getCmsContentPublic } from "../controller/public/cmsContent.js";
+import { publicHomeLayout } from "../controller/admin/homeLayout.js";
 const router = express.Router();
 
 // MENU API
@@ -256,4 +257,6 @@ router.get("/shippingmethod", getShippingMethod);
 
 router.get("/shareproduct/:id", shareProduct);
 router.get("/cms-content", getCmsContentPublic);
+router.get("/home-layout", publicHomeLayout)
 export default router;
+

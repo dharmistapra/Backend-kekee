@@ -370,6 +370,7 @@ import {
 import getDashboard from "../controller/admin/dashboard.js";
 import uploadCMSImages, { deleteUploadImages } from "../controller/admin/uploadImages.js";
 import { cmsContent, deletecmsContent, paginationcmsContent, updatecmsContent, updateCmsContentStatus } from "../controller/admin/cmsContent.js";
+import { getHomeLayout, paginationHomeLayout, postHomeLayout, putHomeLayout } from "../controller/admin/homeLayout.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -850,4 +851,11 @@ adminRouter.get("/cms-content-pagination", paginationcmsContent)
 adminRouter.put("/cms-content/:id", [cmsContentSchema], updatecmsContent)
 adminRouter.delete("/cms-content/:id", deletecmsContent)
 adminRouter.get("/cms-content-status/:id", updateCmsContentStatus);
+
+
+
+adminRouter.post("/home-layout",  postHomeLayout)
+adminRouter.get("/home-layout", getHomeLayout)
+adminRouter.get("/home-layout-pagination", paginationHomeLayout)
+adminRouter.put("/home-layout/:id", putHomeLayout)
 export default adminRouter;

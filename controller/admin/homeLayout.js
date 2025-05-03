@@ -1,18 +1,20 @@
 import prisma from "../../db/config.js";
-import { updateStatus } from "../../helper/common.js";
+import { convertFilePathSlashes, deleteImage, tokenExists, updateStatus } from "../../helper/common.js";
 
 const postHomeLayout = async (req, res, next) => {
     try {
-        const { title, type, html_content } = req.body;
+        let { title, type, desktopsize, mobilesize, categoryId, bannerDetails
+        } = req.body;
         const getlatestPosition = await prisma.homeLayout.count()
-
-
         const result = await prisma.homeLayout.create({
             data: {
                 title,
                 type,
-                html_content,
+                desktopsize: Number(desktopsize),
+                mobilesize: Number(mobilesize),
                 position: getlatestPosition + 1,
+                categoryid: categoryId,
+                banner: bannerDetails || []
             },
         });
         return res.status(200).json({
@@ -37,7 +39,7 @@ const getHomeLayout = async (req, res, next) => {
                 type: true,
                 html_content: true,
                 isActive: true,
-                position: true
+                position: true,
             },
             orderBy: { position: "asc" }
         })
@@ -57,15 +59,21 @@ const getHomeLayout = async (req, res, next) => {
 const putHomeLayout = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { title, type, html_content } = req.body;
+        let { title, type, desktopsize, mobilesize, categoryId, bannerDetails
+        } = req.body;
+
         const exist = await prisma.homeLayout.findUnique({ where: { id: id } })
         if (!exist) res.status(404).json({ isSuccess: false, message: "Layout not found.", })
+
         const result = await prisma.homeLayout.update({
             where: { id: id },
             data: {
                 title,
                 type,
-                html_content
+                desktopsize: Number(desktopsize),
+                mobilesize: Number(mobilesize),
+                categoryid: categoryId,
+                banner: bannerDetails || []
             }
         })
         return res.status(200).json({
@@ -104,9 +112,11 @@ const paginationHomeLayout = async (req, res, next) => {
                     id: true,
                     title: true,
                     type: true,
-                    html_content: true,
+                    desktopsize: true,
+                    mobilesize: true,
+                    banner: true,
                     isActive: true,
-                    position: true
+                    position: true,
                 },
                 orderBy: { id: "asc" },
                 skip,
@@ -126,6 +136,7 @@ const paginationHomeLayout = async (req, res, next) => {
 
 
     } catch (error) {
+        console.log(error)
         const err = new Error("Something went wrong !");
         next(err)
     }
@@ -133,25 +144,175 @@ const paginationHomeLayout = async (req, res, next) => {
 
 const publicHomeLayout = async (req, res, next) => {
     try {
-        const result = await prisma.homeLayout.findMany({
+        const isTokenExists = await tokenExists(req);
+        let count = 8;
+
+        const isWebSettings = await prisma.webSettings.findFirst({
+            select: { showProductCount: true, showPrice: true },
+        });
+
+        if (isWebSettings?.showProductCount) {
+            count = isWebSettings.showProductCount;
+        }
+
+        const layouts = await prisma.homeLayout.findMany({
             select: {
+                id: true,
                 title: true,
                 type: true,
+                desktopsize: true,
+                mobilesize: true,
+                banner: true,
                 html_content: true,
                 isActive: true,
-                position: true
+                position: true,
+                categoryid: true,
             },
-            orderBy: { position: "asc" }
-        })
+            orderBy: { position: "asc" },
+        });
+
+        const data = await Promise.all(
+            layouts.map(async (layout) => {
+                if (layout.type === "product" && layout?.categoryid) {
+                    const category = await prisma.categoryMaster.findFirst({
+                        where: {
+                            id: layout?.categoryid,
+                            isActive: true,
+                            showInHome: true,
+                        },
+                        select: {
+                            id: true,
+                            name: true,
+                            title: true,
+                            url: true,
+                            CatalogueCategory: {
+                                where: {
+                                    catalogue: {
+                                        isActive: true,
+                                        deletedAt: null,
+                                    },
+                                },
+                                select: {
+                                    catalogue_id: true,
+                                },
+                            },
+                        },
+                    });
+
+                    if (category) {
+                        const catalogueCollection = await Promise.all(
+                            category.CatalogueCategory.map(async (val) => {
+                                const catalogues = await prisma.catalogue.findMany({
+                                    where: {
+                                        id: val.catalogue_id,
+                                        isActive: true,
+                                        deletedAt: null,
+                                    },
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        cat_code: true,
+                                        no_of_product: true,
+                                        url: true,
+                                        average_price: true,
+                                        offer_price: true,
+                                        coverImage: true,
+                                        updatedAt: true,
+                                        attributeValues: {
+                                            where: { attribute: { type: "Label" } },
+                                            select: {
+                                                attributeValue: {
+                                                    select: {
+                                                        name: true,
+                                                    },
+                                                },
+                                            },
+                                        },
+                                        Product: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                sku: true,
+                                                showInSingle: true,
+                                            },
+                                        },
+                                    },
+                                    orderBy: { updatedAt: "desc" },
+                                });
+
+                                return catalogues.map((catalogue) => {
+                                    const labels = catalogue.attributeValues.map(
+                                        (attr) => attr.attributeValue.name
+                                    );
+                                    catalogue.labels = labels;
+                                    delete catalogue.attributeValues;
+
+                                    if (!isTokenExists && !isWebSettings?.showPrice) {
+                                        delete catalogue.average_price;
+                                        delete catalogue.offer_price;
+                                    }
+
+                                    const hasSingle = catalogue.Product.some(
+                                        (product) => product.showInSingle
+                                    );
+                                    delete catalogue.Product;
+
+                                    return {
+                                        ...catalogue,
+                                        type: hasSingle ? "Full Set + Single" : "Full Set",
+                                    };
+                                });
+                            })
+                        );
+
+                        const catalogueData = catalogueCollection
+                            .flat()
+                            .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                            .slice(0, count);
+
+                        return {
+                            ...layout,
+                            category: {
+                                id: category.id,
+                                name: category.name,
+                                title: category.title,
+                                url: category.url,
+                                catalogueCollection: catalogueData,
+                            },
+                        };
+                    }
+                }
+
+                return layout;
+            })
+        );
+
         return res.status(200).json({
             isSuccess: true,
             message: "Layout fetched successfully.",
-            data: result
-        })
+            data,
+        });
     } catch (error) {
-        const err = new Error("Something went wrnong!");
+        console.error(error);
+        const err = new Error("Something went wrong!");
+        next(err);
+    }
+};
+
+
+const deleteHomeLayout = async (req, res, next) => {
+    try {
+        const { id } = req.params
+        const deletehome = await prisma.homeLayout.delete({
+            where: {
+                id: id
+            }
+        })
+        return res.status(200).json({ "IsSuccess": false, "message": "Data delete successfully" })
+    } catch (error) {
+        const err = new Error("Something went wrong!")
         next(err)
     }
 }
 
-export { postHomeLayout, getHomeLayout, putHomeLayout, paginationHomeLayout, publicHomeLayout }
+export { postHomeLayout, getHomeLayout, putHomeLayout, paginationHomeLayout, publicHomeLayout, deleteHomeLayout }

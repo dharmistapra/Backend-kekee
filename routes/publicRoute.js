@@ -260,3 +260,5 @@ router.get("/cms-content", getCmsContentPublic);
 router.get("/home-layout", publicHomeLayout)
 export default router;
 
+
+

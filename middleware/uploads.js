@@ -361,6 +361,21 @@ let uploadImgesStorage = multer({
 }).array("images", 6);
 
 
+const homeLayout = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads/CmsContent");
+  },
+  filename: async (req, file, cb) => {
+    let filename = await uniqueFilename(file);
+    cb(null, filename);
+  }
+})
+
+const homeLayoutStorage = multer({
+  storage: homeLayout,
+  limits: { fileSize: 10000000 * 5 },
+  fileFilter: filefilter,
+}).any();
 
 export {
   uploadcurrencyImg,
@@ -371,5 +386,6 @@ export {
   uploadShippingChagresCSV,
   uploadBankPaymentReceipt,
   uploadImgesStorage,
+  homeLayoutStorage,
   data,
 };

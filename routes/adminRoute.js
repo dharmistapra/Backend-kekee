@@ -75,6 +75,7 @@ import {
   collectionImages,
   uploadShippingChagresCSV,
   uploadImgesStorage,
+  homeLayoutStorage,
 } from "../middleware/uploads.js";
 import {
   deleteAttribute,
@@ -370,7 +371,7 @@ import {
 import getDashboard from "../controller/admin/dashboard.js";
 import uploadCMSImages, { deleteUploadImages } from "../controller/admin/uploadImages.js";
 import { cmsContent, deletecmsContent, paginationcmsContent, updatecmsContent, updateCmsContentStatus } from "../controller/admin/cmsContent.js";
-import { getHomeLayout, paginationHomeLayout, postHomeLayout, putHomeLayout } from "../controller/admin/homeLayout.js";
+import { deleteHomeLayout, getHomeLayout, paginationHomeLayout, postHomeLayout, putHomeLayout } from "../controller/admin/homeLayout.js";
 
 /* GET home page. */
 adminRouter.get("/", function (req, res, next) {
@@ -854,8 +855,9 @@ adminRouter.get("/cms-content-status/:id", updateCmsContentStatus);
 
 
 
-adminRouter.post("/home-layout",  postHomeLayout)
+adminRouter.post("/home-layout", [homeLayoutStorage], postHomeLayout)
 adminRouter.get("/home-layout", getHomeLayout)
 adminRouter.get("/home-layout-pagination", paginationHomeLayout)
 adminRouter.put("/home-layout/:id", putHomeLayout)
+adminRouter.delete("/home-layout/:id", deleteHomeLayout)
 export default adminRouter;

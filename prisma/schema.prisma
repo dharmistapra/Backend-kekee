@@ -98,6 +98,7 @@ model CategoryMaster {
   CatalogueCategory CatalogueCategory[]
   StitchingGroup    StitchingGroup[]
   PageWiseBanner    PageWiseBanner[]
+  HomeLayout        HomeLayout[]
 }
 
 model CategoryAttribute {
@@ -1014,10 +1015,16 @@ model HomeLayout {
   title        String
   type         String
   html_content String?
+  desktopsize  Int?
+  mobilesize   Int?
+  banner       Json?
   position     Int
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  categoryid String?         @db.ObjectId
+  category   CategoryMaster? @relation(fields: [categoryid], references: [id])
 }
 
 enum RateCondition {

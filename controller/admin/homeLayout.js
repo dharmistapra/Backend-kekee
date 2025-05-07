@@ -1,5 +1,5 @@
 import prisma from "../../db/config.js";
-import { convertFilePathSlashes, deleteImage, tokenExists, updateStatus } from "../../helper/common.js";
+import { convertFilePathSlashes, deleteImage, tokenExists, updatePosition, updateStatus } from "../../helper/common.js";
 
 const postHomeLayout = async (req, res, next) => {
     try {
@@ -118,7 +118,7 @@ const paginationHomeLayout = async (req, res, next) => {
                     isActive: true,
                     position: true,
                 },
-                orderBy: { id: "asc" },
+                orderBy: { position: "asc" },
                 skip,
                 take,
             }),
@@ -315,4 +315,27 @@ const deleteHomeLayout = async (req, res, next) => {
     }
 }
 
-export { postHomeLayout, getHomeLayout, putHomeLayout, paginationHomeLayout, publicHomeLayout, deleteHomeLayout }
+
+
+const homeLayoutPosition = async (req, res, next) => {
+    try {
+        const { data } = req.body;
+        const model = "homeLayout";
+        const document = await updatePosition(model, data);
+        if (document.status === false)
+            return res
+                .status(404)
+                .json({ isSuccess: false, message: document.message });
+
+        return res.status(200).json({
+            isSuccess: true,
+            message: "Home layout positions updated successfully.",
+        });
+    } catch (err) {
+        console.log(err);
+        const error = new Error("Something went wrong, please try again!");
+        next(error);
+    }
+};
+
+export { postHomeLayout, getHomeLayout, putHomeLayout, paginationHomeLayout, publicHomeLayout, deleteHomeLayout, homeLayoutPosition }

@@ -201,6 +201,7 @@ const models = {
   shippingZone: prisma.shippingZone,
   shippingZoneAddRate: prisma.shippingZoneAddRate,
   cmsContent: prisma.cmsContent,
+  homeLayout: prisma.homeLayout
 };
 
 const updatePosition = async (model, data) => {

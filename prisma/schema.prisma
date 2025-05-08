@@ -1014,7 +1014,10 @@ model HomeLayout {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   title        String
   type         String
+  margin       String?
+  layoutMode   String?
   html_content String?
+  singlebanner Boolean  @default(false)
   desktopsize  Int?
   mobilesize   Int?
   banner       Json?

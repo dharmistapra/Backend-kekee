@@ -3,7 +3,7 @@ import { convertFilePathSlashes, deleteImage, tokenExists, updatePosition, updat
 
 const postHomeLayout = async (req, res, next) => {
     try {
-        let { title, type, desktopsize, mobilesize, categoryId, bannerDetails
+        let { title, type, desktopsize, mobilesize, categoryId, bannerDetails, margin, layoutMode, singlebanner
         } = req.body;
         const getlatestPosition = await prisma.homeLayout.count()
         const result = await prisma.homeLayout.create({
@@ -14,6 +14,9 @@ const postHomeLayout = async (req, res, next) => {
                 mobilesize: Number(mobilesize),
                 position: getlatestPosition + 1,
                 categoryid: categoryId,
+                margin,
+                layoutMode,
+                singlebanner,
                 banner: bannerDetails || []
             },
         });
@@ -59,7 +62,7 @@ const getHomeLayout = async (req, res, next) => {
 const putHomeLayout = async (req, res, next) => {
     try {
         const { id } = req.params;
-        let { title, type, desktopsize, mobilesize, categoryId, bannerDetails
+        let { title, type, desktopsize, mobilesize, categoryId, bannerDetails, margin, layoutMode, singlebanner
         } = req.body;
 
         const exist = await prisma.homeLayout.findUnique({ where: { id: id } })
@@ -73,7 +76,10 @@ const putHomeLayout = async (req, res, next) => {
                 desktopsize: Number(desktopsize),
                 mobilesize: Number(mobilesize),
                 categoryid: categoryId,
-                banner: bannerDetails || []
+                banner: bannerDetails || [],
+                margin,
+                layoutMode,
+                singlebanner,
             }
         })
         return res.status(200).json({
@@ -114,6 +120,9 @@ const paginationHomeLayout = async (req, res, next) => {
                     type: true,
                     desktopsize: true,
                     mobilesize: true,
+                    margin: true,
+                    singlebanner: true,
+                    layoutMode: true,
                     banner: true,
                     isActive: true,
                     position: true,
@@ -156,6 +165,9 @@ const publicHomeLayout = async (req, res, next) => {
         }
 
         const layouts = await prisma.homeLayout.findMany({
+            where: {
+                isActive: true,
+            },
             select: {
                 id: true,
                 title: true,
@@ -167,6 +179,9 @@ const publicHomeLayout = async (req, res, next) => {
                 isActive: true,
                 position: true,
                 categoryid: true,
+                layoutMode: true,
+                margin: true,
+                singlebanner: true,
             },
             orderBy: { position: "asc" },
         });
@@ -178,7 +193,7 @@ const publicHomeLayout = async (req, res, next) => {
                         where: {
                             id: layout?.categoryid,
                             isActive: true,
-                            showInHome: true,
+                            // showInHome: true,
                         },
                         select: {
                             id: true,
@@ -192,6 +207,7 @@ const publicHomeLayout = async (req, res, next) => {
                                         deletedAt: null,
                                     },
                                 },
+
                                 select: {
                                     catalogue_id: true,
                                 },
@@ -338,4 +354,25 @@ const homeLayoutPosition = async (req, res, next) => {
     }
 };
 
-export { postHomeLayout, getHomeLayout, putHomeLayout, paginationHomeLayout, publicHomeLayout, deleteHomeLayout, homeLayoutPosition }
+
+const homeLayoutStatus = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        if (!/^[a-fA-F0-9]{24}$/.test(id))
+            return res
+                .status(400)
+                .json({ isSuccess: false, message: "Invalid ID format!" });
+
+        const { status, message, data } = await updateStatus("homeLayout", id);
+        if (!status)
+            return res.status(400).json({ isSuccess: status, message: message });
+        return res
+            .status(200)
+            .json({ isSuccess: status, message: message, data: data });
+    } catch (err) {
+        const error = new Error("Something went wrong, please try again!");
+        next(error);
+    }
+};
+
+export { postHomeLayout, getHomeLayout, putHomeLayout, paginationHomeLayout, publicHomeLayout, deleteHomeLayout, homeLayoutPosition, homeLayoutStatus }

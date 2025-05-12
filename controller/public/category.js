@@ -20,6 +20,7 @@ const getCategory = async (req, res, next) => {
             name: true,
             title: true,
             url: true,
+            image: true,
           },
         },
       },
@@ -91,7 +92,7 @@ const getCategoryCollection = async (req, res, next) => {
     if (isWebSettings.showProductCount) {
       count = isWebSettings.showProductCount;
     }
-    
+
     const result = await prisma.categoryMaster.findMany({
       where: { parent_id: null, isActive: true, showInHome: true },
       select: {

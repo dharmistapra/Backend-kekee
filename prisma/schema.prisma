@@ -72,7 +72,7 @@ model AttributeValue {
 model CategoryMaster {
   id                String              @id @default(auto()) @map("_id") @db.ObjectId
   position          Int
-  name              String              @unique
+  name              String
   title             String?             @default("")
   url               String              @default("")
   parent_id         String?             @db.ObjectId

@@ -45,8 +45,8 @@ const postCategory = async (req, res, next) => {
       filter = { where: { parent_id: parent_id } };
     }
     const [uniqueCategory, count] = await prisma.$transaction([
-      prisma.categoryMaster.findUnique({
-        where: { name },
+      prisma.categoryMaster.findFirst({
+        where: { name: name, parent_id: parent_id || null, },
       }),
       prisma.categoryMaster.count(filter),
     ]);
@@ -762,7 +762,7 @@ const getAllCategories = async (req, res, next) => {
       select: {
         id: true,
         name: true,
-        url: true 
+        url: true
       },
     });
 

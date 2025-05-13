@@ -34,16 +34,16 @@ const postRetailProduct = async (req, res, next) => {
       req.files.map(async (file) => convertFilePathSlashes(file?.path))
     );
 
-    for (const file of req.files) {
-      const dimension = imageSize(file.path);
-      if (dimension.width !== 2000 && dimension.height !== 3000) {
-        await removeProductImage(imagePaths);
-        return res.status(400).json({
-          isSuccess: false,
-          message: "Product image must be 2000 x 3000.",
-        });
-      }
-    }
+    // for (const file of req.files) {
+    //   const dimension = imageSize(file.path);
+    //   if (dimension.width !== 2000 && dimension.height !== 3000) {
+    //     await removeProductImage(imagePaths);
+    //     return res.status(400).json({
+    //       isSuccess: false,
+    //       message: "Product image must be 2000 x 3000.",
+    //     });
+    //   }
+    // }
 
     let {
       name,
@@ -122,7 +122,7 @@ const postRetailProduct = async (req, res, next) => {
       // await fileValidation(req.files, true);
       return res.status(409).json({
         isSuccess: false,
-        message: `The product with SKU ${sku} matches a deleted ${findUniqueData.catalogue.cat_code} catalog item. Please update the SKU or restore the catalog entry.`,
+        message: `The product with SKU ${sku} matches a deleted ${findUniqueData.catalogue?.cat_code} catalog item. Please update the SKU or restore the catalog entry.`,
       });
     }
 
@@ -240,22 +240,10 @@ const postRetailProduct = async (req, res, next) => {
       };
     }
 
-    if (relatedProduct && relatedProduct.length > 0) {
-      const { status, message, data } = await productsSku(relatedProduct);
-      if (!status) {
-        await removeProductImage(imagePaths);
-        return res.status(400).json({
-          isSuccess: status,
-          message: message,
-        });
-      }
 
-      productData["RelatedProducts"] = {
-        create: data.map((productId) => ({
-          related: { connect: { id: productId } },
-        })),
-      };
-    }
+
+
+
     let colourConnection = [];
     if (colour_id) {
       const { status, message } = await handleProductConnection(
@@ -352,26 +340,92 @@ const postRetailProduct = async (req, res, next) => {
       };
     }
 
-    const newProduct = await prisma.product.create({
-      data: productData,
-      select: { id: true },
-    });
-    if (newProduct) {
-      if (collection_id && collection_id.length > 0) {
-        await prisma.catalogueCollection.createMany({
-          data: collection_id.map((collectionId) => ({
-            catalogue_id: null,
-            collection_id: collectionId,
+
+
+
+
+
+
+
+
+
+
+
+
+
+    const result = await prisma.$transaction(async (tx) => {
+
+      const newProduct = await tx.product.create({
+        data: productData,
+        select: { id: true },
+      });
+
+
+      if (relatedProduct && relatedProduct.length > 0) {
+        const { status, message, data } = await productsSku(relatedProduct);
+        if (!status) throw new Error(message);
+
+        await tx.RelatedProduct.createMany({
+          data: data.map((relatedId) => ({
             product_id: newProduct.id,
+            relatedProduct_id: relatedId
+            // relatedId,
           })),
         });
       }
-    }
-    products = [...products, productData];
+
+      return newProduct;
+    });
+
+
+
+
+
+
+
+
+    // const newProduct = await prisma.product.create({
+    //   data: productData,
+    //   select: { id: true },
+    // });
+
+
+    // if (relatedProduct && relatedProduct.length > 0) {
+    //   const { status, message, data } = await productsSku(relatedProduct);
+    //   if (!status) {
+    //     await removeProductImage(imagePaths);
+    //     return res.status(400).json({
+    //       isSuccess: status,
+    //       message: message,
+    //     });
+    //   }
+
+    //   productData["RelatedProducts"] = {
+    //     create: data.map((productId) => ({
+    //       related: { connect: { id: productId } },
+    //     })),
+    //   };
+    // }
+
+
+    // if (newProduct) {
+    //   if (collection_id && collection_id.length > 0) {
+    //     await prisma.catalogueCollection.createMany({
+    //       data: collection_id.map((collectionId) => ({
+    //         catalogue_id: null,
+    //         collection_id: collectionId,
+    //         product_id: newProduct.id,
+    //       })),
+    //     });
+    //   }
+    // }
+    // products = [...products, productData];
+
+
     return res.status(200).json({
       isSuccess: true,
       message: "Product create successfully.",
-      data: products,
+
     });
   } catch (error) {
     console.log(error);
@@ -777,6 +831,279 @@ const getAllReatialProduct = async (req, res, next) => {
   }
 };
 
+// const paginationReatilProduct = async (req, res, next) => {
+//   try {
+//     const { perPage, pageNo, category_id, searchQuery, type } = req.query;
+//     const page = +pageNo || 1;
+//     const take = +perPage || 10;
+//     const skip = (page - 1) * take;
+
+//     const productSearchFilters = [
+//       { sku: { contains: searchQuery, mode: "insensitive" } },
+//       { name: { contains: searchQuery, mode: "insensitive" } },
+//       { description: { contains: searchQuery, mode: "insensitive" } },
+//       {
+//         retail_price: isNaN(searchQuery)
+//           ? undefined
+//           : { equals: parseFloat(searchQuery) },
+//       },
+
+//       {
+//         average_price: isNaN(searchQuery)
+//           ? undefined
+//           : { equals: parseFloat(searchQuery) },
+//       },
+//       {
+//         quantity: isNaN(searchQuery)
+//           ? undefined
+//           : { equals: parseFloat(searchQuery) },
+//       },
+//       {
+//         discount: isNaN(searchQuery)
+//           ? undefined
+//           : { equals: parseFloat(searchQuery) },
+//       },
+//     ];
+//     const cleanedsearchFilters = createSearchFilter(
+//       searchQuery,
+//       productSearchFilters
+//     );
+//     const filter = {
+//       categories: {
+//         some: {
+//           category_id: category_id,
+//         },
+//       },
+//       showInSingle: true,
+//       OR: [{ catalogue_id: null }, { catalogue: { deletedAt: null } }],
+//       ...(cleanedsearchFilters ? { AND: [cleanedsearchFilters] } : {}),
+//     };
+
+//     if (type === "catalogue") {
+//       filter.catalogue_id = { not: null };
+//       filter.OR = [{ catalogue: { deletedAt: null } }];
+//     } else if (type === "retail") {
+//       filter.catalogue_id = null;
+//     } else if (type === "outOfStock") {
+//       filter.quantity = 0;
+//     }
+
+//     if (!filter.catalogue_id && !filter.quantity) {
+//       filter.OR = [{ catalogue_id: null }, { catalogue: { deletedAt: null } }];
+//     }
+
+//     const count = await prisma.product.count({ where: filter });
+//     if (count === 0)
+//       return res
+//         .status(200)
+//         .json({ isSuccess: true, message: "Product not found!", data: [] });
+
+//     const id = category_id;
+//     if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+//       return res
+//         .status(400)
+//         .json({ isSuccess: false, message: "Invalid ID format!" });
+//     }
+
+//     const catalogueProductCount = await prisma.product.count({
+//       where: {
+//         catalogue_id: { not: null },
+//         showInSingle: true,
+//         categories: {
+//           some: {
+//             category_id: category_id,
+//           },
+//         },
+//         ...(cleanedsearchFilters ? { AND: [cleanedsearchFilters] } : {}),
+//       },
+//     });
+
+//     const retailProductCount = await prisma.product.count({
+//       where: {
+//         catalogue_id: null,
+//         showInSingle: true,
+//         categories: {
+//           some: {
+//             category_id: category_id, // Filter by the provided category_id
+//           },
+//         },
+//         ...(cleanedsearchFilters ? { AND: [cleanedsearchFilters] } : {}),
+//       },
+//     });
+
+//     const outOfStockCount = await prisma.product.count({
+//       where: {
+//         quantity: 0,
+//         showInSingle: true,
+//         categories: {
+//           some: {
+//             category_id: category_id,
+//           },
+//         },
+//         ...(cleanedsearchFilters ? { AND: [cleanedsearchFilters] } : {}),
+//       },
+//     });
+
+//     const dbdata = await prisma.product.findMany({
+//       where: filter,
+//       include: {
+//         attributeValues: true,
+//         categories: {
+//           include: {
+//             category: true,
+//           },
+//         },
+
+//         collection: {
+//           include: {
+//             collection: true,
+//           },
+//         },
+//         colours: {
+//           include: {
+//             colour: true,
+//           },
+//         },
+//         labels: {
+//           include: {
+//             label: true,
+//           },
+//         },
+//         sizes: {
+//           select: {
+//             size_id: true,
+//             price: true,
+//             quantity: true,
+//           },
+//         },
+//         RelatedProducts: {
+//           where: { related: { catalogue: { deletedAt: null } } },
+//           select: {
+//             related: {
+//               select: {
+//                 id: true,
+//                 sku: true,
+//               },
+//             },
+//           },
+//         },
+//       },
+//       skip,
+//       take,
+//       orderBy: { updatedAt: "desc" },
+//     });
+
+//     const formattedData = dbdata?.map((product) => {
+//       const newProduct = {};
+//       Object.keys(product).forEach((key) => {
+//         if (key !== "attributeValues" && key !== "colours") {
+//           newProduct[key] = product[key];
+//         }
+//       });
+
+//       const attributes = product.attributeValues.reduce((acc, val) => {
+//         const existingAttribute = acc.find(
+//           (attr) => attr.attribute_id === val.attribute_id
+//         );
+
+//         if (existingAttribute) {
+//           existingAttribute.attributeValue.push({
+//             id: val.attributeValue_id || "",
+//             value: val.value || "",
+//           });
+//         } else {
+//           acc.push({
+//             attribute_id: val.attribute_id,
+//             attributeValue: [
+//               {
+//                 id: val.attributeValue_id || "",
+//                 value: val.value || "",
+//               },
+//             ],
+//           });
+//         }
+
+//         return acc;
+//       }, []);
+
+//       newProduct.attributes = attributes;
+
+//       newProduct.sizes = product.sizes.map((size) => ({
+//         id: size.size_id,
+//         price: size.price,
+//         quantity: size.quantity,
+//       }));
+//       newProduct.categories = product.categories.map((cat) =>
+//         cat.category
+//           ? {
+//             id: cat.category.id,
+//             parentId: cat.category.parent_id ? cat.category.parent_id : null,
+//             name: cat.category.name,
+//             isActive: cat.category.isActive,
+//           }
+//           : null
+//       );
+
+//       newProduct.relatedProducts = (product.RelatedProducts || [])
+//         .map((rel) => rel.related?.sku)
+//         .filter((sku) => !!sku);
+
+//       console.log("newProduct.relatedProducts", newProduct.relatedProducts)
+//       newProduct.collection = product?.collection?.map((cat) =>
+//         cat.collection
+//           ? {
+//             id: cat.collection.id,
+//             name: cat.collection.name,
+//             isActive: cat.collection.isActive,
+//           }
+//           : null
+//       );
+
+//       newProduct.color = product.colours.map((col) => ({
+//         id: col.colour.id,
+//         name: col.colour.name,
+//         code: col.colour.code,
+//         isActive: col.colour.isActive,
+//         createdAt: col.colour.createdAt,
+//         updatedAt: col.colour.updatedAt,
+//       }));
+
+//       newProduct.labels = product.labels.map((item) => {
+//         return {
+//           id: item.label_id,
+//           date: item.expiryTime,
+//           label: item.label.name,
+//         };
+//       });
+
+//       return newProduct;
+//     });
+
+//     // console.log('FormattedData (JSON):', JSON.stringify(formattedData, null, 2));
+//     let data = {
+//       data: formattedData,
+//       catalogueProductCount,
+//       retailProductCount,
+//       outOfStockCount,
+//     };
+
+//     return res.status(200).json({
+//       isSuccess: true,
+//       message: "Product get successfully.",
+//       data,
+//       totalCount: count,
+//       currentPage: page,
+//       pagesize: take,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     let err = new Error("Something went wrong, please try again!");
+//     next(err);
+//   }
+// };
+
+
+
 const paginationReatilProduct = async (req, res, next) => {
   try {
     const { perPage, pageNo, category_id, searchQuery, type } = req.query;
@@ -793,7 +1120,6 @@ const paginationReatilProduct = async (req, res, next) => {
           ? undefined
           : { equals: parseFloat(searchQuery) },
       },
-
       {
         average_price: isNaN(searchQuery)
           ? undefined
@@ -810,10 +1136,12 @@ const paginationReatilProduct = async (req, res, next) => {
           : { equals: parseFloat(searchQuery) },
       },
     ];
+
     const cleanedsearchFilters = createSearchFilter(
       searchQuery,
       productSearchFilters
     );
+
     const filter = {
       categories: {
         some: {
@@ -839,10 +1167,12 @@ const paginationReatilProduct = async (req, res, next) => {
     }
 
     const count = await prisma.product.count({ where: filter });
-    if (count === 0)
+
+    if (count === 0) {
       return res
         .status(200)
         .json({ isSuccess: true, message: "Product not found!", data: [] });
+    }
 
     const id = category_id;
     if (!/^[a-fA-F0-9]{24}$/.test(id)) {
@@ -870,7 +1200,7 @@ const paginationReatilProduct = async (req, res, next) => {
         showInSingle: true,
         categories: {
           some: {
-            category_id: category_id, // Filter by the provided category_id
+            category_id: category_id,
           },
         },
         ...(cleanedsearchFilters ? { AND: [cleanedsearchFilters] } : {}),
@@ -899,7 +1229,6 @@ const paginationReatilProduct = async (req, res, next) => {
             category: true,
           },
         },
-
         collection: {
           include: {
             collection: true,
@@ -922,108 +1251,111 @@ const paginationReatilProduct = async (req, res, next) => {
             quantity: true,
           },
         },
-        RelatedProducts: {
-          where: { related: { catalogue: { deletedAt: null } } },
-          select: {
-            related: {
-              select: {
-                id: true,
-                sku: true,
-              },
-            },
-          },
-        },
+        // ❌ Removed RelatedProducts from here
       },
       skip,
       take,
       orderBy: { updatedAt: "desc" },
     });
 
-    const formattedData = dbdata?.map((product) => {
-      const newProduct = {};
-      Object.keys(product).forEach((key) => {
-        if (key !== "attributeValues" && key !== "colours") {
-          newProduct[key] = product[key];
-        }
-      });
+    // ✅ Format product data and fetch related SKUs
+    const formattedData = await Promise.all(
+      dbdata.map(async (product) => {
+        const newProduct = {};
+        Object.keys(product).forEach((key) => {
+          if (key !== "attributeValues" && key !== "colours") {
+            newProduct[key] = product[key];
+          }
+        });
 
-      const attributes = product.attributeValues.reduce((acc, val) => {
-        const existingAttribute = acc.find(
-          (attr) => attr.attribute_id === val.attribute_id
+        const attributes = product.attributeValues.reduce((acc, val) => {
+          const existingAttribute = acc.find(
+            (attr) => attr.attribute_id === val.attribute_id
+          );
+
+          if (existingAttribute) {
+            existingAttribute.attributeValue.push({
+              id: val.attributeValue_id || "",
+              value: val.value || "",
+            });
+          } else {
+            acc.push({
+              attribute_id: val.attribute_id,
+              attributeValue: [
+                {
+                  id: val.attributeValue_id || "",
+                  value: val.value || "",
+                },
+              ],
+            });
+          }
+
+          return acc;
+        }, []);
+
+        newProduct.attributes = attributes;
+
+        newProduct.sizes = product.sizes.map((size) => ({
+          id: size.size_id,
+          price: size.price,
+          quantity: size.quantity,
+        }));
+
+        newProduct.categories = product.categories.map((cat) =>
+          cat.category
+            ? {
+              id: cat.category.id,
+              parentId: cat.category.parent_id || null,
+              name: cat.category.name,
+              isActive: cat.category.isActive,
+            }
+            : null
         );
 
-        if (existingAttribute) {
-          existingAttribute.attributeValue.push({
-            id: val.attributeValue_id || "",
-            value: val.value || "",
-          });
-        } else {
-          acc.push({
-            attribute_id: val.attribute_id,
-            attributeValue: [
-              {
-                id: val.attributeValue_id || "",
-                value: val.value || "",
+        // ✅ Fetch related SKUs
+        const related = await prisma.relatedProduct.findMany({
+          where: { product_id: product.id },
+          select: {
+            related: {
+              select: {
+                sku: true,
               },
-            ],
-          });
-        }
+            },
+          },
+        });
 
-        return acc;
-      }, []);
+        newProduct.relatedProducts = related
+          .map((rel) => rel.related?.sku)
+          .filter(Boolean);
 
-      newProduct.attributes = attributes;
+        newProduct.collection = product?.collection?.map((cat) =>
+          cat.collection
+            ? {
+              id: cat.collection.id,
+              name: cat.collection.name,
+              isActive: cat.collection.isActive,
+            }
+            : null
+        );
 
-      newProduct.sizes = product.sizes.map((size) => ({
-        id: size.size_id,
-        price: size.price,
-        quantity: size.quantity,
-      }));
-      newProduct.categories = product.categories.map((cat) =>
-        cat.category
-          ? {
-            id: cat.category.id,
-            parentId: cat.category.parent_id ? cat.category.parent_id : null,
-            name: cat.category.name,
-            isActive: cat.category.isActive,
-          }
-          : null
-      );
+        newProduct.color = product.colours.map((col) => ({
+          id: col.colour.id,
+          name: col.colour.name,
+          code: col.colour.code,
+          isActive: col.colour.isActive,
+          createdAt: col.colour.createdAt,
+          updatedAt: col.colour.updatedAt,
+        }));
 
-      newProduct.relatedProducts = product.RelatedProducts.map((rel) => ({
-        id: rel.related.id,
-        sku: rel.related.sku,
-      }));
-
-      newProduct.collection = product?.collection?.map((cat) =>
-        cat.collection
-          ? {
-            id: cat.collection.id,
-            name: cat.collection.name,
-            isActive: cat.collection.isActive,
-          }
-          : null
-      );
-
-      newProduct.color = product.colours.map((col) => ({
-        id: col.colour.id,
-        name: col.colour.name,
-        code: col.colour.code,
-        isActive: col.colour.isActive,
-        createdAt: col.colour.createdAt,
-        updatedAt: col.colour.updatedAt,
-      }));
-
-      newProduct.labels = product.labels.map((item) => {
-        return {
+        newProduct.labels = product.labels.map((item) => ({
           id: item.label_id,
           date: item.expiryTime,
           label: item.label.name,
-        };
-      });
+        }));
 
-      return newProduct;
-    });
+        return newProduct;
+      })
+    );
 
     let data = {
       data: formattedData,
@@ -1046,6 +1378,7 @@ const paginationReatilProduct = async (req, res, next) => {
     next(err);
   }
 };
+
 
 const updateRetailProduct = async (req, res, next) => {
   try {

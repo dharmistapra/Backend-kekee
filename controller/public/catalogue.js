@@ -642,6 +642,77 @@ const searchCatalogueAndProduct = async (req, res, next) => {
   }
 };
 
+// const relatedProduct = async (req, res, next) => {
+//   try {
+//     const isTokenExists = await tokenExists(req);
+//     const isWebSettings = await prisma.webSettings.findFirst({
+//       select: { showPrice: true },
+//     });
+//     const shouldHidePrice = !isTokenExists && isWebSettings.showPrice === false;
+//     const {slug} = req.params.slug;
+//     const isCategoryExists = await prisma.categoryMaster.findUnique({
+//       where: { id: id },
+//     });
+
+//     // console.log("isCategoryExists0",isCategoryExists)
+
+//     if (!isCategoryExists)
+//       return res
+//         .status(404)
+//         .json({ isSuccess: false, message: "Category not found!" });
+
+//     const result = await prisma.product.findMany({
+//       where: {
+//         categories: { some: { category_id: id } },
+//         catalogue: { deletedAt: null },
+//         isActive: true,
+//         isDraft: false,
+//       },
+//       select: {
+//         id: true,
+//         name: true,
+//         catalogue_id: true,
+//         sku: true,
+//         url: true,
+//         mediumImage: true,
+//         quantity: true,
+//         ...(shouldHidePrice === false && {
+//           retail_price: true,
+//           retail_GST: true,
+//           retail_discount: true,
+//           offer_price: true,
+//         }),
+//         image: true,
+//         categories: {
+//           select: {
+//             category: {
+//               select: {
+//                 url: true
+//               }
+//             }
+//           }
+//         }
+//       },
+//       orderBy: { updatedAt: "desc" },
+//       take: 10,
+//     });
+
+//     const shuffledProducts = result
+//       .sort(() => Math.random() - 0.5)
+//       .slice(0, 10);
+//     return res.status(200).json({
+//       isSuccess: true,
+//       message: "products get successfully",
+//       data: shuffledProducts,
+//     });
+//   } catch (err) {
+//     const error = new Error("Something went wrong, Please try again!");
+//     next(error);
+//   }
+// };
+
+
+
 const relatedProduct = async (req, res, next) => {
   try {
     const isTokenExists = await tokenExists(req);
@@ -649,19 +720,30 @@ const relatedProduct = async (req, res, next) => {
       select: { showPrice: true },
     });
     const shouldHidePrice = !isTokenExists && isWebSettings.showPrice === false;
-    const id = req.params.id;
-    const isCategoryExists = await prisma.categoryMaster.findUnique({
-      where: { id: id },
+
+    const { slug } = req.params;
+
+    const currentProduct = await prisma.product.findUnique({
+      where: { url: slug },
+      include: { categories: true },
     });
 
-    if (!isCategoryExists)
-      return res
-        .status(404)
-        .json({ isSuccess: false, message: "Category not found!" });
+    if (!currentProduct) {
+      return res.status(404).json({
+        isSuccess: false,
+        message: "Product not found!",
+      });
+    }
 
-    const result = await prisma.product.findMany({
+    const categoryIds = currentProduct.categories.map((c) => c.category_id);
+    const relatedProducts = await prisma.product.findMany({
       where: {
-        categories: { some: { category_id: id } },
+        id: { not: currentProduct.id },
+        categories: {
+          some: {
+            category_id: { in: categoryIds },
+          },
+        },
         catalogue: { deletedAt: null },
         isActive: true,
         isDraft: false,
@@ -685,29 +767,32 @@ const relatedProduct = async (req, res, next) => {
           select: {
             category: {
               select: {
-                url: true
-              }
-            }
-          }
-        }
+                url: true,
+              },
+            },
+          },
+        },
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: {
+        updatedAt: 'desc',
+      },
       take: 10,
     });
 
-    const shuffledProducts = result
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 10);
     return res.status(200).json({
       isSuccess: true,
-      message: "products get successfully",
-      data: shuffledProducts,
+      message: "Related products fetched successfully",
+      data: relatedProducts,
     });
   } catch (err) {
-    const error = new Error("Something went wrong, Please try again!");
-    next(error);
+    console.error("Error in relatedProduct:", err);
+    return res
+      .status(500)
+      .json({ isSuccess: false, message: "Something went wrong!" });
   }
 };
+
+
 
 const BASE_URL = "https://api.lajo.in/"
 // const BASE_URL = "https://fb00-116-72-43-254.ngrok-free.app"

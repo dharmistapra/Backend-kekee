@@ -180,7 +180,7 @@ router.get("/menu-pagewisebanner/:url", getMenuPageWiseBanner);
 // PRODUCT ROUTE
 router.post("/product", getProductpublic);
 router.get("/product-detail/:url", getProductDetails);
-router.get("/related-product/:id", relatedProduct);
+router.get("/related-product/:slug", relatedProduct);
 
 // CATALOGUE ROUTE
 router.post("/catalogue", getCatalogue);

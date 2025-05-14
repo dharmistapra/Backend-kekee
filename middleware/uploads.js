@@ -46,6 +46,7 @@ const filefilter = (req, file, cb) => {
     "image/jpeg",
     "image/gif",
     "image/webp",
+    "video/mp4"
   ];
   if (validTypes.includes(file.mimetype)) {
     return cb(null, true);

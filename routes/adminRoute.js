@@ -656,7 +656,7 @@ adminRouter.put(
 adminRouter.get("/catlog-single-product/:id", catlogtGetSingleProduct);
 adminRouter.delete("/catlog-single-delete/:id", deleteCatlogProduct);
 adminRouter.post("/catalogueproducts", [data.uploadCatalogue], addCatalogue);
-adminRouter.post("/catalogue-product", getCatalogueProducts);
+adminRouter.get("/catalogue-product", getCatalogueProducts);
 adminRouter.get("/catalogue-product/:catalogue_id", getCatalogueProduct);
 adminRouter.get("/draft-product", draftProdcutRemove);
 adminRouter.delete("/catalogue/:id", deleteCatalogue);

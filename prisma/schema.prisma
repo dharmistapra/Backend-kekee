@@ -903,6 +903,7 @@ enum PaymentStatus {
   PROCESSING
   SUCCESS
   CANCELLED
+  PENDING
   REFUNDED
 }
 

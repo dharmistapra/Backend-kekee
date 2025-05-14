@@ -204,10 +204,11 @@ const postCartItem = async (req, res, next) => {
 
 // const postCartItemOptimizeCode = async (req, res, next) => {
 //   try {
-//     let { product_id, catalogue_id, size, stitching, quantity, user_id } =
-//       req.body;
+//     let { product_id, catalogue_id, size, stitching, quantity, user_id } = req.body;
+
 //     const findUser = await prisma.users.findUnique({ where: { id: user_id } });
-//     if (!findUser) res.status(404).json({ isSuccess: false, message: "User not found." });
+//     if (!findUser)
+//       return res.status(404).json({ isSuccess: false, message: "User not found." });
 
 //     let cart = await prisma.cart.findUnique({ where: { user_id: user_id } });
 //     if (!cart) {
@@ -216,28 +217,72 @@ const postCartItem = async (req, res, next) => {
 
 //     if (stitching) {
 //       const { success } = await validateStitchingOption(stitching);
-
 //       if (!success)
 //         return res.status(400).json({
 //           isSuccess: false,
-//           message: "Option Id Not Founf",
+//           message: "Option Id Not Found",
 //         });
 //     } else if (size) {
 //       const result = await isvalidstitching(size.id, "size");
 //       if (!result)
-//         return res
-//           .status(400)
-//           .json({ isSuccess: false, message: "Size does not exist." });
+//         return res.status(400).json({ isSuccess: false, message: "Size does not exist." });
 //     }
+
+//     const normalizeStitching = (s) => {
+//       if (!s || !Array.isArray(s)) return [];
+//       return s
+//         .map((item) => ({
+//           optionid: item.optionid,
+//           measurment: item.measurment || [],
+//         }))
+//         .sort((a, b) => a.optionid.localeCompare(b.optionid));
+//     };
 
 //     if (catalogue_id && !product_id) {
 //       const products = await prisma.product.findMany({
 //         where: { catalogue_id: catalogue_id },
 //       });
+
 //       if (!products.length)
-//         return res
-//           .status(400)
-//           .json({ error: "No products found in this catalogue" });
+//         return res.status(400).json({ error: "No products found in this catalogue" });
+
+//       const existingCartItems = await prisma.cartItem.findMany({
+//         where: {
+//           cart_id: cart.id,
+//           catalogue_id: catalogue_id,
+//           isCatalogue: true,
+//         },
+//       });
+
+//       const normalizedIncoming = JSON.stringify(normalizeStitching(stitching));
+//       let existingCartItem = null;
+
+//       for (const item of existingCartItems) {
+//         const normalizedExisting = JSON.stringify(
+//           normalizeStitching(JSON.parse(item.stitching || "[]"))
+//         );
+
+//         if (normalizedExisting === normalizedIncoming) {
+//           existingCartItem = item;
+//           break;
+//         }
+//       }
+
+//       if (existingCartItem) {
+//         const updatedCartItem = await prisma.cartItem.update({
+//           where: { id: existingCartItem.id },
+//           data: {
+//             quantity: existingCartItem.quantity + quantity,
+//           },
+//         });
+
+//         return res.status(200).json({
+//           isSuccess: true,
+//           message: "Catalogue item quantity updated successfully.",
+//           data: updatedCartItem,
+//         });
+//       }
+
 
 //       const result = await prisma.cartItem.create({
 //         data: {
@@ -267,22 +312,21 @@ const postCartItem = async (req, res, next) => {
 //       return res.status(200).json({
 //         isSuccess: true,
 //         message: "Catalogue items added to cart successfully.",
+//         data: result,
 //       });
 //     }
-
 //     if (product_id) {
 //       const findProduct = await prisma.product.findUnique({
 //         where: { id: product_id },
 //         include: { sizes: true, categories: true },
 //       });
+
 //       if (!findProduct)
 //         return res
 //           .status(404)
 //           .json({ isSuccess: false, message: "Product not found." });
 
-//       let result;
-//       let message;
-//       result = await prisma.cartItem.create({
+//       const result = await prisma.cartItem.create({
 //         data: {
 //           cart_id: cart.id,
 //           product_id: product_id,
@@ -293,7 +337,7 @@ const postCartItem = async (req, res, next) => {
 //         },
 //       });
 
-//       if (stitching && stitching?.length > 0) {
+//       if (stitching?.length > 0) {
 //         for (const stitch of stitching) {
 //           await prisma.cartItemStitching.create({
 //             data: {
@@ -307,10 +351,9 @@ const postCartItem = async (req, res, next) => {
 //         }
 //       }
 
-//       message = "item add in cart successfully";
 //       return res.status(200).json({
 //         isSuccess: true,
-//         message: message,
+//         message: "Item added to cart successfully.",
 //         data: result,
 //       });
 //     }
@@ -323,168 +366,192 @@ const postCartItem = async (req, res, next) => {
 
 const postCartItemOptimizeCode = async (req, res, next) => {
   try {
-    let { product_id, catalogue_id, size, stitching, quantity, user_id } = req.body;
+    const { product_id, catalogue_id, size, stitching, quantity, user_id } = req.body;
 
-    const findUser = await prisma.users.findUnique({ where: { id: user_id } });
-    if (!findUser)
+    // 1. Validate User
+    const user = await prisma.users.findUnique({ where: { id: user_id } });
+    if (!user) {
       return res.status(404).json({ isSuccess: false, message: "User not found." });
+    }
 
-    let cart = await prisma.cart.findUnique({ where: { user_id: user_id } });
+    // 2. Ensure Cart Exists
+    let cart = await prisma.cart.findUnique({ where: { user_id } });
     if (!cart) {
-      cart = await prisma.cart.create({ data: { user_id: user_id } });
+      cart = await prisma.cart.create({ data: { user_id } });
     }
 
-    if (stitching) {
+    // 3. Stitching or Size Validation
+    if (stitching && stitching.length > 0) {
       const { success } = await validateStitchingOption(stitching);
-      if (!success)
-        return res.status(400).json({
-          isSuccess: false,
-          message: "Option Id Not Found",
-        });
+      if (!success) {
+        return res.status(400).json({ isSuccess: false, message: "Invalid stitching options." });
+      }
     } else if (size) {
-      const result = await isvalidstitching(size.id, "size");
-      if (!result)
-        return res.status(400).json({ isSuccess: false, message: "Size does not exist." });
+      const sizeExists = await isvalidstitching(size.id, "size");
+      if (!sizeExists) {
+        return res.status(400).json({ isSuccess: false, message: "Invalid size selected." });
+      }
     }
 
-    // Utility to normalize stitching data
+    // 4. Normalize Helpers
     const normalizeStitching = (s) => {
-      if (!s || !Array.isArray(s)) return [];
+      if (!Array.isArray(s)) return [];
       return s
-        .map((item) => ({
-          optionid: item.optionid,
-          measurment: item.measurment || [],
-        }))
+        .map(({ optionid, measurment = [] }) => ({ optionid, measurment }))
         .sort((a, b) => a.optionid.localeCompare(b.optionid));
     };
 
-    // --- Handle Catalogue Case ---
+    const normalizeSize = (s) => {
+      if (!s || typeof s !== "object") return {};
+      return s;
+    };
+
+    const normalizedStitchingStr = JSON.stringify(normalizeStitching(stitching));
+    const sizeStr = JSON.stringify(normalizeSize(size));
+
+    // 5. Helper to store stitching details
+    const addStitchingDetails = async (cartItemId, stitchingData) => {
+      for (const stitch of stitchingData) {
+        await prisma.cartItemStitching.create({
+          data: {
+            cartItem_id: cartItemId,
+            stitching_option: stitch.optionid,
+            measurment: stitch.measurment ? JSON.stringify(stitch.measurment) : null,
+          },
+        });
+      }
+    };
+
+    // 6. Handle Catalogue Add
     if (catalogue_id && !product_id) {
-      const products = await prisma.product.findMany({
-        where: { catalogue_id: catalogue_id },
-      });
+      const products = await prisma.product.findMany({ where: { catalogue_id } });
+      if (!products.length) {
+        return res.status(400).json({ isSuccess: false, message: "No products in catalogue." });
+      }
 
-      if (!products.length)
-        return res.status(400).json({ error: "No products found in this catalogue" });
-
-      const existingCartItems = await prisma.cartItem.findMany({
+      const existingItems = await prisma.cartItem.findMany({
         where: {
           cart_id: cart.id,
-          catalogue_id: catalogue_id,
+          catalogue_id,
           isCatalogue: true,
         },
       });
 
-      const normalizedIncoming = JSON.stringify(normalizeStitching(stitching));
-      let existingCartItem = null;
+      const existingItem = existingItems.find((item) => {
+        const existingStitching = normalizeStitching(JSON.parse(item.stitching || "[]"));
+        return JSON.stringify(existingStitching) === normalizedStitchingStr;
+      });
 
-      for (const item of existingCartItems) {
-        const normalizedExisting = JSON.stringify(
-          normalizeStitching(JSON.parse(item.stitching || "[]"))
-        );
-
-        if (normalizedExisting === normalizedIncoming) {
-          existingCartItem = item;
-          break;
-        }
-      }
-
-      if (existingCartItem) {
-        const updatedCartItem = await prisma.cartItem.update({
-          where: { id: existingCartItem.id },
-          data: {
-            quantity: existingCartItem.quantity + quantity,
-          },
+      if (existingItem) {
+        const updatedItem = await prisma.cartItem.update({
+          where: { id: existingItem.id },
+          data: { quantity: existingItem.quantity + quantity },
         });
 
         return res.status(200).json({
           isSuccess: true,
-          message: "Catalogue item quantity updated successfully.",
-          data: updatedCartItem,
+          message: "Catalogue item quantity updated.",
+          data: updatedItem,
         });
       }
 
-      // Else create new cart item
-      const result = await prisma.cartItem.create({
+      const newItem = await prisma.cartItem.create({
         data: {
           cart_id: cart.id,
-          catalogue_id: catalogue_id,
+          catalogue_id,
           stitching: JSON.stringify(stitching),
-          size: JSON.stringify(size),
-          quantity: quantity,
+          size: sizeStr,
+          quantity,
           isCatalogue: true,
         },
       });
 
       if (stitching?.length > 0) {
-        for (const stitch of stitching) {
-          await prisma.cartItemStitching.create({
-            data: {
-              cartItem_id: result.id,
-              stitching_option: stitch.optionid,
-              measurment: stitch.measurment
-                ? JSON.stringify(stitch.measurment)
-                : null,
-            },
-          });
-        }
+        await addStitchingDetails(newItem.id, stitching);
       }
 
       return res.status(200).json({
         isSuccess: true,
-        message: "Catalogue items added to cart successfully.",
-        data: result,
+        message: "New catalogue item added to cart.",
+        data: newItem,
       });
     }
 
-    // --- Handle Single Product Case ---
+    // 7. Handle Single Product Add
     if (product_id) {
-      const findProduct = await prisma.product.findUnique({
+      const product = await prisma.product.findUnique({
         where: { id: product_id },
         include: { sizes: true, categories: true },
       });
 
-      if (!findProduct)
-        return res
-          .status(404)
-          .json({ isSuccess: false, message: "Product not found." });
+      if (!product) {
+        return res.status(404).json({ isSuccess: false, message: "Product not found." });
+      }
 
-      const result = await prisma.cartItem.create({
+      const existingItems = await prisma.cartItem.findMany({
+        where: {
+          cart_id: cart.id,
+          product_id,
+          isCatalogue: false,
+        },
+      });
+
+      const existingItem = existingItems.find((item) => {
+        const existingStitching = normalizeStitching(JSON.parse(item.stitching || "[]"));
+        const existingSize = normalizeSize(JSON.parse(item.size || "{}"));
+        return (
+          JSON.stringify(existingStitching) === normalizedStitchingStr &&
+          JSON.stringify(existingSize) === sizeStr
+        );
+      });
+
+      if (existingItem) {
+        const updatedItem = await prisma.cartItem.update({
+          where: { id: existingItem.id },
+          data: { quantity: existingItem.quantity + quantity },
+        });
+
+        return res.status(200).json({
+          isSuccess: true,
+          message: "Product quantity updated in cart.",
+          data: updatedItem,
+        });
+      }
+
+      const newItem = await prisma.cartItem.create({
         data: {
           cart_id: cart.id,
-          product_id: product_id,
+          product_id,
           stitching: JSON.stringify(stitching),
-          size: JSON.stringify(size),
-          quantity: quantity,
+          size: sizeStr,
+          quantity,
           isCatalogue: false,
         },
       });
 
       if (stitching?.length > 0) {
-        for (const stitch of stitching) {
-          await prisma.cartItemStitching.create({
-            data: {
-              cartItem_id: result.id,
-              stitching_option: stitch.optionid,
-              measurment: stitch.measurment
-                ? JSON.stringify(stitch.measurment)
-                : null,
-            },
-          });
-        }
+        await addStitchingDetails(newItem.id, stitching);
       }
 
       return res.status(200).json({
         isSuccess: true,
-        message: "Item added to cart successfully.",
-        data: result,
+        message: "Product added to cart.",
+        data: newItem,
       });
     }
+
+    // 8. No product or catalogue ID
+    return res.status(400).json({
+      isSuccess: false,
+      message: "Either product_id or catalogue_id must be provided.",
+    });
   } catch (error) {
-    console.log("Error:", error);
-    return next(new Error("Something went wrong, please try again!"));
+    console.error("Cart Add Error:", error);
+    return next(new Error("Something went wrong, please try again."));
   }
 };
+
+
 
 const getAllcartitemOptimizecode = async (req, res, next) => {
   try {

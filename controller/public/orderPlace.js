@@ -857,37 +857,115 @@ const generateOrderId = async (req, res, next) => {
     }
 }
 
+// const razorpayOrderCreate = async (req, res, next) => {
+//     try {
+//         const { user_id, orderId, currency, } = req.body
+
+//         const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
+//         if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
+
+//         const getOrderExpTime = await prisma.webSettings.findFirst({
+//             select: {
+//                 orderExpireyTime: true
+//             }
+//         })
+
+//         const ExpireTimeAdjust = getOrderExpTime?.orderExpireyTime || 3
+//         const checkOrderId = await prisma.order.findUnique({
+//             where: {
+//                 orderId: orderId
+//             },
+
+//         })
+
+
+//         if (!checkOrderId) res.status(400).json({ isSuccess: false, message: "order not found", });
+
+
+
+//         const orderCreatedAt = new Date(checkOrderId.createdAt);
+//         const currentTime = new Date();
+
+//         const diffMs = currentTime - orderCreatedAt;
+//         const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+//         if (diffDays > ExpireTimeAdjust) {
+//             return res.status(400).json({
+//                 isSuccess: false,
+//                 message: "Order has expired",
+//                 data: null
+//             });
+//         }
+
+//         const paymenttype = await prisma.paymentMethods.findFirst({ where: { name: "razorpay" } })
+//         if (!paymenttype) res.status(400).json({ isSuccess: false, message: "Payment method not found", data: null });
+
+//         const handlingCharge = checkOrderId.totalAmount * (paymenttype?.charge / 100);
+//         const razorpayAmount = Math.round((checkOrderId.totalAmount + handlingCharge) * 100);
+
+
+//         const razorpayOrder = await rozarpay.orders.create({
+//             amount: razorpayAmount,
+//             currency: currency?.code,
+//             receipt: `order_${orderId}`,
+//             payment_capture: 1,
+//         });
+
+//         const paymentData = {
+//             orderId: checkOrderId.id,
+//             paymentMethod: "razorpay",
+//             status: "PROCESSING",
+//             transactionId: razorpayOrder.id
+//         };
+
+//         const payment = await prisma.payment.create({ data: paymentData });
+
+//         const response = {
+//             orderId: orderId,
+//             razorpayOrderId: paymentData.transactionId,
+//             currency: currency,
+//             amount: razorpayAmount,
+//         };
+
+//         await prisma.order.update({
+//             where: {
+//                 id: checkOrderId.id
+//             },
+//             data: {
+//                 totalAmount: (checkOrderId.totalAmount + handlingCharge),
+//                 handlingcharge: handlingCharge,
+//             }
+//         })
+//         return res.status(200).json({ isSuccess: false, mesage: "Razorpay order created successfully", data: response })
+
+
+//     } catch (error) {
+//         console.log(error)
+//         let err = new Error("Something went wrong, please try again!")
+//         next(err);
+//     }
+// }
+
+
+
 const razorpayOrderCreate = async (req, res, next) => {
     try {
-        const { user_id, orderId, currency, } = req.body
+        const { user_id, orderId, currency } = req.body;
 
-        const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
-        if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
+        const finduser = await prisma.cart.findUnique({ where: { user_id } });
+        if (!finduser) return res.status(400).json({ isSuccess: false, message: "User not found", data: null });
 
         const getOrderExpTime = await prisma.webSettings.findFirst({
-            select: {
-                orderExpireyTime: true
-            }
-        })
+            select: { orderExpireyTime: true }
+        });
+        const ExpireTimeAdjust = getOrderExpTime?.orderExpireyTime || 3;
 
-        const ExpireTimeAdjust = getOrderExpTime?.orderExpireyTime || 3
-        const checkOrderId = await prisma.order.findUnique({
-            where: {
-                orderId: orderId
-            },
-
-        })
-
-
-        if (!checkOrderId) res.status(400).json({ isSuccess: false, message: "order not found", });
-
-
+        const checkOrderId = await prisma.order.findUnique({ where: { orderId } });
+        if (!checkOrderId) return res.status(400).json({ isSuccess: false, message: "Order not found" });
 
         const orderCreatedAt = new Date(checkOrderId.createdAt);
         const currentTime = new Date();
-
-        const diffMs = currentTime - orderCreatedAt;
-        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        const diffDays = (currentTime - orderCreatedAt) / (1000 * 60 * 60 * 24);
 
         if (diffDays > ExpireTimeAdjust) {
             return res.status(400).json({
@@ -897,12 +975,33 @@ const razorpayOrderCreate = async (req, res, next) => {
             });
         }
 
-        const paymenttype = await prisma.paymentMethods.findFirst({ where: { name: "razorpay" } })
-        if (!paymenttype) res.status(400).json({ isSuccess: false, message: "Payment method not found", data: null });
+        const existingPayment = await prisma.payment.findFirst({
+            where: {
+                orderId: checkOrderId.id,
+                paymentMethod: "razorpay",
+                status: "PENDING"
+            }
+        });
+
+        if (existingPayment) {
+            const amount = Math.round((checkOrderId.totalAmount) * 100);
+            return res.status(200).json({
+                isSuccess: true,
+                message: "Razorpay order already created",
+                data: {
+                    orderId,
+                    razorpayOrderId: existingPayment.transactionId,
+                    currency,
+                    amount
+                }
+            });
+        }
+
+        const paymenttype = await prisma.paymentMethods.findFirst({ where: { name: "razorpay" } });
+        if (!paymenttype) return res.status(400).json({ isSuccess: false, message: "Payment method not found", data: null });
 
         const handlingCharge = checkOrderId.totalAmount * (paymenttype?.charge / 100);
         const razorpayAmount = Math.round((checkOrderId.totalAmount + handlingCharge) * 100);
-
 
         const razorpayOrder = await rozarpay.orders.create({
             amount: razorpayAmount,
@@ -914,76 +1013,136 @@ const razorpayOrderCreate = async (req, res, next) => {
         const paymentData = {
             orderId: checkOrderId.id,
             paymentMethod: "razorpay",
-            status: "PROCESSING",
+            status: "PENDING",
             transactionId: razorpayOrder.id
         };
 
-        const payment = await prisma.payment.create({ data: paymentData });
-
-        const response = {
-            orderId: orderId,
-            razorpayOrderId: paymentData.transactionId,
-            currency: currency,
-            amount: razorpayAmount,
-        };
+        await prisma.payment.create({ data: paymentData });
 
         await prisma.order.update({
-            where: {
-                id: checkOrderId.id
-            },
+            where: { id: checkOrderId.id },
             data: {
-                totalAmount: (checkOrderId.totalAmount + handlingCharge),
-                handlingcharge: handlingCharge,
+                totalAmount: checkOrderId.totalAmount + handlingCharge,
+                handlingcharge: handlingCharge
             }
-        })
-        return res.status(200).json({ isSuccess: false, mesage: "Razorpay order created successfully", data: response })
+        });
 
+        return res.status(200).json({
+            isSuccess: true,
+            message: "Razorpay order created successfully",
+            data: {
+                orderId,
+                razorpayOrderId: paymentData.transactionId,
+                currency,
+                amount: razorpayAmount
+            }
+        });
 
     } catch (error) {
-        console.log(error)
-        let err = new Error("Something went wrong, please try again!")
-        next(err);
+        console.log(error);
+        next(new Error("Something went wrong, please try again!"));
     }
-}
+};
 
 
+
+// const bankPayment = async (req, res, next) => {
+//     try {
+//         const { user_id, orderId, transactionId } = req.body
+//         let receipt = req.file;
+
+//         if (receipt) {
+//             receipt = await convertFilePathSlashes(receipt.path);
+//         }
+
+
+//         const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
+//         if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
+
+//         const getOrderExpTime = await prisma.webSettings.findFirst({
+//             select: {
+//                 orderExpireyTime: true
+//             }
+//         })
+
+//         const ExpireTimeAdjust = getOrderExpTime?.orderExpireyTime || 3
+//         const checkOrderId = await prisma.order.findUnique({
+//             where: {
+//                 orderId: orderId
+//             }
+//         })
+
+
+//         if (!checkOrderId) res.status(400).json({ isSuccess: false, message: "order not found", });
+
+
+
+//         const orderCreatedAt = new Date(checkOrderId.createdAt);
+//         const currentTime = new Date();
+
+//         const diffMs = currentTime - orderCreatedAt;
+//         const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+//         if (diffDays > ExpireTimeAdjust) {
+//             return res.status(400).json({
+//                 isSuccess: false,
+//                 message: "Order has expired",
+//                 data: null
+//             });
+//         }
+
+
+
+//         const paymentData = {
+//             orderId: checkOrderId.id,
+//             paymentMethod: "bank",
+//             status: "PROCESSING",
+//             receiptImage: receipt,
+//             transactionId: transactionId
+//         };
+
+//         const payment = await prisma.payment.create({ data: paymentData });
+
+//         const response = {
+//             orderId: orderId,
+//             transactionId: paymentData.transactionId,
+//         };
+
+//         const cartId = await prisma.cart.findFirst({ where: { user_id: checkOrderId.userId }, select: { id: true } })
+//         await prisma.cartItem.deleteMany({ where: { cart_id: cartId.id } })
+//         return res.status(200).json({ isSuccess: false, mesage: "Payment paid successfylly", data: response })
+
+
+//     } catch (error) {
+//         console.log(error)
+//         let err = new Error("Something went wrong, please try again!")
+//         next(err);
+//     }
+// }
 
 const bankPayment = async (req, res, next) => {
     try {
-        const { user_id, orderId, transactionId } = req.body
+        const { user_id, orderId, transactionId } = req.body;
         let receipt = req.file;
 
         if (receipt) {
             receipt = await convertFilePathSlashes(receipt.path);
         }
 
-
-        const finduser = await prisma.cart.findUnique({ where: { user_id: user_id } });
-        if (!finduser) res.status(400).json({ isSuccess: false, message: "User not found", data: null });
+        const finduser = await prisma.cart.findUnique({ where: { user_id } });
+        if (!finduser) return res.status(400).json({ isSuccess: false, message: "User not found", data: null });
 
         const getOrderExpTime = await prisma.webSettings.findFirst({
-            select: {
-                orderExpireyTime: true
-            }
-        })
+            select: { orderExpireyTime: true }
+        });
 
-        const ExpireTimeAdjust = getOrderExpTime?.orderExpireyTime || 3
-        const checkOrderId = await prisma.order.findUnique({
-            where: {
-                orderId: orderId
-            }
-        })
-
-
-        if (!checkOrderId) res.status(400).json({ isSuccess: false, message: "order not found", });
-
-
+        const ExpireTimeAdjust = getOrderExpTime?.orderExpireyTime || 3;
+        const checkOrderId = await prisma.order.findUnique({ where: { orderId } });
+        if (!checkOrderId) return res.status(400).json({ isSuccess: false, message: "Order not found" });
 
         const orderCreatedAt = new Date(checkOrderId.createdAt);
         const currentTime = new Date();
-
-        const diffMs = currentTime - orderCreatedAt;
-        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        const diffDays = (currentTime - orderCreatedAt) / (1000 * 60 * 60 * 24);
 
         if (diffDays > ExpireTimeAdjust) {
             return res.status(400).json({
@@ -993,33 +1152,57 @@ const bankPayment = async (req, res, next) => {
             });
         }
 
+        const existingPayment = await prisma.payment.findUnique({
+            where: {
+                orderId: checkOrderId.id
+            }
+        });
 
+        let payment;
+        if (existingPayment) {
+            payment = await prisma.payment.update({
+                where: { orderId: checkOrderId.id },
+                data: {
+                    paymentMethod: "bank",
+                    status: "PROCESSING",
+                    receiptImage: receipt,
+                    transactionId: transactionId
+                }
+            });
+        } else {
+            payment = await prisma.payment.create({
+                data: {
+                    orderId: checkOrderId.id,
+                    paymentMethod: "bank",
+                    status: "PROCESSING",
+                    receiptImage: receipt,
+                    transactionId: transactionId
+                }
+            });
+        }
 
-        const paymentData = {
-            orderId: checkOrderId.id,
-            paymentMethod: "bank",
-            status: "PROCESSING",
-            receiptImage: receipt,
-            transactionId: transactionId
-        };
+        const cartId = await prisma.cart.findFirst({
+            where: { user_id: checkOrderId.userId },
+            select: { id: true }
+        });
 
-        const payment = await prisma.payment.create({ data: paymentData });
+        await prisma.cartItem.deleteMany({ where: { cart_id: cartId.id } });
 
-        const response = {
-            orderId: orderId,
-            transactionId: paymentData.transactionId,
-        };
-
-        const cartId = await prisma.cart.findFirst({ where: { user_id: checkOrderId.userId }, select: { id: true } })
-        await prisma.cartItem.deleteMany({ where: { cart_id: cartId.id } })
-        return res.status(200).json({ isSuccess: false, mesage: "Payment paid successfylly", data: response })
-
+        return res.status(200).json({
+            isSuccess: true,
+            message: "Payment paid successfully",
+            data: {
+                orderId,
+                transactionId: payment.transactionId
+            }
+        });
 
     } catch (error) {
-        console.log(error)
-        let err = new Error("Something went wrong, please try again!")
-        next(err);
+        console.log(error);
+        next(new Error("Something went wrong, please try again!"));
     }
-}
+};
+
+
 export default OrderPlace;
 export { verifyOrder, orderFailed, generateOrderId, razorpayOrderCreate, bankPayment };

@@ -506,8 +506,9 @@ const getProductDetails = async (req, res, next) => {
             values: [],
           };
         }
+        // console.log("attributeValue.value)", attributeValue.value)
         if (attributeValue && attributeValue.attr_id === attribute.id) {
-          acc[attribute.id].values.push(attributeValue.value);
+          acc[attribute.id].values.push(attributeValue.name);
         }
         return acc;
       }, {});

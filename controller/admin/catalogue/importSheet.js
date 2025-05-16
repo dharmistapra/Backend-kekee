@@ -215,6 +215,7 @@ const importCatalogues = async (req, res, next) => {
           errors.push(message);
         }
       }
+      
       let attributeData = [];
       if (attributes.length > 0 && Object.keys(attributeValue).length > 0) {
         const existingAttributes = await prisma.attributeMaster.findMany({
@@ -523,6 +524,8 @@ const importCatalogues = async (req, res, next) => {
           productArray.push(product);
         }
       }
+
+
     }
 
     for (const cat of catalogues) {

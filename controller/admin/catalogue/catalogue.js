@@ -99,15 +99,14 @@ const postCatlogProduct = async (req, res, next) => {
       await removeProductImage(imagePaths);
       return res.status(400).json({ isSuccess, message });
     }
-
-    if (findUniqueData && findUniqueData?.catalogue?.deletedAt !== null) {
+    if (findUniqueData && findUniqueData?.catalogue !== null && findUniqueData?.catalogue?.deletedAt !== null) {
       await removeProductImage(imagePaths);
       return res.status(409).json({
         isSuccess: false,
         message: `The product with SKU ${sku} matches a deleted ${findUniqueData?.catalogue?.cat_code} catalog item. Please update the SKU or restore the catalog entry.`,
       });
     }
-    if (findUniqueData || findUniqueData?.catalogue?.deletedAt === null) {
+    if (findUniqueData || findUniqueData?.catalogue === null || findUniqueData?.catalogue?.deletedAt === null) {
       await removeProductImage(imagePaths);
       return res
         .status(409)

@@ -51,6 +51,9 @@ const postCatlogProduct = async (req, res, next) => {
       size,
       readyToShip,
       relatedProduct,
+      meta_title,
+      meta_keyword,
+      meta_description
     } = req.body;
 
     quantity = parseInt(quantity);
@@ -180,6 +183,9 @@ const postCatlogProduct = async (req, res, next) => {
       isActive: false,
       isDraft: catalogue_id ? false : true,
       optionType,
+      meta_title,
+      meta_keyword,
+      meta_description
     };
 
     let categoryConnection = [];

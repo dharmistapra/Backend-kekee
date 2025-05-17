@@ -494,10 +494,10 @@ const getProductDetails = async (req, res, next) => {
           });
           return acc;
         }
-        if (attribute.type === "Colour") {
-          colours.push(attributeValue.value);
-          return acc;
-        }
+        // if (attribute.type === "Colour") {
+        //   colours.push(attributeValue.value);
+        //   return acc;
+        // }
 
         if (!acc[attribute.id]) {
           acc[attribute.id] = {
@@ -513,7 +513,7 @@ const getProductDetails = async (req, res, next) => {
         return acc;
       }, {});
       data.labels = labels;
-      data.colours = colours;
+      // data.colours = colours;
       data.attributeValues = Object.values(processedAttributes);
     }
     // if (data?.colours && data?.colours?.length > 0) {

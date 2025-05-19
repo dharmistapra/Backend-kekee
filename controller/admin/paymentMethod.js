@@ -9,7 +9,7 @@ import {
 
 const postPaymentMethod = async (req, res, next) => {
   try {
-    const { name, keyId, secretKey, charge, description } = req.body;
+    const { name, charge, description } = req.body;
     const image = req.file;
     let filepath = "";
     if (image?.path) {
@@ -32,10 +32,8 @@ const postPaymentMethod = async (req, res, next) => {
       data: {
         position: count + 1,
         name,
-        // keyId,
-        // secretKey,
         image: filepath,
-        charge,
+        charge: charge === "" ? 0 : Number(charge),
         description,
       },
       select: {

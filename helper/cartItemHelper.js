@@ -471,6 +471,7 @@ const calculateCartItemTotal = (cartItems) => {
   const DataModified2 = cartItems.map((item) => {
     const { quantity, size, isCatalogue, stitchingItems, catalogue, product } =
       item;
+
     const sizeObject = typeof size === "string" ? JSON.parse(size) : size;
     const totalStitchingPrice = stitchingItems.reduce(
       (acc, stitch) => acc + (stitch.option?.price || 0),
@@ -485,7 +486,8 @@ const calculateCartItemTotal = (cartItems) => {
 
     if (isCatalogue && catalogue) {
       let availableProductCount = catalogue.Product.reduce((count, data) => {
-        if (size) {
+
+        if (sizeObject && Object.keys(sizeObject).length > 0) {
           const selectedSize = JSON.parse(size);
           const sizeData = data.sizes.find(
             (s) => s?.size?.id === selectedSize?.id

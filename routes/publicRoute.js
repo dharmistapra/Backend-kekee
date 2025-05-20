@@ -68,6 +68,7 @@ import { getWebSetting } from "../controller/admin/webSetting.js";
 import { getShippingMethod } from "../controller/public/shippingMethod.js";
 import { getCmsContentPublic } from "../controller/public/cmsContent.js";
 import { publicHomeLayout } from "../controller/admin/homeLayout.js";
+import scoialMedia from "../controller/public/socialMedia.js";
 const router = express.Router();
 
 // MENU API
@@ -258,6 +259,7 @@ router.get("/shippingmethod", getShippingMethod);
 router.get("/shareproduct/:id", shareProduct);
 router.get("/cms-content", getCmsContentPublic);
 router.get("/home-layout", publicHomeLayout)
+router.get("/social-feed", scoialMedia)
 export default router;
 
 

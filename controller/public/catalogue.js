@@ -739,6 +739,7 @@ const relatedProduct = async (req, res, next) => {
     const relatedProducts = await prisma.product.findMany({
       where: {
         id: { not: currentProduct.id },
+        showInSingle: true,
         categories: {
           some: {
             category_id: { in: categoryIds },
@@ -752,6 +753,7 @@ const relatedProduct = async (req, res, next) => {
         id: true,
         name: true,
         catalogue_id: true,
+        showInSingle:true,
         sku: true,
         url: true,
         mediumImage: true,

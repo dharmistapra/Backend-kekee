@@ -357,8 +357,6 @@ const getProductDetails = async (req, res, next) => {
           retail_discount: true,
           offer_price: true,
         }),
-        image: true,
-        thumbImage: true,
         description: true,
         tag: true,
         readyToShip: true,
@@ -601,7 +599,119 @@ const getProductDetails = async (req, res, next) => {
   }
 };
 
+const getProductImages = async (req, res, next) => {
+  try {
+    const { url } = req.params;
+    const data = await prisma.product.findUnique({
+      where: {
+        url: url,
+        isActive: true,
+      },
+      select: {
+        image: true,
+        thumbImage: true,
+      },
+    });
 
+    if (!data)
+      return res
+        .status(404)
+        .json({ isSuccess: false, message: "Product not found!" });
+    return res.status(200).json({
+      isSuccess: true,
+      message: "Product get successfully.",
+      data: data,
+    });
+  } catch (error) {
+    console.log(error);
+    let err = new Error("Something went wrong, please try again!");
+    next(err);
+  }
+};
+
+
+
+const getProductStitching = async (req, res, next) => {
+  try {
+    const { url } = req.params;
+
+    const product = await prisma.product.findUnique({
+      where: { url, isActive: true },
+      select: {
+        categories: {
+          select: {
+            category: {
+              select: {
+                StitchingGroup: {
+                  select: {
+                    id: true,
+                    name: true,
+                    stitchingGroupOption: {
+                      where: {
+                        stitchingOption: { isActive: true },
+                      },
+                      select: {
+                        stitchingOption: {
+                          select: {
+                            id: true,
+                            name: true,
+                            catalogue_price: true,
+                            price: true,
+                            type: true,
+                            dispatch_time: true,
+                            isActive: true,
+                            isCustom: true,
+                            isDefault: true,
+                            stitchingValues: {
+                              where: { isActive: true },
+                              select: {
+                                id: true,
+                                type: true,
+                                name: true,
+                                range: true,
+                                values: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        isSuccess: false,
+        message: "Product not found!",
+      });
+    }
+
+    const stitchingOption = product.categories
+      ?.flatMap((item) => item.category?.StitchingGroup || [])
+      .map((group) => ({
+        id: group.id,
+        name: group.name,
+        stitchingOption: group.stitchingGroupOption
+          .map((opt) => opt.stitchingOption)
+          .flat(),
+      }));
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "Stitching options fetched successfully.",
+      data: stitchingOption,
+    });
+  } catch (error) {
+    console.error(error);
+    next(new Error("Something went wrong, please try again!"));
+  }
+};
 
 
 
@@ -1009,4 +1119,4 @@ const filterAttribute = async (req, res, next) => {
   }
 };
 
-export { getProductpublic, getProductDetails, filterAttribute };
+export { getProductpublic, getProductDetails, filterAttribute ,getProductImages,getProductStitching};

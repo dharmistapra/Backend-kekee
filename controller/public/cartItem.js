@@ -62,7 +62,6 @@ const updateCartItem = async (req, res, next) => {
       data: updatedCartItem,
     });
   } catch (error) {
-    console.error("Error updating cart item:", error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
@@ -126,7 +125,6 @@ const postCartItem = async (req, res, next) => {
     }
 
     if (stitching && Array.isArray(stitching) && stitching.length > 0) {
-      console.log("stitching", stitching);
       return;
       const stitchingValidationResult = await validateStitching(stitching);
       if (!stitchingValidationResult?.isValid)
@@ -197,7 +195,6 @@ const postCartItem = async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.log("Error:", error);
     return next(new Error("Something went wrong, please try again!"));
   }
 };
@@ -367,20 +364,15 @@ const postCartItem = async (req, res, next) => {
 const postCartItemOptimizeCode = async (req, res, next) => {
   try {
     const { product_id, catalogue_id, size, stitching, quantity, user_id } = req.body;
-
-    // 1. Validate User
     const user = await prisma.users.findUnique({ where: { id: user_id } });
     if (!user) {
       return res.status(404).json({ isSuccess: false, message: "User not found." });
     }
-
-    // 2. Ensure Cart Exists
     let cart = await prisma.cart.findUnique({ where: { user_id } });
     if (!cart) {
       cart = await prisma.cart.create({ data: { user_id } });
     }
 
-    // 3. Stitching or Size Validation
     if (stitching && stitching.length > 0) {
       const { success } = await validateStitchingOption(stitching);
       if (!success) {
@@ -393,7 +385,6 @@ const postCartItemOptimizeCode = async (req, res, next) => {
       }
     }
 
-    // 4. Normalize Helpers
     const normalizeStitching = (s) => {
       if (!Array.isArray(s)) return [];
       return s
@@ -408,21 +399,38 @@ const postCartItemOptimizeCode = async (req, res, next) => {
 
     const normalizedStitchingStr = JSON.stringify(normalizeStitching(stitching));
     const sizeStr = JSON.stringify(normalizeSize(size));
+    // const addStitchingDetails = async (cartItemId, stitchingData) => {
+    //   for (const stitch of stitchingData) {
+    //     await prisma.cartItemStitching.create({
+    //       data: {
+    //         cartItem_id: cartItemId,
+    //         stitching_option: stitch.optionid,
+    //         measurment: stitch.measurment ? JSON.stringify(stitch.measurment) : null,
+    //       },
+    //     });
+    //   }
+    // };
 
-    // 5. Helper to store stitching details
-    const addStitchingDetails = async (cartItemId, stitchingData) => {
-      for (const stitch of stitchingData) {
-        await prisma.cartItemStitching.create({
-          data: {
-            cartItem_id: cartItemId,
-            stitching_option: stitch.optionid,
-            measurment: stitch.measurment ? JSON.stringify(stitch.measurment) : null,
-          },
-        });
-      }
-    };
+const addStitchingDetails = async (cartItemId, stitchingData) => {
+  try {
+    const insertPromises = stitchingData.map((stitch) =>
+      prisma.cartItemStitching.create({
+        data: {
+          cartItem_id: cartItemId,
+          stitching_option: stitch.optionid,
+          measurment: stitch.measurment ? JSON.stringify(stitch.measurment) : null,
+        },
+      })
+    );
 
-    // 6. Handle Catalogue Add
+    await Promise.all(insertPromises);
+    console.log("All stitching details inserted in parallel.");
+  } catch (error) {
+    console.error("Error adding stitching details:", error);
+  }
+};
+
+
     if (catalogue_id && !product_id) {
       const products = await prisma.product.findMany({ where: { catalogue_id } });
       if (!products.length) {
@@ -477,7 +485,6 @@ const postCartItemOptimizeCode = async (req, res, next) => {
       });
     }
 
-    // 7. Handle Single Product Add
     if (product_id) {
       const product = await prisma.product.findUnique({
         where: { id: product_id },
@@ -496,6 +503,7 @@ const postCartItemOptimizeCode = async (req, res, next) => {
         },
       });
 
+     
       const existingItem = existingItems.find((item) => {
         const existingStitching = normalizeStitching(JSON.parse(item.stitching || "[]"));
         const existingSize = normalizeSize(JSON.parse(item.size || "{}"));
@@ -504,6 +512,8 @@ const postCartItemOptimizeCode = async (req, res, next) => {
           JSON.stringify(existingSize) === sizeStr
         );
       });
+
+      
 
       if (existingItem) {
         const updatedItem = await prisma.cartItem.update({
@@ -518,35 +528,46 @@ const postCartItemOptimizeCode = async (req, res, next) => {
         });
       }
 
-      const newItem = await prisma.cartItem.create({
-        data: {
-          cart_id: cart.id,
-          product_id,
-          stitching: JSON.stringify(stitching),
-          size: sizeStr,
-          quantity,
-          isCatalogue: false,
-        },
-      });
+      const result = await prisma.$transaction(async (tx) => {
+  const newItem = await tx.cartItem.create({
+    data: {
+      cart_id: cart.id,
+      product_id,
+      stitching: JSON.stringify(stitching),
+      size: sizeStr,
+      quantity,
+      isCatalogue: false,
+    },
+  });
 
-      if (stitching?.length > 0) {
-        await addStitchingDetails(newItem.id, stitching);
-      }
+  if (stitching?.length > 0) {
+    const records = stitching.map((stitch) => ({
+      cartItem_id: newItem.id,
+      stitching_option: stitch.optionid,
+      measurment: stitch.measurment ? JSON.stringify(stitch.measurment) : null,
+    }));
+
+    await tx.cartItemStitching.createMany({ data: records });
+  }
+
+  return newItem;
+});
+
+
+       
 
       return res.status(200).json({
         isSuccess: true,
         message: "Product added to cart.",
-        data: newItem,
+        data: result,
       });
     }
 
-    // 8. No product or catalogue ID
     return res.status(400).json({
       isSuccess: false,
       message: "Either product_id or catalogue_id must be provided.",
     });
   } catch (error) {
-    console.error("Cart Add Error:", error);
     return next(new Error("Something went wrong, please try again."));
   }
 };
@@ -591,7 +612,6 @@ const getAllcartitemOptimizecode = async (req, res, next) => {
 
     const { DataModified2, totalSubtotal, totalTax, totalWeight } =
       calculateCartItemTotal(cartItems);
-    console.log("totalSubtotal", totalSubtotal)
 
     return res.status(200).json({
       status: true,
@@ -602,7 +622,6 @@ const getAllcartitemOptimizecode = async (req, res, next) => {
       totalOrder: parseFloat((totalSubtotal + totalTax).toFixed(2)),
     });
   } catch (error) {
-    console.error(error);
     next(new Error("Something went wrong, please try again!"));
   }
 };

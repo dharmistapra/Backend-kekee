@@ -15,7 +15,9 @@ import { getContactDetails } from "../controller/admin/contactDetails.js";
 import {
   filterAttribute,
   getProductDetails,
+  getProductImages,
   getProductpublic,
+  getProductStitching,
 } from "../controller/public/product.js";
 import {
   getCatalogue,
@@ -181,6 +183,8 @@ router.get("/menu-pagewisebanner/:url", getMenuPageWiseBanner);
 // PRODUCT ROUTE
 router.post("/product", getProductpublic);
 router.get("/product-detail/:url", getProductDetails);
+router.get("/product-images/:url", getProductImages);
+router.get("/product-stitching/:url", getProductStitching);
 router.get("/related-product/:slug", relatedProduct);
 
 // CATALOGUE ROUTE

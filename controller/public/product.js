@@ -325,271 +325,18 @@ const getProductpublic = async (req, res, next) => {
   }
 };
 
-// const getProductDetails = async (req, res, next) => {
-//   try {
-//     const { url } = req.params;
-
-//     const isTokenExists = await tokenExists(req);
-//     const isWebSettings = await prisma.webSettings.findFirst({
-//       select: { showPrice: true },
-//     });
-//     const shouldHidePrice = !isTokenExists && isWebSettings.showPrice === false;
-//     const data = await prisma.product.findUnique({
-//       where: {
-//         url: url,
-//         isActive: true,
-//       },
-//       select: {
-//         id: true,
-//         name: true,
-//         sku: true,
-//         showInSingle: true,
-//         catalogue_id: true,
-//         catalogue: {
-//           select: { id: true, name: true, url: true },
-//         },
-//         url: true,
-//         quantity: true,
-//         weight: true,
-//         ...(shouldHidePrice === false && {
-//           average_price: true,
-//           retail_price: true,
-//           retail_discount: true,
-//           offer_price: true,
-//         }),
-//         image: true,
-//         thumbImage: true,
-//         description: true,
-//         tag: true,
-//         readyToShip: true,
-//         meta_title: true,
-//         meta_keyword: true,
-//         meta_description: true,
-//         optionType: true,
-//         categories: {
-//           select: {
-//             category: {
-//               select: {
-//                 id: true,
-//                 StitchingGroup: {
-//                   select: {
-//                     id: true,
-//                     name: true,
-//                     stitchingGroupOption: {
-//                       select: {
-//                         stitchingOption: {
-//                           select: {
-//                             id: true,
-//                             name: true,
-//                             catalogue_price: true,
-//                             price: true,
-//                             type: true,
-//                             dispatch_time: true,
-//                             isActive: true,
-//                             isCustom: true,
-//                             isDefault: true,
-//                             stitchingValues: {
-//                               select: {
-//                                 id: true,
-//                                 type: true,
-//                                 name: true,
-//                                 range: true,
-//                                 values: true,
-//                               },
-//                               where: {
-//                                 isActive: true,
-//                               },
-//                             },
-//                           },
-//                         },
-//                       },
-//                       where: {
-//                         stitchingOption: {
-//                           isActive: true,
-//                         },
-//                       },
-//                     },
-//                   },
-//                 },
-//               },
-//             },
-//           },
-//         },
-//         attributeValues: {
-//           select: {
-//             attribute: true,
-//             attributeValue: true,
-//           },
-//         },
-//         colours: {
-//           include: {
-//             colour: {
-//               select: {
-//                 code: true,
-//                 name: true,
-//               },
-//             },
-//           },
-//         },
-//         labels: {
-//           select: {
-//             id: true,
-//             label: {
-//               select: {
-//                 id: true,
-//                 name: true,
-//               },
-//             },
-//             expiryTime: true,
-//           },
-//         },
-//         sizes: {
-//           where: { size: { isActive: true } },
-//           include: {
-//             size: {
-//               select: {
-//                 id: true,
-//                 value: true,
-//                 position: true,
-//               },
-//             },
-//           },
-//         },
-//         RelatedProduct: {
-//           where: {
-//             related: { catalogue: { deletedAt: null }, isActive: true },
-//           },
-//           select: {
-//             related: {
-//               select: {
-//                 id: true,
-//                 sku: true,
-//                 url: true,
-//                 image: true,
-//               },
-//             },
-//           },
-//         },
-//       },
-//     });
-
-//     if (!data)
-//       return res
-//         .status(404)
-//         .json({ isSuccess: false, message: "Product not found!" });
-
-//     data.catalogueUrl = data.catalogue?.url || null;
-//     if (data?.attributeValues?.length > 0) {
-//       let labels = [];
-//       let colours = [];
-//       const processedAttributes = data.attributeValues.reduce((acc, item) => {
-//         const { attribute, attributeValue } = item;
-//         if (attribute.type === "ExpiryTime") return acc;
-//         if (attribute.type === "Label") {
-//           labels.push({
-//             label: attributeValue.name,
-//             colour: attributeValue.colour,
-//           });
-//           return acc;
-//         }
-
-//         if (!acc[attribute.id]) {
-//           acc[attribute.id] = {
-//             name: attribute.name,
-//             key: attribute.key,
-//             values: [],
-//           };
-//         }
-//         if (attributeValue && attributeValue.attr_id === attribute.id) {
-//           acc[attribute.id].values.push(attributeValue.name);
-//         }
-//         return acc;
-//       }, {});
-//       data.labels = labels;
-//       data.attributeValues = Object.values(processedAttributes);
-//     }
-
-//     if (data && data.optionType === "Stitching") {
-//       data.stitchingOption = data.categories
-//         ?.map((item) => {
-//           const stitchingGroup = item.category?.StitchingGroup;
-
-//           if (Array.isArray(stitchingGroup) && stitchingGroup.length > 0) {
-//             return stitchingGroup.flatMap((group) => ({
-//               id: group.id,
-//               name: group.name,
-//               stitchingOption: group.stitchingGroupOption
-//                 .map((option) => ({
-//                   ...option.stitchingOption,
-//                 }))
-//                 .flat(),
-//             }));
-//           }
-
-//           return [];
-//         })
-//         .flat();
-//     }
-
-//     if (data && data.categories) {
-//       data.categories = data.categories.map((item) => item.category.id);
-//     }
-
-//     if (data && data.sizes) {
-//       data.sizes = data.sizes
-//         ?.map((item) => {
-//           item.size.price = item.price;
-//           item.size.quantity = item.quantity;
-//           return item.size;
-//         })
-//         .flat();
-//     }
-//     if (data && data.RelatedProduct) {
-//       data.RelatedProduct = data.RelatedProduct?.map((item) => {
-//         return item.related;
-//       }).flat();
-//     }
-
-//     return res.status(200).json({
-//       isSuccess: true,
-//       message: "Product get successfully.",
-//       data: data,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     let err = new Error("Something went wrong, please try again!");
-//     next(err);
-//   }
-// };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const getProductDetails = async (req, res, next) => {
   try {
     const { url } = req.params;
 
     const isTokenExists = await tokenExists(req);
-
     const isWebSettings = await prisma.webSettings.findFirst({
       select: { showPrice: true },
     });
-
-    const shouldHidePrice = !isTokenExists && isWebSettings?.showPrice === false;
-
-    const product = await prisma.product.findFirst({
+    const shouldHidePrice = !isTokenExists && isWebSettings.showPrice === false;
+    const data = await prisma.product.findUnique({
       where: {
-        url,
+        url: url,
         isActive: true,
       },
       select: {
@@ -598,9 +345,20 @@ const getProductDetails = async (req, res, next) => {
         sku: true,
         showInSingle: true,
         catalogue_id: true,
+        catalogue: {
+          select: { id: true, name: true, url: true },
+        },
         url: true,
         quantity: true,
         weight: true,
+        ...(shouldHidePrice === false && {
+          average_price: true,
+          retail_price: true,
+          retail_discount: true,
+          offer_price: true,
+        }),
+        image: true,
+        thumbImage: true,
         description: true,
         tag: true,
         readyToShip: true,
@@ -608,39 +366,7 @@ const getProductDetails = async (req, res, next) => {
         meta_keyword: true,
         meta_description: true,
         optionType: true,
-        image: true,
-        thumbImage: true,
-        ...(shouldHidePrice === false && {
-          average_price: true,
-          retail_price: true,
-          retail_discount: true,
-          offer_price: true,
-        }),
-        catalogue: {
-          select: { id: true, name: true, url: true },
-        },
-      },
-    });
-
-    if (!product) {
-      return res.status(404).json({
-        isSuccess: false,
-        message: "Product not found!",
-      });
-    }
-
-    const [attributeValues, categories, colours, labels, sizes, relatedProducts] =
-      await Promise.all([
-        prisma.productAttributeValue.findMany({
-          where: { product_id: product.id },
-          select: {
-            attribute: true,
-            attributeValue: true,
-          },
-        }),
-
-        prisma.productCategory.findMany({
-          where: { product_id: product.id },
+        categories: {
           select: {
             category: {
               select: {
@@ -650,9 +376,6 @@ const getProductDetails = async (req, res, next) => {
                     id: true,
                     name: true,
                     stitchingGroupOption: {
-                      where: {
-                        stitchingOption: { isActive: true },
-                      },
                       select: {
                         stitchingOption: {
                           select: {
@@ -666,7 +389,6 @@ const getProductDetails = async (req, res, next) => {
                             isCustom: true,
                             isDefault: true,
                             stitchingValues: {
-                              where: { isActive: true },
                               select: {
                                 id: true,
                                 type: true,
@@ -674,8 +396,16 @@ const getProductDetails = async (req, res, next) => {
                                 range: true,
                                 values: true,
                               },
+                              where: {
+                                isActive: true,
+                              },
                             },
                           },
+                        },
+                      },
+                      where: {
+                        stitchingOption: {
+                          isActive: true,
                         },
                       },
                     },
@@ -684,11 +414,24 @@ const getProductDetails = async (req, res, next) => {
               },
             },
           },
-        }),
-
-
-        prisma.productLabel.findMany({
-          where: { product_id: product.id },
+        },
+        attributeValues: {
+          select: {
+            attribute: true,
+            attributeValue: true,
+          },
+        },
+        colours: {
+          include: {
+            colour: {
+              select: {
+                code: true,
+                name: true,
+              },
+            },
+          },
+        },
+        labels: {
           select: {
             id: true,
             label: {
@@ -699,13 +442,9 @@ const getProductDetails = async (req, res, next) => {
             },
             expiryTime: true,
           },
-        }),
-
-        prisma.productSize.findMany({
-          where: {
-            product_id: product.id,
-            size: { isActive: true },
-          },
+        },
+        sizes: {
+          where: { size: { isActive: true } },
           include: {
             size: {
               select: {
@@ -715,15 +454,10 @@ const getProductDetails = async (req, res, next) => {
               },
             },
           },
-        }),
-
-        prisma.relatedProduct.findMany({
+        },
+        RelatedProduct: {
           where: {
-            product_id: product.id,
-            related: {
-              isActive: true,
-              catalogue: { deletedAt: null },
-            },
+            related: { catalogue: { deletedAt: null }, isActive: true },
           },
           select: {
             related: {
@@ -735,82 +469,387 @@ const getProductDetails = async (req, res, next) => {
               },
             },
           },
-        }),
-      ]);
+        },
+      },
+    });
 
+    if (!data)
+      return res
+        .status(404)
+        .json({ isSuccess: false, message: "Product not found!" });
 
-    product.catalogueUrl = product.catalogue?.url || null;
+    data.catalogueUrl = data.catalogue?.url || null;
+    if (data?.attributeValues?.length > 0) {
+      let labels = [];
+      let colours = [];
+      // const processedAttributes = data.attributeValues.reduce((acc, item) => {
+      //   const { attribute, attributeValue } = item;
+      //   if (attribute.type === "ExpiryTime") return acc;
+      //   if (attribute.type === "Label") {
+      //     labels.push({
+      //       label: attributeValue.name,
+      //       colour: attributeValue.colour,
+      //     });
+      //     return acc;
+      //   }
 
-    let labelsList = [];
-    const processedAttributes = attributeValues.reduce((acc, { attribute, attributeValue }) => {
-      if (!attribute || !attributeValue) return acc;
-      if (attribute.type === "Label") {
-        labelsList.push({
-          label: attributeValue.name,
-          colour: attributeValue.colour,
-        });
+      //   if (attribute.type === "Colour") {
+      //     acc[attribute.id].values.push({
+      //       color: attributeValue.colour || null,
+      //       value: attributeValue.name,
+      //     });
+      //   } else {
+      //     acc[attribute.id].values.push(attributeValue.name);
+      //   }
+
+      //   if (!acc[attribute.id]) {
+      //     acc[attribute.id] = {
+      //       name: attribute.name,
+      //       key: attribute.key,
+      //       values: [],
+      //     };
+      //   }
+      //   if (attributeValue && attributeValue.attr_id === attribute.id) {
+      //     acc[attribute.id].values.push(attributeValue.name);
+      //   }
+      //   return acc;
+      // }, {});
+
+      let labelsList = [];
+      const processedAttributes = data?.attributeValues.reduce((acc, { attribute, attributeValue }) => {
+        if (!attribute || !attributeValue) return acc;
+        if (attribute.type === "Label") {
+          labelsList.push({
+            label: attributeValue.name,
+            colour: attributeValue.colour,
+          });
+          return acc;
+        }
+        if (attribute.type === "ExpiryTime") return acc;
+        if (!acc[attribute.id]) {
+          acc[attribute.id] = {
+            name: attribute.name,
+            key: attribute.key,
+            values: [],
+          };
+        }
+        if (attribute.type === "Colour") {
+          acc[attribute.id].values.push({
+            color: attributeValue.colour || null,
+            value: attributeValue.name,
+          });
+        } else {
+          acc[attribute.id].values.push(attributeValue.name);
+        }
+
         return acc;
-      }
-      if (attribute.type === "ExpiryTime") return acc;
-      if (!acc[attribute.id]) {
-        acc[attribute.id] = {
-          name: attribute.name,
-          key: attribute.key,
-          values: [],
-        };
-      }
-      if (attribute.type === "Colour") {
-        acc[attribute.id].values.push({
-          color: attributeValue.colour || null,
-          value: attributeValue.name,
-        });
-      } else {
-        acc[attribute.id].values.push(attributeValue.name);
-      }
+      }, {});
+      data.labels = labelsList;
+      data.attributeValues = Object.values(processedAttributes);
+    }
 
-      return acc;
-    }, {});
+    if (data && data.optionType === "Stitching") {
+      data.stitchingOption = data.categories
+        ?.map((item) => {
+          const stitchingGroup = item.category?.StitchingGroup;
 
+          if (Array.isArray(stitchingGroup) && stitchingGroup.length > 0) {
+            return stitchingGroup.flatMap((group) => ({
+              id: group.id,
+              name: group.name,
+              stitchingOption: group.stitchingGroupOption
+                .map((option) => ({
+                  ...option.stitchingOption,
+                }))
+                .flat(),
+            }));
+          }
 
-    product.labels = labelsList;
-    product.attributeValues = Object.values(processedAttributes);
-
-
-
-    product.sizes = sizes?.map((item) => ({
-      ...item.size,
-      price: item.price,
-      quantity: item.quantity,
-    }));
-
-    product.RelatedProduct = relatedProducts?.map((item) => item.related);
-
-    product.categories = categories?.map((item) => item.category.id);
-
-    if (product.optionType === "Stitching") {
-      product.stitchingOption = categories
-        .map((catItem) => {
-          const groups = catItem.category?.StitchingGroup || [];
-          return groups.flatMap((group) => ({
-            id: group.id,
-            name: group.name,
-            stitchingOption: group.stitchingGroupOption
-              .flatMap((opt) => opt.stitchingOption),
-          }));
+          return [];
         })
         .flat();
+    }
+
+    if (data && data.categories) {
+      data.categories = data.categories.map((item) => item.category.id);
+    }
+
+    if (data && data.sizes) {
+      data.sizes = data.sizes
+        ?.map((item) => {
+          item.size.price = item.price;
+          item.size.quantity = item.quantity;
+          return item.size;
+        })
+        .flat();
+    }
+    if (data && data.RelatedProduct) {
+      data.RelatedProduct = data.RelatedProduct?.map((item) => {
+        return item.related;
+      }).flat();
     }
 
     return res.status(200).json({
       isSuccess: true,
       message: "Product get successfully.",
-      data: product,
+      data: data,
     });
   } catch (error) {
-    console.error(error);
-    next(new Error("Something went wrong, please try again!"));
+    console.log(error);
+    let err = new Error("Something went wrong, please try again!");
+    next(err);
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// const getProductDetails = async (req, res, next) => {
+//   try {
+//     const { url } = req.params;
+
+//     const isTokenExists = await tokenExists(req);
+
+//     const isWebSettings = await prisma.webSettings.findFirst({
+//       select: { showPrice: true },
+//     });
+
+//     const shouldHidePrice = !isTokenExists && isWebSettings?.showPrice === false;
+
+//     const product = await prisma.product.findFirst({
+//       where: {
+//         url,
+//         isActive: true,
+//       },
+//       select: {
+//         id: true,
+//         name: true,
+//         sku: true,
+//         showInSingle: true,
+//         catalogue_id: true,
+//         url: true,
+//         quantity: true,
+//         weight: true,
+//         description: true,
+//         tag: true,
+//         readyToShip: true,
+//         meta_title: true,
+//         meta_keyword: true,
+//         meta_description: true,
+//         optionType: true,
+//         image: true,
+//         thumbImage: true,
+//         ...(shouldHidePrice === false && {
+//           average_price: true,
+//           retail_price: true,
+//           retail_discount: true,
+//           offer_price: true,
+//         }),
+//         catalogue: {
+//           select: { id: true, name: true, url: true },
+//         },
+//       },
+//     });
+
+//     if (!product) {
+//       return res.status(404).json({
+//         isSuccess: false,
+//         message: "Product not found!",
+//       });
+//     }
+
+//     const [attributeValues, categories, colours, labels, sizes, relatedProducts] =
+//       await Promise.all([
+//         prisma.productAttributeValue.findMany({
+//           where: { product_id: product.id },
+//           select: {
+//             attribute: true,
+//             attributeValue: true,
+//           },
+//         }),
+
+//         prisma.productCategory.findMany({
+//           where: { product_id: product.id },
+//           select: {
+//             category: {
+//               select: {
+//                 id: true,
+//                 StitchingGroup: {
+//                   select: {
+//                     id: true,
+//                     name: true,
+//                     stitchingGroupOption: {
+//                       where: {
+//                         stitchingOption: { isActive: true },
+//                       },
+//                       select: {
+//                         stitchingOption: {
+//                           select: {
+//                             id: true,
+//                             name: true,
+//                             catalogue_price: true,
+//                             price: true,
+//                             type: true,
+//                             dispatch_time: true,
+//                             isActive: true,
+//                             isCustom: true,
+//                             isDefault: true,
+//                             stitchingValues: {
+//                               where: { isActive: true },
+//                               select: {
+//                                 id: true,
+//                                 type: true,
+//                                 name: true,
+//                                 range: true,
+//                                 values: true,
+//                               },
+//                             },
+//                           },
+//                         },
+//                       },
+//                     },
+//                   },
+//                 },
+//               },
+//             },
+//           },
+//         }),
+
+
+//         prisma.productLabel.findMany({
+//           where: { product_id: product.id },
+//           select: {
+//             id: true,
+//             label: {
+//               select: {
+//                 id: true,
+//                 name: true,
+//               },
+//             },
+//             expiryTime: true,
+//           },
+//         }),
+
+//         prisma.productSize.findMany({
+//           where: {
+//             product_id: product.id,
+//             size: { isActive: true },
+//           },
+//           include: {
+//             size: {
+//               select: {
+//                 id: true,
+//                 value: true,
+//                 position: true,
+//               },
+//             },
+//           },
+//         }),
+
+//         prisma.relatedProduct.findMany({
+//           where: {
+//             product_id: product.id,
+//             related: {
+//               isActive: true,
+//               catalogue: { deletedAt: null },
+//             },
+//           },
+//           select: {
+//             related: {
+//               select: {
+//                 id: true,
+//                 sku: true,
+//                 url: true,
+//                 image: true,
+//               },
+//             },
+//           },
+//         }),
+//       ]);
+
+
+//     product.catalogueUrl = product.catalogue?.url || null;
+
+//     let labelsList = [];
+//     const processedAttributes = attributeValues.reduce((acc, { attribute, attributeValue }) => {
+//       if (!attribute || !attributeValue) return acc;
+//       if (attribute.type === "Label") {
+//         labelsList.push({
+//           label: attributeValue.name,
+//           colour: attributeValue.colour,
+//         });
+//         return acc;
+//       }
+//       if (attribute.type === "ExpiryTime") return acc;
+//       if (!acc[attribute.id]) {
+//         acc[attribute.id] = {
+//           name: attribute.name,
+//           key: attribute.key,
+//           values: [],
+//         };
+//       }
+//       if (attribute.type === "Colour") {
+//         acc[attribute.id].values.push({
+//           color: attributeValue.colour || null,
+//           value: attributeValue.name,
+//         });
+//       } else {
+//         acc[attribute.id].values.push(attributeValue.name);
+//       }
+
+//       return acc;
+//     }, {});
+
+
+//     product.labels = labelsList;
+//     product.attributeValues = Object.values(processedAttributes);
+
+
+
+//     product.sizes = sizes?.map((item) => ({
+//       ...item.size,
+//       price: item.price,
+//       quantity: item.quantity,
+//     }));
+
+//     product.RelatedProduct = relatedProducts?.map((item) => item.related);
+
+//     product.categories = categories?.map((item) => item.category.id);
+
+//     if (product.optionType === "Stitching") {
+//       product.stitchingOption = categories
+//         .map((catItem) => {
+//           const groups = catItem.category?.StitchingGroup || [];
+//           return groups.flatMap((group) => ({
+//             id: group.id,
+//             name: group.name,
+//             stitchingOption: group.stitchingGroupOption
+//               .flatMap((opt) => opt.stitchingOption),
+//           }));
+//         })
+//         .flat();
+//     }
+
+//     return res.status(200).json({
+//       isSuccess: true,
+//       message: "Product get successfully.",
+//       data: product,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     next(new Error("Something went wrong, please try again!"));
+//   }
+// };
 
 
 const filterAttribute = async (req, res, next) => {

@@ -976,8 +976,6 @@ const relatedCatalogue = async (req, res, next) => {
     const shouldHidePrice = !isTokenExists && isWebSettings.showPrice === false;
 
     const { url } = req.params;
-    console.log("slug", url)
-
     const currentCatalogue = await prisma.catalogue.findUnique({
       where: { url: url },
       include: { CatalogueCategory: true }
@@ -1015,17 +1013,23 @@ const relatedCatalogue = async (req, res, next) => {
           average_price: true,
           offer_price: true,
         }),
+
         CatalogueCategory: {
           where: { category: { isActive: true } },
           select: {
             category: {
               select: {
-                id: true,
-                name: true,
                 url: true,
               },
             },
           },
+        },
+
+        Product: {
+          select: {
+            showInSingle: true,
+            id: true,
+          }
         },
       },
       orderBy: {
@@ -1034,10 +1038,22 @@ const relatedCatalogue = async (req, res, next) => {
       take: 10,
     });
 
+
+    const processedCatalogue = relateCatalogue && relateCatalogue?.length > 0 && relateCatalogue?.map((catalogue) => {
+      const firstProduct = catalogue.Product[0];
+      const type = firstProduct?.showInSingle ? "Full Set + Single" : "Full Set";
+      const { Product, ...catalogueWithoutProduct } = catalogue;
+
+      return {
+        ...catalogueWithoutProduct,
+        type,
+      };
+    });
+
     return res.status(200).json({
       isSuccess: true,
       message: "Related products fetched successfully",
-      data: relateCatalogue,
+      data: processedCatalogue,
     });
   } catch (err) {
     console.error("Error in relatedProduct:", err);

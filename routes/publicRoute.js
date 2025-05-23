@@ -18,6 +18,7 @@ import {
   getProductImages,
   getProductpublic,
   getProductStitching,
+  // resizeImages,
 } from "../controller/public/product.js";
 import {
   getCatalogue,
@@ -186,6 +187,7 @@ router.get("/menu-pagewisebanner/:url", getMenuPageWiseBanner);
 router.post("/product", getProductpublic);
 router.get("/product-detail/:url", getProductDetails);
 router.get("/product-images/:url", getProductImages);
+// router.get("/images-resize", resizeImages);
 router.get("/product-stitching/:url", getProductStitching);
 router.get("/related-product/:slug", relatedProduct);
 

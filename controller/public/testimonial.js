@@ -1,7 +1,6 @@
 import prisma from "../../db/config.js";
 const gettestimonial = async (req, res, next) => {
     try {
-        console.log("jdjj")
         const take = 10;
         const data = await prisma.testimonial.findMany({
             orderBy: {

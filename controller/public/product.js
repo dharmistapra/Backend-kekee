@@ -3,82 +3,6 @@ import { tokenExists } from "../../helper/common.js";
 
 const getProductpublic = async (req, res, next) => {
   try {
-    // const { perPage, pageNo, url } = req.body;
-    // const { filter, minPrice, maxPrice } = req.query;
-    // const page = +pageNo || 1;
-    // const take = +perPage || 10;
-    // const skip = (page - 1) * take;
-    // const fetchCategory = await prisma.menu.findFirst({
-    //   where: { url: url },
-    //   select: { category_id: true },
-    // });
-
-    // const { category_id } = fetchCategory;
-    // let filters;
-    // if (filter) {
-    //   const filterSegment = filter.split(",");
-    //   filters = filterSegment;
-    // }
-
-    // const priceCondition = {};
-    // if (minPrice) priceCondition.gte = +minPrice;
-    // if (maxPrice) priceCondition.lte = +maxPrice;
-
-    // const count = await prisma.productCategory.count({
-    //   where: {
-    //     category_id: category_id,
-    //     product: {
-    //       ...((minPrice || maxPrice) && { offer_price: priceCondition }),
-    //       isActive: true,
-    //       showInSingle: true,
-    //       isDraft: false,
-    //       ...(filter && {
-    //         attributeValues: {
-    //           some: {
-    //             OR: filters.map((value) => ({ attributeValue: { value } })),
-    //           },
-    //         },
-    //       }),
-    //     },
-    //   },
-    // });
-    // const productData = await prisma.productCategory.findMany({
-    //   where: {
-    //     category_id: category_id,
-    //     product: {
-    //       isActive: true,
-    //       showInSingle: true,
-    //       ...((minPrice || maxPrice) && { offer_price: priceCondition }),
-    //       ...(filter && {
-    //         attributeValues: {
-    //           some: {
-    //             OR: filters.map((value) => ({ attributeValue: { value } })), // Match any filter value
-    //           },
-    //         },
-    //       }),
-    //     },
-    //   },
-
-    //   include: {
-    //     category: {
-    //       select: {
-    //         id: true,
-    //         name: true,
-    //       },
-    //     },
-    //     product: {
-    //       include: {
-    //         attributeValues: {
-    //           select: { id: true, attributeValue: true },
-    //         },
-    //       },
-    //     },
-    //   },
-    //   skip,
-    //   take,
-    //   orderBy: { updatedAt: "asc" },
-    // });
-
     const { perPage, pageNo, url, user_id, filter } = req.body;
     const { minPrice, maxPrice, ...dynamicFilters } = req.query;
 
@@ -110,8 +34,6 @@ const getProductpublic = async (req, res, next) => {
         wishLists.map((value) => wishList.push(value));
       }
     }
-
-    // Fetch the category based on the URL
     const fetchCategory = await prisma.categoryMaster.findFirst({
       where: { url: url },
       select: { id: true },
@@ -127,20 +49,6 @@ const getProductpublic = async (req, res, next) => {
     const { id } = fetchCategory;
 
     let orderBy = { updatedAt: "desc" };
-    // if (price) {
-    //   price === "high"
-    //     ? (orderBy["product"] = { offer_price: "asc" })
-    //     : (orderBy["product"] = { offer_price: "desc" });
-    //   delete orderBy["updatedAt"];
-    // }
-    // if (!price && name) {
-    //   name === "AtoZ"
-    //     ? (orderBy["product"] = { name: "asc" })
-    //     : (orderBy["product"] = { name: "desc" });
-    //   delete orderBy["updatedAt"];
-    // }
-
-    // let orderBy = { updatedAt: "desc" };
     if (filter) {
       if (filter === "price-ascending") {
         orderBy["product"] = { offer_price: "asc" };
@@ -153,16 +61,15 @@ const getProductpublic = async (req, res, next) => {
       }
       delete orderBy["updatedAt"];
     }
-    // Build dynamic filter conditions for attributes
     let filterConditions = [];
     for (const [key, value] of Object.entries(dynamicFilters)) {
-      const values = value.split(","); // Support multiple values for a single attribute
+      const values = value.split(",");
       filterConditions.push(
         ...values.map((val) => ({
           attributeValues: {
             some: {
               attributeValue: {
-                attribute: { key: key }, // Match the attribute name dynamically
+                attribute: { key: key },
                 value: val,
               },
             },
@@ -170,13 +77,9 @@ const getProductpublic = async (req, res, next) => {
         }))
       );
     }
-
-    // Build the price condition
     const priceCondition = {};
     if (minPrice) priceCondition.gte = +minPrice;
     if (maxPrice) priceCondition.lte = +maxPrice;
-
-    // Count total products matching the conditions
     const count = await prisma.productCategory.count({
       where: {
         category_id: id,
@@ -188,8 +91,6 @@ const getProductpublic = async (req, res, next) => {
         },
       },
     });
-
-    // Fetch paginated products
     const productData = await prisma.productCategory.findMany({
       where: {
         category_id: id,
@@ -286,9 +187,6 @@ const getProductpublic = async (req, res, next) => {
       value.product.wishList_id =
         wishList.find((wish) => wish.product_id === value.product.id)?.id ||
         null;
-      // if (user_id && wishList.length > 0)
-      //   value.product.wishList = wishList.includes(value.product.id);
-
       value.product.outOfStock = value.product.quantity === 0;
 
       if (shouldHidePrice) {
@@ -299,8 +197,6 @@ const getProductpublic = async (req, res, next) => {
       }
       return value;
     });
-
-    // Return response
     return res.status(200).json({
       isSuccess: true,
       message: "Products fetched successfully.",
@@ -310,16 +206,15 @@ const getProductpublic = async (req, res, next) => {
       pagesize: take,
     });
 
-    return res.status(200).json({
-      isSuccess: true,
-      message: "Product get successfully.",
-      data: productData,
-      totalCount: count,
-      currentPage: page,
-      pagesize: take,
-    });
+    // return res.status(200).json({
+    //   isSuccess: true,
+    //   message: "Product get successfully.",
+    //   data: productData,
+    //   totalCount: count,
+    //   currentPage: page,
+    //   pagesize: take,
+    // });
   } catch (error) {
-    console.log(error);
     let err = new Error("Something went wrong, please try again!");
     next(err);
   }
@@ -328,7 +223,6 @@ const getProductpublic = async (req, res, next) => {
 const getProductDetails = async (req, res, next) => {
   try {
     const { url } = req.params;
-
     const isTokenExists = await tokenExists(req);
     const isWebSettings = await prisma.webSettings.findFirst({
       select: { showPrice: true },
@@ -369,46 +263,46 @@ const getProductDetails = async (req, res, next) => {
             category: {
               select: {
                 id: true,
-                StitchingGroup: {
-                  select: {
-                    id: true,
-                    name: true,
-                    stitchingGroupOption: {
-                      select: {
-                        stitchingOption: {
-                          select: {
-                            id: true,
-                            name: true,
-                            catalogue_price: true,
-                            price: true,
-                            type: true,
-                            dispatch_time: true,
-                            isActive: true,
-                            isCustom: true,
-                            isDefault: true,
-                            stitchingValues: {
-                              select: {
-                                id: true,
-                                type: true,
-                                name: true,
-                                range: true,
-                                values: true,
-                              },
-                              where: {
-                                isActive: true,
-                              },
-                            },
-                          },
-                        },
-                      },
-                      where: {
-                        stitchingOption: {
-                          isActive: true,
-                        },
-                      },
-                    },
-                  },
-                },
+                // StitchingGroup: {
+                //   select: {
+                //     id: true,
+                //     name: true,
+                //     stitchingGroupOption: {
+                //       select: {
+                //         stitchingOption: {
+                //           select: {
+                //             id: true,
+                //             name: true,
+                //             catalogue_price: true,
+                //             price: true,
+                //             type: true,
+                //             dispatch_time: true,
+                //             isActive: true,
+                //             isCustom: true,
+                //             isDefault: true,
+                //             stitchingValues: {
+                //               select: {
+                //                 id: true,
+                //                 type: true,
+                //                 name: true,
+                //                 range: true,
+                //                 values: true,
+                //               },
+                //               where: {
+                //                 isActive: true,
+                //               },
+                //             },
+                //           },
+                //         },
+                //       },
+                //       where: {
+                //         stitchingOption: {
+                //           isActive: true,
+                //         },
+                //       },
+                //     },
+                //   },
+                // },
               },
             },
           },
@@ -419,28 +313,28 @@ const getProductDetails = async (req, res, next) => {
             attributeValue: true,
           },
         },
-        colours: {
-          include: {
-            colour: {
-              select: {
-                code: true,
-                name: true,
-              },
-            },
-          },
-        },
-        labels: {
-          select: {
-            id: true,
-            label: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            expiryTime: true,
-          },
-        },
+        // colours: {
+        //   include: {
+        //     colour: {
+        //       select: {
+        //         code: true,
+        //         name: true,
+        //       },
+        //     },
+        //   },
+        // },
+        // labels: {
+        //   select: {
+        //     id: true,
+        //     label: {
+        //       select: {
+        //         id: true,
+        //         name: true,
+        //       },
+        //     },
+        //     expiryTime: true,
+        //   },
+        // },
         sizes: {
           where: { size: { isActive: true } },
           include: {
@@ -478,8 +372,8 @@ const getProductDetails = async (req, res, next) => {
 
     data.catalogueUrl = data.catalogue?.url || null;
     if (data?.attributeValues?.length > 0) {
-      let labels = [];
-      let colours = [];
+      // let labels = [];
+      // let colours = [];
       // const processedAttributes = data.attributeValues.reduce((acc, item) => {
       //   const { attribute, attributeValue } = item;
       //   if (attribute.type === "ExpiryTime") return acc;
@@ -546,27 +440,27 @@ const getProductDetails = async (req, res, next) => {
       data.attributeValues = Object.values(processedAttributes);
     }
 
-    if (data && data.optionType === "Stitching") {
-      data.stitchingOption = data.categories
-        ?.map((item) => {
-          const stitchingGroup = item.category?.StitchingGroup;
+    // if (data && data.optionType === "Stitching") {
+    //   data.stitchingOption = data.categories
+    //     ?.map((item) => {
+    //       const stitchingGroup = item.category?.StitchingGroup;
 
-          if (Array.isArray(stitchingGroup) && stitchingGroup.length > 0) {
-            return stitchingGroup.flatMap((group) => ({
-              id: group.id,
-              name: group.name,
-              stitchingOption: group.stitchingGroupOption
-                .map((option) => ({
-                  ...option.stitchingOption,
-                }))
-                .flat(),
-            }));
-          }
+    //       if (Array.isArray(stitchingGroup) && stitchingGroup.length > 0) {
+    //         return stitchingGroup.flatMap((group) => ({
+    //           id: group.id,
+    //           name: group.name,
+    //           stitchingOption: group.stitchingGroupOption
+    //             .map((option) => ({
+    //               ...option.stitchingOption,
+    //             }))
+    //             .flat(),
+    //         }));
+    //       }
 
-          return [];
-        })
-        .flat();
-    }
+    //       return [];
+    //     })
+    //     .flat();
+    // }
 
     if (data && data.categories) {
       data.categories = data.categories.map((item) => item.category.id);
@@ -1119,4 +1013,4 @@ const filterAttribute = async (req, res, next) => {
   }
 };
 
-export { getProductpublic, getProductDetails, filterAttribute ,getProductImages,getProductStitching};
+export { getProductpublic, getProductDetails, filterAttribute, getProductImages, getProductStitching };

@@ -22,6 +22,8 @@ import {
 import {
   getCatalogue,
   getCatalogueProduct,
+  getCatalogueStitching,
+  relatedCatalogue,
   relatedProduct,
   searchCatalogueAndProduct,
   shareProduct,
@@ -190,6 +192,8 @@ router.get("/related-product/:slug", relatedProduct);
 // CATALOGUE ROUTE
 router.post("/catalogue", getCatalogue);
 router.get("/catalogueproduct/:url", getCatalogueProduct);
+router.get("/catalogue-stitching/:url", getCatalogueStitching);
+router.get("/catalogue-realted/:url", relatedCatalogue);
 
 router.get("/filter/:url", filterAttribute);
 

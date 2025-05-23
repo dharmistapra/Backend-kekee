@@ -186,8 +186,6 @@ const getCatalogueProduct = async (req, res, next) => {
           offer_price: true,
         }),
         optionType: true,
-        // stitching: true,
-        // size: true,
         weight: true,
         meta_title: true,
         meta_keyword: true,
@@ -201,46 +199,46 @@ const getCatalogueProduct = async (req, res, next) => {
             category: {
               select: {
                 id: true,
-                StitchingGroup: {
-                  select: {
-                    id: true,
-                    name: true,
-                    stitchingGroupOption: {
-                      select: {
-                        stitchingOption: {
-                          select: {
-                            id: true,
-                            name: true,
-                            catalogue_price: true,
-                            price: true,
-                            type: true,
-                            dispatch_time: true,
-                            isActive: true,
-                            isCustom: true,
-                            isDefault: true,
-                            stitchingValues: {
-                              select: {
-                                id: true,
-                                type: true,
-                                name: true,
-                                range: true,
-                                values: true,
-                              },
-                              where: {
-                                isActive: true,
-                              },
-                            },
-                          },
-                        },
-                      },
-                      where: {
-                        stitchingOption: {
-                          isActive: true,
-                        },
-                      },
-                    },
-                  },
-                },
+                // StitchingGroup: {
+                //   select: {
+                //     id: true,
+                //     name: true,
+                //     stitchingGroupOption: {
+                //       select: {
+                //         stitchingOption: {
+                //           select: {
+                //             id: true,
+                //             name: true,
+                //             catalogue_price: true,
+                //             price: true,
+                //             type: true,
+                //             dispatch_time: true,
+                //             isActive: true,
+                //             isCustom: true,
+                //             isDefault: true,
+                //             stitchingValues: {
+                //               select: {
+                //                 id: true,
+                //                 type: true,
+                //                 name: true,
+                //                 range: true,
+                //                 values: true,
+                //               },
+                //               where: {
+                //                 isActive: true,
+                //               },
+                //             },
+                //           },
+                //         },
+                //       },
+                //       where: {
+                //         stitchingOption: {
+                //           isActive: true,
+                //         },
+                //       },
+                //     },
+                //   },
+                // },
               },
             },
           },
@@ -268,68 +266,37 @@ const getCatalogueProduct = async (req, res, next) => {
         },
         Product: {
           select: {
-            id: true,
-            name: true,
-            catalogue_id: true,
+            // id: true,
+            // name: true,
+            // catalogue_id: true,
             sku: true,
             url: true,
-            quantity: true,
+            // quantity: true,
             ...(shouldHidePrice === false && { average_price: true }),
             image: true,
-            description: true,
-            isActive: true,
+            // description: true,
+            // isActive: true,
             showInSingle: true,
-            readyToShip: true,
-            attributeValues: {
-              where: { attribute: { type: "Label" } },
-              select: {
-                attribute: true,
-                attributeValue: true,
-              },
-            },
+            // readyToShip: true,
+            // attributeValues: {
+            //   where: { attribute: { type: "Label" } },
+            //   select: {
+            //     attribute: true,
+            //     attributeValue: true,
+            //   },
+            // },
           },
         },
       },
     });
 
-    if (product && product.optionType === "Stitching") {
-      product.stitchingOption = product.CatalogueCategory?.map((item) => {
-        const stitchingGroup = item.category?.StitchingGroup;
-
-        if (Array.isArray(stitchingGroup) && stitchingGroup.length > 0) {
-          return stitchingGroup.flatMap((group) => ({
-            id: group.id,
-            name: group.name,
-            stitchingOption: group.stitchingGroupOption
-              .map((option) => ({
-                ...option.stitchingOption,
-              }))
-              .flat(),
-          }));
-        }
-
-        return [];
-      }).flat();
+    if (product?.Product) {
+      product.Product = product.Product.map(p => ({
+        ...p,
+        image: p.image?.[0] || null,
+      }));
     }
 
-    // if (product && product.attributeValues?.length > 0) {
-    //   let attributes = [];
-    //   for (const value of product.attributeValues) {
-    //     let isAttributeExists = attributes?.find(
-    //       (val) => val.name === value.attribute.name
-    //     );
-    //     if (isAttributeExists) {
-    //       isAttributeExists.value.push(value.attributeValue.name);
-    //     } else {
-    //       attributes.push({
-    //         name: value.attribute.name,
-    //         key: value.attribute.key,
-    //         value: [value.attributeValue.name],
-    //       });
-    //     }
-    //   }
-    //   product["attributeValues"] = attributes;
-    // }
 
     if (product?.attributeValues?.length > 0) {
       const processedAttributes = product.attributeValues.reduce(
@@ -395,6 +362,116 @@ const getCatalogueProduct = async (req, res, next) => {
     next(error);
   }
 };
+
+
+
+const getCatalogueStitching = async (req, res, next) => {
+  try {
+    const url = req.params.url;
+    const product = await prisma.catalogue.findUnique({
+      where: { url: url },
+      select: {
+        CatalogueCategory: {
+          where: { category: { parent_id: null } },
+          select: {
+            category: {
+              select: {
+                id: true,
+                StitchingGroup: {
+                  select: {
+                    id: true,
+                    name: true,
+                    stitchingGroupOption: {
+                      select: {
+                        stitchingOption: {
+                          select: {
+                            id: true,
+                            name: true,
+                            catalogue_price: true,
+                            price: true,
+                            type: true,
+                            dispatch_time: true,
+                            isActive: true,
+                            isCustom: true,
+                            isDefault: true,
+                            stitchingValues: {
+                              select: {
+                                id: true,
+                                type: true,
+                                name: true,
+                                range: true,
+                                values: true,
+                              },
+                              where: {
+                                isActive: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                      where: {
+                        stitchingOption: {
+                          isActive: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+
+    const stitchingOption = product?.CatalogueCategory?.map((item) => {
+      const stitchingGroup = item.category?.StitchingGroup;
+
+      if (Array.isArray(stitchingGroup) && stitchingGroup.length > 0) {
+        return stitchingGroup.flatMap((group) => ({
+          id: group.id,
+          name: group.name,
+          stitchingOption: group.stitchingGroupOption
+            .map((option) => ({
+              ...option.stitchingOption,
+            }))
+            .flat(),
+        }));
+      }
+
+      return [];
+    }).flat();
+
+    if (stitchingOption && stitchingOption.length > 0) {
+      return res.status(200).json({
+        isSuccess: true,
+        message: "Catalogue stitching get successfully.",
+        data: stitchingOption,
+      });
+    } else {
+      return res.status(500).json({
+        isSuccess: true,
+        message: "Catalogue stitching not found.",
+        data: [],
+      });
+    }
+
+  } catch (err) {
+    console.log(err);
+    const error = new Error("Something went wrong, please try again!");
+    next(error);
+  }
+};
+
+
+
+
+
+
+
+
+
 
 const searchCatalogueAndProduct = async (req, res, next) => {
   try {
@@ -753,7 +830,7 @@ const relatedProduct = async (req, res, next) => {
         id: true,
         name: true,
         catalogue_id: true,
-        showInSingle:true,
+        showInSingle: true,
         sku: true,
         url: true,
         mediumImage: true,
@@ -880,10 +957,101 @@ const shareProduct = async (req, res, next) => {
     next(error);
   }
 };
+
+
+
+
+
+
+
+
+
+
+const relatedCatalogue = async (req, res, next) => {
+  try {
+    const isTokenExists = await tokenExists(req);
+    const isWebSettings = await prisma.webSettings.findFirst({
+      select: { showPrice: true },
+    });
+    const shouldHidePrice = !isTokenExists && isWebSettings.showPrice === false;
+
+    const { url } = req.params;
+    console.log("slug", url)
+
+    const currentCatalogue = await prisma.catalogue.findUnique({
+      where: { url: url },
+      include: { CatalogueCategory: true }
+    });
+
+
+    if (!currentCatalogue) {
+      return res.status(404).json({
+        isSuccess: false,
+        message: "Catalogue not found!",
+      });
+    }
+
+    const categoryIds = currentCatalogue.CatalogueCategory.map((c) => c.category_id);
+
+    const relateCatalogue = await prisma.catalogue.findMany({
+      where: {
+        id: { not: currentCatalogue.id },
+        CatalogueCategory: {
+          some: {
+            category_id: { in: categoryIds },
+          },
+        },
+        deletedAt: null,
+        isActive: true,
+      },
+      select: {
+        no_of_product: true,
+        cat_code: true,
+        coverImage: true,
+        url: true,
+        name: true,
+        ...(shouldHidePrice === false && {
+          catalogue_discount: true,
+          average_price: true,
+          offer_price: true,
+        }),
+        CatalogueCategory: {
+          where: { category: { isActive: true } },
+          select: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+                url: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+      take: 10,
+    });
+
+    return res.status(200).json({
+      isSuccess: true,
+      message: "Related products fetched successfully",
+      data: relateCatalogue,
+    });
+  } catch (err) {
+    console.error("Error in relatedProduct:", err);
+    return res
+      .status(500)
+      .json({ isSuccess: false, message: "Something went wrong!" });
+  }
+};
 export {
   getCatalogue,
   getCatalogueProduct,
   searchCatalogueAndProduct,
+  getCatalogueStitching,
   relatedProduct,
   shareProduct,
+  relatedCatalogue,
 };

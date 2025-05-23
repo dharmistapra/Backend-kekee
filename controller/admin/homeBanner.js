@@ -76,7 +76,14 @@ const getHomeBanner = async (req, res, next) => {
   try {
     const result = await prisma.homeBanner.findMany({
       where: { isActive: true },
-      orderBy: { position: "asc" }
+      orderBy: { position: "asc" },
+      select:{
+        position: true,
+        bannerType: true,
+        url: true,
+        desktopImage: true,
+        mobileImage: true,
+      }
     });
     return res.status(200).json({
       isSuccess: true,

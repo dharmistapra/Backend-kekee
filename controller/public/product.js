@@ -3,7 +3,7 @@ import { tokenExists } from "../../helper/common.js";
 
 const getProductpublic = async (req, res, next) => {
   try {
-    const { perPage, pageNo, url, user_id, filter } = req.body;
+    const { perPage, pageNo, url, user_id, sortOption } = req.body;
     const { minPrice, maxPrice, ...dynamicFilters } = req.query;
 
     const isTokenExists = await tokenExists(req);
@@ -48,19 +48,38 @@ const getProductpublic = async (req, res, next) => {
 
     const { id } = fetchCategory;
 
-    let orderBy = { updatedAt: "desc" };
-    if (filter) {
-      if (filter === "price-ascending") {
-        orderBy["product"] = { offer_price: "asc" };
-      } else if (filter === "price-descending") {
-        orderBy["product"] = { offer_price: "desc" };
-      } else if (filter === "name-ascending") {
-        orderBy["product"] = { name: "asc" };
-      } else if (filter === "name-descending") {
-        orderBy["product"] = { name: "desc" };
-      }
-      delete orderBy["updatedAt"];
+    let orderBy = {};
+
+    switch (sortOption) {
+      case "high":
+        orderBy = { product: { offer_price: "desc" } };
+        break;
+      case "low":
+        orderBy = { product: { offer_price: "asc" } };
+        break;
+      case "AtoZ":
+        orderBy = { product: { name: "asc" } };
+        break;
+      case "ZtoA":
+        orderBy = { product: { name: "desc" } };
+        break;
+      default:
+        orderBy.updatedAt = "desc";
     }
+
+    // let orderBy = { updatedAt: "desc" };
+    // if (filter) {
+    //   if (filter === "price-ascending") {
+    //     orderBy["product"] = { offer_price: "asc" };
+    //   } else if (filter === "price-descending") {
+    //     orderBy["product"] = { offer_price: "desc" };
+    //   } else if (filter === "name-ascending") {
+    //     orderBy["product"] = { name: "asc" };
+    //   } else if (filter === "name-descending") {
+    //     orderBy["product"] = { name: "desc" };
+    //   }
+    //   delete orderBy["updatedAt"];
+    // }
     let filterConditions = [];
     for (const [key, value] of Object.entries(dynamicFilters)) {
       const values = value.split(",");
@@ -408,34 +427,37 @@ const getProductDetails = async (req, res, next) => {
       // }, {});
 
       let labelsList = [];
-      const processedAttributes = data?.attributeValues.reduce((acc, { attribute, attributeValue }) => {
-        if (!attribute || !attributeValue) return acc;
-        if (attribute.type === "Label") {
-          labelsList.push({
-            label: attributeValue.name,
-            colour: attributeValue.colour,
-          });
-          return acc;
-        }
-        if (attribute.type === "ExpiryTime") return acc;
-        if (!acc[attribute.id]) {
-          acc[attribute.id] = {
-            name: attribute.name,
-            key: attribute.key,
-            values: [],
-          };
-        }
-        if (attribute.type === "Colour") {
-          acc[attribute.id].values.push({
-            color: attributeValue.colour || null,
-            value: attributeValue.name,
-          });
-        } else {
-          acc[attribute.id].values.push(attributeValue.name);
-        }
+      const processedAttributes = data?.attributeValues.reduce(
+        (acc, { attribute, attributeValue }) => {
+          if (!attribute || !attributeValue) return acc;
+          if (attribute.type === "Label") {
+            labelsList.push({
+              label: attributeValue.name,
+              colour: attributeValue.colour,
+            });
+            return acc;
+          }
+          if (attribute.type === "ExpiryTime") return acc;
+          if (!acc[attribute.id]) {
+            acc[attribute.id] = {
+              name: attribute.name,
+              key: attribute.key,
+              values: [],
+            };
+          }
+          if (attribute.type === "Colour") {
+            acc[attribute.id].values.push({
+              color: attributeValue.colour || null,
+              value: attributeValue.name,
+            });
+          } else {
+            acc[attribute.id].values.push(attributeValue.name);
+          }
 
-        return acc;
-      }, {});
+          return acc;
+        },
+        {}
+      );
       data.labels = labelsList;
       data.attributeValues = Object.values(processedAttributes);
     }
@@ -523,8 +545,6 @@ const getProductImages = async (req, res, next) => {
   }
 };
 
-
-
 const getProductStitching = async (req, res, next) => {
   try {
     const { url } = req.params;
@@ -606,17 +626,6 @@ const getProductStitching = async (req, res, next) => {
     next(new Error("Something went wrong, please try again!"));
   }
 };
-
-
-
-
-
-
-
-
-
-
-
 
 // const getProductDetails = async (req, res, next) => {
 //   try {
@@ -729,7 +738,6 @@ const getProductStitching = async (req, res, next) => {
 //           },
 //         }),
 
-
 //         prisma.productLabel.findMany({
 //           where: { product_id: product.id },
 //           select: {
@@ -781,7 +789,6 @@ const getProductStitching = async (req, res, next) => {
 //         }),
 //       ]);
 
-
 //     product.catalogueUrl = product.catalogue?.url || null;
 
 //     let labelsList = [];
@@ -814,11 +821,8 @@ const getProductStitching = async (req, res, next) => {
 //       return acc;
 //     }, {});
 
-
 //     product.labels = labelsList;
 //     product.attributeValues = Object.values(processedAttributes);
-
-
 
 //     product.sizes = sizes?.map((item) => ({
 //       ...item.size,
@@ -854,7 +858,6 @@ const getProductStitching = async (req, res, next) => {
 //     next(new Error("Something went wrong, please try again!"));
 //   }
 // };
-
 
 const filterAttribute = async (req, res, next) => {
   try {
@@ -1013,4 +1016,10 @@ const filterAttribute = async (req, res, next) => {
   }
 };
 
-export { getProductpublic, getProductDetails, filterAttribute, getProductImages, getProductStitching };
+export {
+  getProductpublic,
+  getProductDetails,
+  filterAttribute,
+  getProductImages,
+  getProductStitching,
+};

@@ -3,7 +3,7 @@ import { tokenExists } from "../../helper/common.js";
 
 const getCatalogue = async (req, res, next) => {
   try {
-    const { perPage, pageNo, url, user_id, price, name } = req.body;
+    const { perPage, pageNo, url, user_id, sortOption } = req.body;
     const page = +pageNo || 1;
     const take = +perPage || 10;
     const skip = (page - 1) * take;
@@ -54,17 +54,36 @@ const getCatalogue = async (req, res, next) => {
       isActive: true,
       deletedAt: null,
     };
-    let orderBy = { updatedAt: "desc" };
-    if (price) {
-      price === "high"
-        ? (orderBy["offer_price"] = "asc")
-        : (orderBy["offer_price"] = "desc");
-      delete orderBy["updatedAt"];
+    let orderBy = {};
+
+    switch (sortOption) {
+      case "high":
+        orderBy.offer_price = "desc";
+        break;
+      case "low":
+        orderBy.offer_price = "asc";
+        break;
+      case "AtoZ":
+        orderBy.name = "asc";
+        break;
+      case "ZtoA":
+        orderBy.name = "desc";
+        break;
+      default:
+        orderBy.updatedAt = "desc";
     }
-    if (!price && name) {
-      name === "AtoZ" ? (orderBy["name"] = "asc") : (orderBy["name"] = "desc");
-      delete orderBy["updatedAt"];
-    }
+
+    // let orderBy = { updatedAt: "desc" };
+    // if (price) {
+    //   price === "high"
+    //     ? (orderBy["offer_price"] = "asc")
+    //     : (orderBy["offer_price"] = "desc");
+    //   delete orderBy["updatedAt"];
+    // }
+    // if (!price && name) {
+    //   name === "AtoZ" ? (orderBy["name"] = "asc") : (orderBy["name"] = "desc");
+    //   delete orderBy["updatedAt"];
+    // }
     const count = await prisma.catalogue.count({
       where: filter,
     });
@@ -291,12 +310,11 @@ const getCatalogueProduct = async (req, res, next) => {
     });
 
     if (product?.Product) {
-      product.Product = product.Product.map(p => ({
+      product.Product = product.Product.map((p) => ({
         ...p,
         image: p.image?.[0] || null,
       }));
     }
-
 
     if (product?.attributeValues?.length > 0) {
       const processedAttributes = product.attributeValues.reduce(
@@ -363,8 +381,6 @@ const getCatalogueProduct = async (req, res, next) => {
   }
 };
 
-
-
 const getCatalogueStitching = async (req, res, next) => {
   try {
     const url = req.params.url;
@@ -424,7 +440,6 @@ const getCatalogueStitching = async (req, res, next) => {
       },
     });
 
-
     const stitchingOption = product?.CatalogueCategory?.map((item) => {
       const stitchingGroup = item.category?.StitchingGroup;
 
@@ -456,22 +471,12 @@ const getCatalogueStitching = async (req, res, next) => {
         data: [],
       });
     }
-
   } catch (err) {
     console.log(err);
     const error = new Error("Something went wrong, please try again!");
     next(error);
   }
 };
-
-
-
-
-
-
-
-
-
 
 const searchCatalogueAndProduct = async (req, res, next) => {
   try {
@@ -788,8 +793,6 @@ const searchCatalogueAndProduct = async (req, res, next) => {
 //   }
 // };
 
-
-
 const relatedProduct = async (req, res, next) => {
   try {
     const isTokenExists = await tokenExists(req);
@@ -853,7 +856,7 @@ const relatedProduct = async (req, res, next) => {
         },
       },
       orderBy: {
-        updatedAt: 'desc',
+        updatedAt: "desc",
       },
       take: 10,
     });
@@ -871,9 +874,7 @@ const relatedProduct = async (req, res, next) => {
   }
 };
 
-
-
-const BASE_URL = "https://api.lajo.in/"
+const BASE_URL = "https://api.lajo.in/";
 // const BASE_URL = "https://fb00-116-72-43-254.ngrok-free.app"
 const shareProduct = async (req, res, next) => {
   try {
@@ -932,7 +933,9 @@ const shareProduct = async (req, res, next) => {
         <html>
           <head>
             <meta property="og:title" content="${`${isProductExists.name}`}" />
-            <meta property="og:description" content="${isProductExists.description}" />
+            <meta property="og:description" content="${
+              isProductExists.description
+            }" />
             <meta property="og:image" content="${imageUrl}" />
             <meta property="og:url" content="${isProductExists.id}" />
             <meta name="twitter:card" content="summary_large_image" />
@@ -958,15 +961,6 @@ const shareProduct = async (req, res, next) => {
   }
 };
 
-
-
-
-
-
-
-
-
-
 const relatedCatalogue = async (req, res, next) => {
   try {
     const isTokenExists = await tokenExists(req);
@@ -978,9 +972,8 @@ const relatedCatalogue = async (req, res, next) => {
     const { url } = req.params;
     const currentCatalogue = await prisma.catalogue.findUnique({
       where: { url: url },
-      include: { CatalogueCategory: true }
+      include: { CatalogueCategory: true },
     });
-
 
     if (!currentCatalogue) {
       return res.status(404).json({
@@ -989,7 +982,9 @@ const relatedCatalogue = async (req, res, next) => {
       });
     }
 
-    const categoryIds = currentCatalogue.CatalogueCategory.map((c) => c.category_id);
+    const categoryIds = currentCatalogue.CatalogueCategory.map(
+      (c) => c.category_id
+    );
 
     const relateCatalogue = await prisma.catalogue.findMany({
       where: {
@@ -1029,26 +1024,30 @@ const relatedCatalogue = async (req, res, next) => {
           select: {
             showInSingle: true,
             id: true,
-          }
+          },
         },
       },
       orderBy: {
-        updatedAt: 'desc',
+        updatedAt: "desc",
       },
       take: 10,
     });
 
+    const processedCatalogue =
+      relateCatalogue &&
+      relateCatalogue?.length > 0 &&
+      relateCatalogue?.map((catalogue) => {
+        const firstProduct = catalogue.Product[0];
+        const type = firstProduct?.showInSingle
+          ? "Full Set + Single"
+          : "Full Set";
+        const { Product, ...catalogueWithoutProduct } = catalogue;
 
-    const processedCatalogue = relateCatalogue && relateCatalogue?.length > 0 && relateCatalogue?.map((catalogue) => {
-      const firstProduct = catalogue.Product[0];
-      const type = firstProduct?.showInSingle ? "Full Set + Single" : "Full Set";
-      const { Product, ...catalogueWithoutProduct } = catalogue;
-
-      return {
-        ...catalogueWithoutProduct,
-        type,
-      };
-    });
+        return {
+          ...catalogueWithoutProduct,
+          type,
+        };
+      });
 
     return res.status(200).json({
       isSuccess: true,
